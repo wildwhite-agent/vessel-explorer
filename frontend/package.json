@@ -1,0 +1,20 @@
+{
+  "name": "vessel-explorer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@1001-digital/components": "^1.2.3",
+    "@1001-digital/components.evm": "^1.2.2",
+    "@1001-digital/layers.evm": "^1.2.2",
+    "nuxt": "^4.3.1",
+    "postcss-nesting": "^14.0.0",
+    "viem": "^2.47.0",
+    "@wagmi/vue": "^0.5.0"
+  }
+}

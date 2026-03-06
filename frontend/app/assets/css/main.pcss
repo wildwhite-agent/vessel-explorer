@@ -1,0 +1,209 @@
+:root {
+  color-scheme: light;
+  --font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', ui-monospace, monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', ui-monospace, monospace;
+  --background: #fff;
+  --color: #000;
+  --muted: #666;
+  --border-color: #e0e0e0;
+  --border-radius: 0;
+  --button-border-radius: 0;
+  --card-border-radius: 0;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --write: #f59e0b;
+  --error: #ef4444;
+
+  --sh-keyword: #7c3aed;
+  --sh-type: #0891b2;
+  --sh-string: #16a34a;
+  --sh-number: #d97706;
+  --sh-comment: #999;
+  --sh-function: #2563eb;
+
+  --bg-subtle: #fafafa;
+  --bg-muted: #f5f5f5;
+  --text-faint: #999;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --background: #000;
+  --color: #fff;
+  --muted: #999;
+  --border-color: #222;
+  --button-background: #111;
+  --button-color: #fff;
+  --button-background-highlight: #222;
+  --accent: #60a5fa;
+  --accent-hover: #3b82f6;
+
+  --sh-keyword: #a78bfa;
+  --sh-type: #22d3ee;
+  --sh-string: #4ade80;
+  --sh-number: #fbbf24;
+  --sh-comment: #666;
+  --sh-function: #60a5fa;
+
+  --bg-subtle: #111;
+  --bg-muted: #1a1a1a;
+  --text-faint: #555;
+}
+
+/* Toast overrides — terminal style */
+:root {
+  --toast-width: 20rem;
+  --card-background: #fff;
+  --success: #22c55e;
+  --z-index-toast: 100;
+}
+
+:root.dark {
+  --card-background: #111;
+}
+
+/* Smooth dark/light mode transition */
+:root,
+:root *,
+:root *::before,
+:root *::after {
+  transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+dialog {
+  margin: auto;
+  font-family: var(--font-family);
+}
+
+.loader .text {
+  font-family: var(--font-family);
+  font-size: 12px;
+  text-transform: lowercase;
+}
+
+.text-btn {
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  block-size: auto;
+  min-inline-size: auto;
+  display: inline;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+
+  &:hover { color: var(--color); }
+}
+
+.dialog > .close {
+  background: var(--background);
+  box-shadow: none;
+
+  &:is(:hover, :active, :focus) {
+    background: var(--bg-muted);
+  }
+}
+
+/* Syntax highlighting */
+.sh-keyword { color: var(--sh-keyword); }
+.sh-type { color: var(--sh-type); }
+.sh-string { color: var(--sh-string); }
+.sh-number { color: var(--sh-number); }
+.sh-comment { color: var(--sh-comment); font-style: italic; }
+.sh-function { color: var(--sh-function); }
+
+/* Shared layout */
+.row {
+  display: flex;
+  align-items: baseline;
+  padding: 0 1rem;
+  border-left: 2px solid transparent;
+}
+.nav-col {
+  display: inline-block;
+  width: var(--nav-w, 1.5rem);
+  flex-shrink: 0;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+.main-col {
+  flex: 1;
+  min-width: 0;
+}
+
+/* File sections */
+.file-section {
+  border-bottom: 1px solid var(--border-color);
+  scroll-margin-top: 1rem;
+}
+.file-header {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+
+  &:hover { background: var(--bg-subtle); }
+}
+.file-toggle {
+  cursor: pointer;
+}
+.file-path {
+  color: var(--muted);
+}
+
+/* Code collapse transition */
+.code-enter-active,
+.code-leave-active {
+  transition: max-height 0.2s ease, opacity 0.15s ease;
+  overflow: hidden;
+}
+.code-enter-from,
+.code-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+.code-enter-to,
+.code-leave-from {
+  max-height: 100vh;
+  opacity: 1;
+}
+
+.code-wrap {
+  background: var(--background);
+}
+
+/* Function line states */
+.cl-fn {
+  cursor: pointer;
+
+  &:hover { background: var(--bg-subtle); }
+}
+.cl-read { border-left-color: var(--accent); }
+.cl-write { border-left-color: var(--write); }
+.cl-open { background: var(--bg-muted); }
+
+/* Meta notes above function lines */
+.fn-note {
+  flex-shrink: 0;
+}
+
+/* Badges */
+.badge {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+.br { color: var(--accent); }
+.bw { color: var(--write); }
+
+
+@media (max-width: 640px) {
+  .row { padding: 0.3rem 0.5rem; }
+}
