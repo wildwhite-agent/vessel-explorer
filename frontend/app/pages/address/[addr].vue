@@ -56,7 +56,7 @@
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { VESSEL_ADDRESS, VESSEL_ABI, getGridDimensions } from '~/utils/vessel'
+import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, shortenAddress, computeOwnership, renderToCanvas } from '~/utils/vessel'
 import { fetchVesselTransfersForAddress } from '~/utils/etherscan'
 
 const route = useRoute()
@@ -94,38 +94,9 @@ const stats = computed(() => {
 
 const ownedVessels = ref<OwnedVessel[]>([])
 
-function shortenAddress(a: string): string {
-  if (a.length <= 12) return a
-  return `${a.slice(0, 6)}...${a.slice(-4)}`
-}
-
 function renderCanvas(canvas: HTMLCanvasElement, vessel: OwnedVessel) {
   if (!vessel.payload?.length) return
-  const vesselId = Number(vessel.id)
-  const { cols, rows } = getGridDimensions(vesselId)
-  const scale = Math.max(1, Math.floor(100 / Math.max(cols, rows)))
-  canvas.width = cols * scale
-  canvas.height = rows * scale
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  ctx.imageSmoothingEnabled = false
-  const tmp = document.createElement('canvas')
-  tmp.width = cols
-  tmp.height = rows
-  const tmpCtx = tmp.getContext('2d')!
-  const img = tmpCtx.createImageData(cols, rows)
-  for (let i = 0; i < cols * rows; i++) {
-    const v = i < vessel.payload!.length ? vessel.payload![i]! : 0
-    const off = i * 4
-    img.data[off] = v
-    img.data[off + 1] = v
-    img.data[off + 2] = v
-    img.data[off + 3] = 255
-  }
-  tmpCtx.putImageData(img, 0, 0)
-  ctx.drawImage(tmp, 0, 0, cols * scale, rows * scale)
+  renderToCanvas(canvas, vessel.payload, Number(vessel.id), 100)
 }
 
 async function resolveAddr(identifier: string) {
@@ -168,12 +139,7 @@ async function loadVessels(address: string) {
   loading.value = true
   try {
     const transfers = await fetchVesselTransfersForAddress(address)
-
-    const ownership = new Map<string, string>()
-    const sorted = [...transfers].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber))
-    for (const tx of sorted) {
-      ownership.set(tx.tokenID, tx.to.toLowerCase())
-    }
+    const ownership = computeOwnership(transfers)
 
     const owned = [...ownership.entries()]
       .filter(([, owner]) => owner === address.toLowerCase())
@@ -200,11 +166,7 @@ async function loadVessels(address: string) {
             args: [BigInt(id)],
           }) as Promise<string>,
         ])
-        const clean = payload.startsWith('0x') ? payload.slice(2) : payload
-        const bytes = new Uint8Array(clean.length / 2)
-        for (let i = 0; i < bytes.length; i++) {
-          bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
-        }
+        const bytes = hexToBytes(payload)
         const idx = ownedVessels.value.findIndex(v => v.id === id)
         if (idx !== -1) {
           ownedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType }
@@ -244,28 +206,6 @@ watch(addr, async (newAddr) => {
   padding: 1rem;
 }
 
-.back-link {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 13px;
-  display: inline-block;
-  margin-bottom: 1rem;
-
-  &:hover {
-    color: var(--color);
-  }
-}
-
-.status {
-  color: var(--muted);
-  font-size: 13px;
-  padding: 1rem 0;
-}
-
-.status-error {
-  color: var(--error);
-}
-
 .profile-title {
   font-size: 18px;
   font-weight: 700;
@@ -285,9 +225,9 @@ watch(addr, async (newAddr) => {
   margin-bottom: 1rem;
 }
 
-.stat-machine { color: #a78bfa; }
-.stat-vault { color: #4ade80; }
-.stat-capsule { color: #22d3ee; }
+.stat-machine { color: var(--color-machine); }
+.stat-vault { color: var(--color-vault); }
+.stat-capsule { color: var(--color-capsule); }
 .stat-empty { color: var(--text-faint); }
 
 .vessel-grid {
@@ -314,15 +254,15 @@ watch(addr, async (newAddr) => {
   }
 
   &.card-machine:hover {
-    border-color: #a78bfa;
+    border-color: var(--color-machine);
   }
 
   &.card-vault:hover {
-    border-color: #4ade80;
+    border-color: var(--color-vault);
   }
 
   &.card-capsule:hover {
-    border-color: #22d3ee;
+    border-color: var(--color-capsule);
   }
 }
 

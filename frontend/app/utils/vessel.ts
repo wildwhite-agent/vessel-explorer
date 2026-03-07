@@ -69,6 +69,57 @@ export type ColorMode = 0
 // Roles: 0 = default, 2 = creator(?)
 export type VesselRole = number
 
+export function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex
+  if (!clean.length) return new Uint8Array(0)
+  const bytes = new Uint8Array(clean.length / 2)
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
+  }
+  return bytes
+}
+
+export function shortenAddress(a: string): string {
+  if (a.length <= 12) return a
+  return `${a.slice(0, 6)}...${a.slice(-4)}`
+}
+
+export function computeOwnership(transfers: { tokenID: string; to: string; blockNumber: string }[]): Map<string, string> {
+  const ownership = new Map<string, string>()
+  const sorted = [...transfers].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber))
+  for (const tx of sorted) {
+    ownership.set(tx.tokenID, tx.to.toLowerCase())
+  }
+  return ownership
+}
+
+export function renderToCanvas(canvas: HTMLCanvasElement, data: Uint8Array, tokenId: number, maxSize = 80) {
+  const { cols, rows } = getGridDimensions(tokenId)
+  const scale = Math.max(1, Math.floor(maxSize / Math.max(cols, rows)))
+  canvas.width = cols * scale
+  canvas.height = rows * scale
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  ctx.imageSmoothingEnabled = false
+  const tmp = document.createElement('canvas')
+  tmp.width = cols
+  tmp.height = rows
+  const tmpCtx = tmp.getContext('2d')!
+  const img = tmpCtx.createImageData(cols, rows)
+  for (let i = 0; i < cols * rows; i++) {
+    const v = i < data.length ? data[i]! : 0
+    const off = i * 4
+    img.data[off] = v
+    img.data[off + 1] = v
+    img.data[off + 2] = v
+    img.data[off + 3] = 255
+  }
+  tmpCtx.putImageData(img, 0, 0)
+  ctx.drawImage(tmp, 0, 0, cols * scale, rows * scale)
+}
+
 export function getGridDimensions(tokenId: number): { cols: number; rows: number } {
   const cols = Math.ceil(Math.sqrt(tokenId))
   const rows = Math.ceil(tokenId / cols)

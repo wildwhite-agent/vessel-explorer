@@ -5,6 +5,7 @@ import {
   VESSEL_ADDRESS,
   VESSEL_ABI,
   MACHINE_ABI,
+  hexToBytes,
   type VesselType,
 } from '~/utils/vessel'
 
@@ -34,16 +35,6 @@ export interface VesselData {
 }
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
-function hexToBytes(hex: string): Uint8Array {
-  const clean = hex.startsWith('0x') ? hex.slice(2) : hex
-  if (!clean.length) return new Uint8Array(0)
-  const bytes = new Uint8Array(clean.length / 2)
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
-  }
-  return bytes
-}
 
 export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
   const vessel = ref<VesselData | null>(null)

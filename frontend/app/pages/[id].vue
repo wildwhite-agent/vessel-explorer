@@ -165,28 +165,6 @@ async function copyBytes() {
   padding: 1rem;
 }
 
-.back-link {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 13px;
-  display: inline-block;
-  margin-bottom: 1rem;
-
-  &:hover {
-    color: var(--color);
-  }
-}
-
-.status {
-  color: var(--muted);
-  font-size: 13px;
-  padding: 1rem 0;
-}
-
-.status-error {
-  color: var(--error);
-}
-
 .empty-label {
   text-align: center;
   padding: 3rem 0;
@@ -212,9 +190,9 @@ async function copyBytes() {
   text-transform: lowercase;
 }
 
-.type-capsule { color: #22d3ee; }
-.type-vault { color: var(--sh-string, #4ade80); }
-.type-machine { color: var(--sh-keyword, #a78bfa); }
+.type-capsule { color: var(--color-capsule); }
+.type-vault { color: var(--color-vault); }
+.type-machine { color: var(--color-machine); }
 .unclaimed { color: var(--text-faint); }
 .locked { color: var(--error, #e06c75); }
 

@@ -109,7 +109,7 @@
       class="preview-tooltip"
       :style="{ top: preview.y + 'px', left: preview.x + 'px' }"
     >
-      <canvas ref="previewCanvas" class="preview-canvas" />
+      <canvas ref="previewCanvas" class="preview-canvas pixelated" />
       <div v-if="preview.loading" class="preview-loading">...</div>
     </div>
   </div>
@@ -119,7 +119,7 @@
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import { fetchVesselActivity, fetchVesselTransfersForAddress, type VesselTransaction } from '~/utils/etherscan'
-import { VESSEL_ADDRESS, VESSEL_ABI, getGridDimensions } from '~/utils/vessel'
+import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, computeOwnership, renderToCanvas } from '~/utils/vessel'
 
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
@@ -155,12 +155,7 @@ watch(activeTab, async (tab) => {
       const transfers = await res.json()
       if (!Array.isArray(transfers)) { holdersLoading.value = false; return }
 
-      // Replay transfers to compute current ownership
-      const ownership = new Map<string, string>()
-      const sorted = [...transfers].sort((a: any, b: any) => Number(a.blockNumber) - Number(b.blockNumber))
-      for (const tx of sorted) {
-        ownership.set(tx.tokenID, tx.to.toLowerCase())
-      }
+      const ownership = computeOwnership(transfers)
       ownershipMap.value = ownership
 
       // Group tokens by owner
@@ -280,12 +275,9 @@ async function showPreview(vesselId: string, event: MouseEvent) {
         functionName: 'craftToPayload',
         args: [BigInt(vesselId)],
       }) as string
-      const clean = raw.startsWith('0x') ? raw.slice(2) : raw
-      if (clean.length > 0) {
-        payload = new Uint8Array(clean.length / 2)
-        for (let i = 0; i < payload.length; i++) {
-          payload[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
-        }
+      const bytes = hexToBytes(raw)
+      if (bytes.length > 0) {
+        payload = bytes
         payloadCache.set(vesselId, payload)
       }
     } catch {}
@@ -309,31 +301,7 @@ function hidePreview() {
 function renderPreview(data: Uint8Array, tokenId: number) {
   const canvas = previewCanvas.value
   if (!canvas) return
-
-  const { cols, rows } = getGridDimensions(tokenId)
-  const scale = Math.max(2, Math.floor(80 / Math.max(cols, rows)))
-  canvas.width = cols * scale
-  canvas.height = rows * scale
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  ctx.imageSmoothingEnabled = false
-  const tmp = document.createElement('canvas')
-  tmp.width = cols
-  tmp.height = rows
-  const tmpCtx = tmp.getContext('2d')!
-  const img = tmpCtx.createImageData(cols, rows)
-  for (let i = 0; i < cols * rows; i++) {
-    const v = i < data.length ? data[i]! : 0
-    const off = i * 4
-    img.data[off] = v
-    img.data[off + 1] = v
-    img.data[off + 2] = v
-    img.data[off + 3] = 255
-  }
-  tmpCtx.putImageData(img, 0, 0)
-  ctx.drawImage(tmp, 0, 0, cols * scale, rows * scale)
+  renderToCanvas(canvas, data, tokenId, 80)
 }
 
 onMounted(async () => {
@@ -418,7 +386,7 @@ onMounted(async () => {
   font-size: 13px;
 }
 
-.holder-row {
+.holder-row.feed-row {
   grid-template-columns: 2rem 1fr repeat(4, 3.5rem);
 }
 
@@ -486,10 +454,10 @@ onMounted(async () => {
   text-transform: lowercase;
 }
 
-.action-claim { color: #22d3ee; }
+.action-claim { color: var(--color-capsule); }
 .action-write { color: var(--write, #f59e0b); }
 .action-delegate { color: #fb923c; }
-.action-machine { color: #a78bfa; }
+.action-machine { color: var(--color-machine); }
 .action-transfer { color: var(--muted); }
 .action-role { color: #fb923c; }
 .action-entry { color: var(--write, #f59e0b); }
@@ -523,8 +491,6 @@ onMounted(async () => {
 }
 
 .preview-canvas {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
   display: block;
 }
 

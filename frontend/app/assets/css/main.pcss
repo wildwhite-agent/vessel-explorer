@@ -24,6 +24,10 @@
   --bg-subtle: #fafafa;
   --bg-muted: #f5f5f5;
   --text-faint: #999;
+
+  --color-machine: #a78bfa;
+  --color-vault: #4ade80;
+  --color-capsule: #22d3ee;
 }
 
 :root.dark {
@@ -48,6 +52,10 @@
   --bg-subtle: #111;
   --bg-muted: #1a1a1a;
   --text-faint: #555;
+
+  --color-machine: #a78bfa;
+  --color-vault: #4ade80;
+  --color-capsule: #22d3ee;
 }
 
 /* Toast overrides — terminal style */
@@ -203,6 +211,38 @@ dialog {
 .br { color: var(--accent); }
 .bw { color: var(--write); }
 
+
+/* Shared utility classes */
+.back-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  display: inline-block;
+  margin-bottom: 1rem;
+
+  &:hover {
+    color: var(--color);
+  }
+}
+
+.status {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 1rem 0;
+}
+
+.status-error {
+  color: var(--error);
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.color-machine { color: var(--color-machine); }
+.color-vault { color: var(--color-vault); }
+.color-capsule { color: var(--color-capsule); }
 
 @media (max-width: 640px) {
   .row { padding: 0.3rem 0.5rem; }
