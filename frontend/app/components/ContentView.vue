@@ -67,28 +67,13 @@ const sourceLines = computed(() => {
 const lineNumWidth = computed(() => String(sourceLines.value.length).length)
 
 const highlightedLines = computed(() => {
-  const isMarkup = content.value.type === 'svg' || content.value.type === 'html'
   return sourceLines.value.map((line: string) => {
-    // Always escape HTML first
-    let escaped = line
+    // Escape all HTML entities — this is the source view, everything must be visible as text
+    const escaped = line
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
-
-    if (isMarkup) {
-      // Highlight tags: <tagname and </tagname and >
-      escaped = escaped.replace(/(&lt;\/?)([\w:-]+)/g, '$1<span class="sh-keyword">$2</span>')
-      // Highlight attribute names (only inside tags — simplified)
-      escaped = escaped.replace(/\s([\w:-]+)=/g, ' <span class="sh-type">$1</span>=')
-      // Highlight attribute values in quotes
-      escaped = escaped.replace(/=(&quot;)(.*?)(&quot;)/g, '=<span class="sh-string">&quot;$2&quot;</span>')
-      // Highlight single-quoted values
-      escaped = escaped.replace(/=&#39;(.*?)&#39;/g, '=<span class="sh-string">&#39;$1&#39;</span>')
-      // Highlight comments
-      escaped = escaped.replace(/(&lt;!--.*?--&gt;)/g, '<span class="sh-comment">$1</span>')
-    }
-
     return escaped
   })
 })
