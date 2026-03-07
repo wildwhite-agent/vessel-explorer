@@ -251,7 +251,7 @@ watch(addr, async (newAddr) => {
 
 .vessel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 120px);
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 1rem;
   margin-top: 1.5rem;
 }
@@ -265,8 +265,7 @@ watch(addr, async (newAddr) => {
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   background: var(--bg-subtle);
-  width: 120px;
-  height: 120px;
+  aspect-ratio: 1;
   overflow: hidden;
 
   &:hover {
