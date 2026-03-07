@@ -251,7 +251,7 @@ watch(addr, async (newAddr) => {
 
 .vessel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, 120px);
   gap: 1rem;
   margin-top: 1.5rem;
 }
@@ -265,7 +265,9 @@ watch(addr, async (newAddr) => {
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   background: var(--bg-subtle);
-  aspect-ratio: 1;
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
 
   &:hover {
     border-color: var(--accent);
@@ -277,6 +279,7 @@ watch(addr, async (newAddr) => {
   font-weight: 700;
   margin-bottom: 0.5rem;
   color: var(--accent);
+  flex-shrink: 0;
 }
 
 .card-thumb-wrap {
@@ -285,6 +288,7 @@ watch(addr, async (newAddr) => {
   align-items: center;
   justify-content: center;
   width: 100%;
+  min-height: 0;
 }
 
 .card-thumb {
@@ -292,6 +296,7 @@ watch(addr, async (newAddr) => {
   image-rendering: crisp-edges;
   max-width: 100%;
   max-height: 100%;
+  object-fit: contain;
 }
 
 .card-empty {
