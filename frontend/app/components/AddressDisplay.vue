@@ -1,5 +1,5 @@
 <template>
-  <a v-if="external" :href="`https://etherscan.io/address/${address}`" target="_blank" rel="noopener" class="address-display">
+  <a v-if="external" :href="`${ETHERSCAN_BASE}/address/${address}`" target="_blank" rel="noopener" class="address-display">
     <template v-if="ens?.ens">{{ ens.ens }}</template>
     <template v-else>{{ shortened }}</template>
   </a>
@@ -10,6 +10,8 @@
 </template>
 
 <script setup lang="ts">
+import { ETHERSCAN_BASE, shortenAddress } from '~/utils/vessel'
+
 const props = withDefaults(defineProps<{
   address: string
   external?: boolean
@@ -19,11 +21,7 @@ const props = withDefaults(defineProps<{
 
 const { data: ens } = useEns(() => props.address)
 
-const shortened = computed(() => {
-  const a = props.address
-  if (a.length <= 12) return a
-  return `${a.slice(0, 6)}...${a.slice(-4)}`
-})
+const shortened = computed(() => shortenAddress(props.address))
 </script>
 
 <style scoped>

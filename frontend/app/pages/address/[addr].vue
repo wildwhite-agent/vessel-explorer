@@ -56,8 +56,8 @@
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, shortenAddress, computeOwnership, renderToCanvas } from '~/utils/vessel'
-import { fetchVesselTransfersForAddress } from '~/utils/etherscan'
+import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, shortenAddress, renderToCanvas } from '~/utils/vessel'
+import { fetchOwnership, tokensOwnedBy } from '~/composables/useOwnership'
 
 const route = useRoute()
 const config = useConfig()
@@ -138,13 +138,8 @@ async function resolveAddr(identifier: string) {
 async function loadVessels(address: string) {
   loading.value = true
   try {
-    const transfers = await fetchVesselTransfersForAddress(address)
-    const ownership = computeOwnership(transfers)
-
-    const owned = [...ownership.entries()]
-      .filter(([, owner]) => owner === address.toLowerCase())
-      .map(([id]) => id)
-      .sort((a, b) => Number(a) - Number(b))
+    const { ownership } = await fetchOwnership(address)
+    const owned = tokensOwnedBy(ownership, address)
 
     // Add all vessels immediately with loading state
     ownedVessels.value = owned.map(id => ({ id, payload: null, loaded: false, type: null }))

@@ -91,7 +91,7 @@
           </span>
           <span class="col-time">{{ formatTime(tx.timeStamp) }}</span>
           <a
-            :href="`https://etherscan.io/tx/${tx.hash}`"
+            :href="`${ETHERSCAN_BASE}/tx/${tx.hash}`"
             target="_blank"
             rel="noopener"
             class="col-tx etherscan-link"
@@ -118,11 +118,11 @@
 <script setup lang="ts">
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
-import { fetchVesselActivity, fetchVesselTransfersForAddress, type VesselTransaction } from '~/utils/etherscan'
-import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, computeOwnership, renderToCanvas } from '~/utils/vessel'
+import { fetchVesselActivity, type VesselTransaction } from '~/utils/etherscan'
+import { VESSEL_ADDRESS, VESSEL_ABI, ETHERSCAN_BASE, hexToBytes, renderToCanvas } from '~/utils/vessel'
+import { fetchOwnership } from '~/composables/useOwnership'
 
 const router = useRouter()
-const runtimeConfig = useRuntimeConfig()
 const wagmiConfig = useConfig()
 
 const searchQuery = ref('')
@@ -151,19 +151,8 @@ watch(activeTab, async (tab) => {
   if (tab === 'holders' && !holdersLoaded.value) {
     holdersLoading.value = true
     try {
-      const res = await fetch('/api/transfers?offset=10000')
-      const transfers = await res.json()
-      if (!Array.isArray(transfers)) { holdersLoading.value = false; return }
-
-      const ownership = computeOwnership(transfers)
+      const { ownership, ownerTokens } = await fetchOwnership()
       ownershipMap.value = ownership
-
-      // Group tokens by owner
-      const ownerTokens = new Map<string, string[]>()
-      for (const [tokenId, owner] of ownership.entries()) {
-        if (!ownerTokens.has(owner)) ownerTokens.set(owner, [])
-        ownerTokens.get(owner)!.push(tokenId)
-      }
 
       // Build holder list immediately (sorted by count)
       holders.value = [...ownerTokens.entries()]

@@ -1,6 +1,7 @@
 export const VESSEL_ADDRESS = '0xECb92Cc7112b80A2234936315BbB493fb48d1463' as const
 export const RENDERER_ADDRESS = '0x85c7D2933f178A02Ee9AAC0E654094EaDAca48a2' as const
 export const SEQUENCES_ADDRESS = '0x9423548a957284eD17E55c37c4B6D96e5E63065f' as const
+export const ETHERSCAN_BASE = 'https://etherscan.io' as const
 
 export const VESSEL_ABI = [
   // ERC721 core

@@ -1,6 +1,7 @@
 import { decodeFunctionData } from 'viem'
 
-export const VESSEL_ADDRESS = '0xECb92Cc7112b80A2234936315BbB493fb48d1463'
+// Note: canonical VESSEL_ADDRESS lives in ~/utils/vessel.ts.
+// This module uses its own decode ABI since it only needs function signatures.
 
 // Minimal ABI for decoding tx inputs
 const VESSEL_DECODE_ABI = [
