@@ -23,11 +23,11 @@
         <div class="panel-header">
           rendered
           <button
-            v-if="content.type === 'html' && !scriptsEnabled"
-            class="run-btn"
-            @click="scriptsEnabled = true"
+            v-if="content.type === 'html'"
+            :class="['run-btn', { active: scriptsEnabled }]"
+            @click="scriptsEnabled = !scriptsEnabled"
           >
-            [run]
+            {{ scriptsEnabled ? '[running]' : '[run]' }}
           </button>
         </div>
         <div class="panel-body rendered-body">
@@ -39,6 +39,7 @@
           />
           <iframe
             v-else-if="content.type === 'html'"
+            :key="'iframe-' + scriptsEnabled"
             :srcdoc="content.text"
             :sandbox="scriptsEnabled ? 'allow-scripts' : ''"
             class="rendered-iframe"
@@ -126,16 +127,22 @@ const svgDataUri = computed(() => {
 
 .run-btn {
   background: none;
-  border: none;
+  border: 1px solid var(--border-color);
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
-  padding: 0;
+  padding: 0.15rem 0.5rem;
   text-transform: lowercase;
 
   &:hover {
     color: var(--color);
+    border-color: var(--color);
+  }
+
+  &.active {
+    color: var(--sh-string, #4ade80);
+    border-color: var(--sh-string, #4ade80);
   }
 }
 
