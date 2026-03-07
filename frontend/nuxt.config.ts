@@ -41,7 +41,7 @@ export default defineNuxtConfig({
     etherscanKey: '',
     public: {
       evm: {
-        walletConnectProjectId: '',
+
         chains: {
           mainnet: { rpc1: '', rpc2: '', rpc3: '' },
         },
