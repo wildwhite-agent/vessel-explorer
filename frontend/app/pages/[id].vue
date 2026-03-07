@@ -279,4 +279,28 @@ async function copyBytes() {
     font-weight: 700;
   }
 }
+
+@media (max-width: 640px) {
+  .vessel-title {
+    font-size: 16px;
+  }
+
+  .meta-row {
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .meta-label {
+    width: auto;
+  }
+
+  .meta-value {
+    word-break: break-all;
+  }
+
+  .entry-btn {
+    min-width: 4rem;
+    font-size: 11px;
+  }
+}
 </style>

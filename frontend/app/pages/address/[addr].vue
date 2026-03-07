@@ -307,4 +307,16 @@ watch(addr, async (newAddr) => {
   color: var(--text-faint);
   font-size: 11px;
 }
+
+@media (max-width: 640px) {
+  .vessel-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .profile-title {
+    font-size: 16px;
+    word-break: break-all;
+  }
+}
 </style>

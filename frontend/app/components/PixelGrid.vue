@@ -42,10 +42,24 @@ const props = defineProps<{
 
 const { cols, rows } = getGridDimensions(props.tokenId)
 
-const maxGridWidth = 600
+const containerWidth = ref(600)
+
+onMounted(() => {
+  updateWidth()
+  window.addEventListener('resize', updateWidth)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWidth)
+})
+
+function updateWidth() {
+  // Use viewport width minus padding
+  containerWidth.value = Math.min(600, window.innerWidth - 48)
+}
 
 const cellSize = computed(() => {
-  const raw = Math.floor(maxGridWidth / Math.max(cols, rows))
+  const raw = Math.floor(containerWidth.value / Math.max(cols, rows))
   return Math.max(4, Math.min(raw, 40))
 })
 
