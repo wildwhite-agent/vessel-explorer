@@ -21,8 +21,9 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Server-only (not shipped to browser)
+    etherscanKey: '',
     public: {
-      etherscanKey: '',
       evm: {
         walletConnectProjectId: '',
         chains: {

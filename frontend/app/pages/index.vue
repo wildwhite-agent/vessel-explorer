@@ -214,8 +214,7 @@ function renderPreview(data: Uint8Array, tokenId: number) {
 
 onMounted(async () => {
   try {
-    const apiKey = runtimeConfig.public.etherscanKey as string
-    const all = await fetchVesselActivity(apiKey)
+    const all = await fetchVesselActivity()
     const showActions = new Set(['claim', 'transfer', 'write', 'machine', 'delegate', 'role', 'entry'])
     activity.value = all.filter(tx => tx.vesselId !== null && tx.isError !== '1' && showActions.has(tx.action))
   } catch (e: any) {

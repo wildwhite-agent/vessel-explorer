@@ -1,7 +1,5 @@
 import { decodeFunctionData } from 'viem'
 
-const BASE = 'https://api.etherscan.io/v2/api?chainid=1'
-
 export const VESSEL_ADDRESS = '0xECb92Cc7112b80A2234936315BbB493fb48d1463'
 
 // Minimal ABI for decoding tx inputs
@@ -66,17 +64,14 @@ function decodeVesselTx(input: string, etherscanFnName: string): { action: strin
         return { action: functionName, vesselId: null, detail: functionName }
     }
   } catch {
-    // fallback to etherscan's function name
     const match = etherscanFnName?.match(/^(\w+)/)
     return { action: match?.[1] || 'unknown', vesselId: null, detail: etherscanFnName || 'unknown' }
   }
 }
 
-export async function fetchVesselActivity(apiKey: string, page = 1, offset = 500): Promise<VesselTransaction[]> {
-  const url = `${BASE}&module=account&action=txlist&address=${VESSEL_ADDRESS}&page=${page}&offset=${offset}&sort=desc&apikey=${apiKey}`
-  const res = await fetch(url)
-  const data = await res.json()
-  const txs = data.result || []
+export async function fetchVesselActivity(): Promise<VesselTransaction[]> {
+  const res = await fetch('/api/activity')
+  const txs = await res.json()
 
   return txs.map((tx: any) => {
     const decoded = decodeVesselTx(tx.input, tx.functionName)
@@ -103,21 +98,7 @@ export interface TokenTransfer {
   timeStamp: string
 }
 
-export async function fetchVesselTransfers(apiKey: string, page = 1, offset = 25): Promise<TokenTransfer[]> {
-  const url = `${BASE}&module=account&action=tokennfttx&contractaddress=${VESSEL_ADDRESS}&page=${page}&offset=${offset}&sort=desc&apikey=${apiKey}`
-  const res = await fetch(url)
-  const data = await res.json()
-  return data.result || []
-}
-
-export async function fetchVesselTransfersForToken(tokenId: string, apiKey: string): Promise<TokenTransfer[]> {
-  const all = await fetchVesselTransfers(apiKey, 1, 100)
-  return all.filter(tx => tx.tokenID === tokenId)
-}
-
-export async function fetchVesselTransfersForAddress(address: string, apiKey: string): Promise<TokenTransfer[]> {
-  const url = `${BASE}&module=account&action=tokennfttx&contractaddress=${VESSEL_ADDRESS}&address=${address}&page=1&offset=1000&sort=desc&apikey=${apiKey}`
-  const res = await fetch(url)
-  const data = await res.json()
-  return data.result || []
+export async function fetchVesselTransfersForAddress(address: string): Promise<TokenTransfer[]> {
+  const res = await fetch(`/api/transfers?address=${address}`)
+  return await res.json()
 }

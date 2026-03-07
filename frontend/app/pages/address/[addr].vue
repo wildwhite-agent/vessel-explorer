@@ -53,7 +53,7 @@ import { fetchVesselTransfersForAddress } from '~/utils/etherscan'
 
 const route = useRoute()
 const config = useConfig()
-const runtimeConfig = useRuntimeConfig()
+
 
 const addr = computed(() => route.params.addr as string)
 
@@ -144,8 +144,7 @@ async function resolveAddr(identifier: string) {
 async function loadVessels(address: string) {
   loading.value = true
   try {
-    const apiKey = runtimeConfig.public.etherscanKey as string
-    const transfers = await fetchVesselTransfersForAddress(address, apiKey)
+    const transfers = await fetchVesselTransfersForAddress(address)
 
     const ownership = new Map<string, string>()
     const sorted = [...transfers].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber))
