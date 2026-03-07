@@ -13,7 +13,7 @@
           <template v-if="ensName">{{ ensName }}</template>
           <template v-else>{{ shortenAddress(resolvedAddress) }}</template>
         </h1>
-        <div v-if="ensName" class="profile-address">{{ resolvedAddress }}</div>
+        <div v-if="ensName" class="profile-address" @click="copyAddress" title="click to copy">{{ resolvedAddress }}</div>
 
         <div v-if="ownedVessels.length > 0" class="profile-stats">
           <span>{{ ownedVessels.length }} vessels</span>
@@ -57,6 +57,12 @@ import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, shortenAddress, renderToCanvas } from '~/utils/vessel'
+
+async function copyAddress() {
+  if (resolvedAddress.value) {
+    await navigator.clipboard.writeText(resolvedAddress.value)
+  }
+}
 import { fetchOwnership, tokensOwnedBy } from '~/composables/useOwnership'
 
 const route = useRoute()
@@ -212,6 +218,11 @@ watch(addr, async (newAddr) => {
   color: var(--muted);
   margin-bottom: 0.5rem;
   word-break: break-all;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color);
+  }
 }
 
 .profile-stats {
