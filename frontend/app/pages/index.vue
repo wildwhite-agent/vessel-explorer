@@ -17,12 +17,9 @@
 
     <div class="feed-section">
       <div class="tab-bar">
-        <button :class="['tab-btn', { active: activeTab === 'activity' }]" @click="activeTab = 'activity'">
-          recent vessel activity
-        </button>
-        <button :class="['tab-btn', { active: activeTab === 'holders' }]" @click="activeTab = 'holders'">
-          holders
-        </button>
+        <span :class="['tab-link', { active: activeTab === 'activity' }]" @click="activeTab = 'activity'">recent vessel activity</span>
+        <span class="tab-divider">/</span>
+        <span :class="['tab-link', { active: activeTab === 'holders' }]" @click="activeTab = 'holders'">holders</span>
       </div>
 
       <!-- Holders tab -->
@@ -32,7 +29,11 @@
           <div class="feed-row feed-row-header holder-row">
             <span class="col-rank">#</span>
             <span class="col-holder">address</span>
-            <span class="col-count">vessels</span>
+            <span class="col-stat">total</span>
+            <span class="col-stat">machines</span>
+            <span class="col-stat">vaults</span>
+            <span class="col-stat">capsules</span>
+            <span class="col-stat">empty</span>
           </div>
           <div
             v-for="(holder, i) in holders"
@@ -45,7 +46,11 @@
                 <AddressDisplay :address="holder.address" />
               </NuxtLink>
             </span>
-            <span class="col-count">{{ holder.count }}</span>
+            <span class="col-stat">{{ holder.count }}</span>
+            <span class="col-stat">{{ holder.machines || '-' }}</span>
+            <span class="col-stat">{{ holder.vaults || '-' }}</span>
+            <span class="col-stat">{{ holder.capsules || '-' }}</span>
+            <span class="col-stat">{{ holder.empty || '-' }}</span>
           </div>
         </div>
       </div>
@@ -132,6 +137,10 @@ const previewCanvas = ref<HTMLCanvasElement | null>(null)
 interface Holder {
   address: string
   count: number
+  machines: number
+  vaults: number
+  capsules: number
+  empty: number
 }
 const holders = ref<Holder[]>([])
 const holdersLoading = ref(false)
@@ -152,18 +161,63 @@ watch(activeTab, async (tab) => {
         ownership.set(tx.tokenID, tx.to.toLowerCase())
       }
 
-      // Count per address
-      const counts = new Map<string, number>()
-      for (const owner of ownership.values()) {
-        counts.set(owner, (counts.get(owner) || 0) + 1)
+      // Group tokens by owner
+      const ownerTokens = new Map<string, string[]>()
+      for (const [tokenId, owner] of ownership.entries()) {
+        if (!ownerTokens.has(owner)) ownerTokens.set(owner, [])
+        ownerTokens.get(owner)!.push(tokenId)
       }
 
-      // Sort by count descending
-      holders.value = [...counts.entries()]
-        .map(([address, count]) => ({ address, count }))
+      // Build initial holder list (sorted by count)
+      holders.value = [...ownerTokens.entries()]
+        .map(([address, tokens]) => ({
+          address,
+          count: tokens.length,
+          machines: 0,
+          vaults: 0,
+          capsules: 0,
+          empty: 0,
+        }))
         .sort((a, b) => b.count - a.count)
 
       holdersLoaded.value = true
+
+      // Progressively fetch types for each token
+      const allTokenIds = [...ownership.entries()]
+      for (const [tokenId, owner] of allTokenIds) {
+        try {
+          const [typeStr, payload] = await Promise.all([
+            readContract(wagmiConfig, {
+              address: VESSEL_ADDRESS,
+              abi: VESSEL_ABI,
+              functionName: 'craftToType',
+              args: [BigInt(tokenId)],
+            }) as Promise<string>,
+            readContract(wagmiConfig, {
+              address: VESSEL_ADDRESS,
+              abi: VESSEL_ABI,
+              functionName: 'craftToPayload',
+              args: [BigInt(tokenId)],
+            }) as Promise<string>,
+          ])
+
+          const holderIdx = holders.value.findIndex(h => h.address === owner)
+          if (holderIdx === -1) continue
+
+          const t = typeStr.toLowerCase()
+          const isEmpty = !payload || payload === '0x' || payload.length <= 2
+          const h = { ...holders.value[holderIdx] }
+
+          if (t === 'machine') h.machines++
+          else if (t === 'vault') h.vaults++
+          else h.capsules++
+          if (isEmpty) h.empty++
+
+          holders.value[holderIdx] = h
+        } catch {
+          // skip failed reads
+        }
+      }
     } catch {
       // silently fail
     } finally {
@@ -348,22 +402,16 @@ onMounted(async () => {
 
 .tab-bar {
   display: flex;
-  gap: 0;
+  align-items: baseline;
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
 }
 
-.tab-btn {
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--muted);
-  font-family: var(--font-mono);
+.tab-link {
   font-size: 13px;
+  color: var(--muted);
   cursor: pointer;
-  padding: 0.5rem 1rem;
   text-transform: lowercase;
-  margin-bottom: -1px;
 
   &:hover {
     color: var(--color);
@@ -371,21 +419,25 @@ onMounted(async () => {
 
   &.active {
     color: var(--color);
-    border-bottom-color: var(--color);
   }
 }
 
+.tab-divider {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
 .holder-row {
-  grid-template-columns: 3rem 1fr 5rem;
+  grid-template-columns: 2.5rem 1fr 3.5rem 4.5rem 3.5rem 4.5rem 3.5rem;
 }
 
 .col-rank {
   color: var(--text-faint);
 }
 
-.col-count {
+.col-stat {
   text-align: right;
-  font-weight: 700;
+  font-size: 12px;
 }
 
 .feed-status {
