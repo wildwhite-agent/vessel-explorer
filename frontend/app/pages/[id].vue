@@ -60,33 +60,31 @@
           sourced from <AddressDisplay :address="vessel.machineAddress" />
         </div>
 
-        <div class="grid-toolbar">
-          <div v-if="vessel.type === 'vault' && vessel.entries.length > 1" class="entry-selector">
-            <button
-              v-for="(_, idx) in vessel.entries"
-              :key="idx"
-              :class="['entry-btn', { active: activeEntry === idx }]"
-              @click="activeEntry = idx"
-            >
-              entry {{ idx }}
-            </button>
-          </div>
+        <div v-if="vessel.type === 'vault' && vessel.entries.length > 1" class="entry-selector">
+          <button
+            v-for="(_, idx) in vessel.entries"
+            :key="idx"
+            :class="['entry-btn', { active: activeEntry === idx }]"
+            @click="activeEntry = idx"
+          >
+            entry {{ idx }}
+          </button>
+        </div>
 
-          <div class="grid-controls">
-            <button
-              :class="['text-btn', { active: showBytes }]"
-              @click="showBytes = !showBytes"
-            >
-              [bytes]
-            </button>
-            <button
-              v-if="activePayload?.length"
-              class="text-btn"
-              @click="copyBytes"
-            >
-              {{ copied ? '[copied]' : '[copy]' }}
-            </button>
-          </div>
+        <div class="grid-controls">
+          <button
+            :class="['text-btn', { active: showBytes }]"
+            @click="showBytes = !showBytes"
+          >
+            [bytes]
+          </button>
+          <button
+            v-if="activePayload?.length"
+            class="text-btn"
+            @click="copyBytes"
+          >
+            {{ copied ? '[copied]' : '[copy]' }}
+          </button>
         </div>
 
         <ClientOnly>
@@ -237,19 +235,11 @@ async function copyBytes() {
   margin-bottom: 0.75rem;
 }
 
-.grid-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
 .entry-selector {
   display: flex;
   gap: 0.25rem;
   flex-wrap: wrap;
+  margin-bottom: 0.5rem;
 }
 
 .entry-btn {
@@ -281,6 +271,7 @@ async function copyBytes() {
 .grid-controls {
   display: flex;
   gap: 0.5rem;
+  margin-bottom: 0.75rem;
 
   & .active {
     color: var(--accent);
