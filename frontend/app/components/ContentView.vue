@@ -1,6 +1,17 @@
 <template>
   <div v-if="content.type !== 'binary'" class="content-view">
-    <div class="content-panels">
+    <!-- Text: single panel only -->
+    <div v-if="content.type === 'text'" class="content-single">
+      <div class="panel">
+        <div class="panel-header">text</div>
+        <div class="panel-body">
+          <pre class="rendered-text">{{ content.text }}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- SVG/HTML: dual panels -->
+    <div v-else class="content-panels">
       <div class="panel panel-source">
         <div class="panel-header">source</div>
         <div class="panel-body">
@@ -32,7 +43,6 @@
             :sandbox="scriptsEnabled ? 'allow-scripts' : ''"
             class="rendered-iframe"
           ></iframe>
-          <pre v-else class="rendered-text">{{ content.text }}</pre>
         </div>
       </div>
     </div>
@@ -94,6 +104,10 @@ const svgDataUri = computed(() => {
   margin-top: 1.5rem;
   font-family: var(--font-mono);
   font-size: 13px;
+}
+
+.content-single {
+  border: 1px solid var(--border-color);
 }
 
 .content-panels {
