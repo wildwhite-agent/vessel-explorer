@@ -11,16 +11,39 @@ import {
 export interface VesselData {
   id: number
   type: VesselType
-  owner: string
+  claimed: boolean
+  owner: string | null
   delegate: string | null
-  machineHolder: string | null
-  machineName: string | null
+  role: number
+  colorMode: number
+  claimBlock: number
+  locked: boolean
+  lockBlock: number
+  // vault
   entryCount: number
-  payload: Uint8Array | null
+  chosenEntry: number
+  isVault: boolean
   entries: Uint8Array[]
+  // machine
+  isMachine: boolean
+  machineAddress: string | null
+  machineName: string | null
+  chosenMachine: string | null
+  // payload
+  payload: Uint8Array | null
 }
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex
+  if (!clean.length) return new Uint8Array(0)
+  const bytes = new Uint8Array(clean.length / 2)
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
+  }
+  return bytes
+}
 
 export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
   const vessel = ref<VesselData | null>(null)
@@ -38,46 +61,79 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
     })
   }
 
+  async function safeRead<T>(fnName: string, args: unknown[], fallback: T): Promise<T> {
+    try { return await read(fnName, args) as T }
+    catch { return fallback }
+  }
+
   async function fetchVessel(id: number) {
     loading.value = true
     error.value = null
     vessel.value = null
 
     try {
-      const owner = await read('ownerOf', [BigInt(id)]) as string
+      // First: check if claimed and get type from the contract itself
+      const [claimed, typeStr] = await Promise.all([
+        safeRead<boolean>('craftToClaimed', [BigInt(id)], false),
+        safeRead<string>('craftToType', [BigInt(id)], 'Capsule'),
+      ])
 
-      // These can revert when not set
-      let delegate = ZERO_ADDRESS
-      try { delegate = await read('getDelegate', [BigInt(id)]) as string } catch {}
+      const type = typeStr.toLowerCase() as VesselType
 
-      let machineHolder = ZERO_ADDRESS
-      try { machineHolder = await read('getMachineHolder', [BigInt(id)]) as string } catch {}
+      // If not claimed, we can still show the type but not much else
+      let owner: string | null = null
+      if (claimed) {
+        try { owner = await read('ownerOf', [BigInt(id)]) as string }
+        catch { /* unclaimed or burned */ }
+      }
 
-      let entryCount = 0n
-      try { entryCount = await read('craftToEntry', [BigInt(id)]) as bigint } catch {}
+      // Fetch all metadata in parallel
+      const [
+        delegate,
+        role,
+        colorMode,
+        claimBlock,
+        locked,
+        lockBlock,
+        entryCount,
+        chosenEntry,
+        isVault,
+        isMachine,
+        machineAddress,
+        chosenMachine,
+        payload,
+      ] = await Promise.all([
+        safeRead<string>('craftToDelegate', [BigInt(id)], ZERO_ADDRESS),
+        safeRead<bigint>('craftToRole', [BigInt(id)], 0n),
+        safeRead<bigint>('craftToColorMode', [BigInt(id)], 0n),
+        safeRead<bigint>('craftToClaimBlock', [BigInt(id)], 0n),
+        safeRead<boolean>('craftToLocked', [BigInt(id)], false),
+        safeRead<bigint>('craftToLockBlock', [BigInt(id)], 0n),
+        safeRead<bigint>('craftToEntry', [BigInt(id)], 0n),
+        safeRead<bigint>('craftToChosenEntry', [BigInt(id)], 0n),
+        safeRead<boolean>('craftToVaultStatus', [BigInt(id)], false),
+        safeRead<boolean>('craftToMachineStatus', [BigInt(id)], false),
+        safeRead<string>('craftToMachine', [BigInt(id)], ZERO_ADDRESS),
+        safeRead<string>('craftToChosenMachine', [BigInt(id)], ZERO_ADDRESS),
+        safeRead<string>('craftToPayload', [BigInt(id)], '0x'),
+      ])
 
-      let payload = '0x'
-      try { payload = await read('craftToPayload', [BigInt(id)]) as string } catch {}
-
-      const hasMachine = machineHolder !== ZERO_ADDRESS
       const entryCountNum = Number(entryCount)
-
-      let type: VesselType = 'capsule'
-      let machineName: string | null = null
-      let finalPayload: Uint8Array | null = null
       const entries: Uint8Array[] = []
+      let machineName: string | null = null
+      let finalPayload = hexToBytes(payload)
 
-      if (hasMachine) {
-        type = 'machine'
+      // For machines: fetch machine contract data
+      if (type === 'machine' && machineAddress !== ZERO_ADDRESS) {
         try {
           const [name, machinePayload] = await Promise.all([
             readContract(config, {
-              address: machineHolder as `0x${string}`,
+              address: machineAddress as `0x${string}`,
               abi: MACHINE_ABI,
               functionName: 'name',
             }) as Promise<string>,
             readContract(config, {
-              address: machineHolder as `0x${string}`,
+              address: machineAddress as `0x${string}`,
               abi: MACHINE_ABI,
               functionName: 'craftToPayload',
               args: [BigInt(id)],
@@ -86,38 +142,44 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
           machineName = name
           finalPayload = hexToBytes(machinePayload)
         } catch {
-          // machine contract call failed, show what we have
-          finalPayload = hexToBytes(payload)
+          // machine contract might not respond, use raw payload
         }
-      } else if (entryCountNum >= 1) {
-        // craftToEntry >= 1 means it's a vault (capsules stay at 0)
-        type = 'vault'
+      }
+
+      // For vaults: fetch all entries
+      if (type === 'vault' && entryCountNum > 0) {
         const entryPromises = []
         for (let i = 0; i < entryCountNum; i++) {
           entryPromises.push(
-            read('vaultToEntry', [BigInt(id), BigInt(i)]) as Promise<string>,
+            safeRead<string>('vaultToEntry', [BigInt(id), BigInt(i)], '0x'),
           )
         }
         const rawEntries = await Promise.all(entryPromises)
         for (const raw of rawEntries) {
           entries.push(hexToBytes(raw))
         }
-        finalPayload = hexToBytes(payload)
-      } else {
-        type = 'capsule'
-        finalPayload = hexToBytes(payload)
       }
 
       vessel.value = {
         id,
         type,
+        claimed,
         owner,
         delegate: delegate !== ZERO_ADDRESS ? delegate : null,
-        machineHolder: hasMachine ? machineHolder : null,
-        machineName,
+        role: Number(role),
+        colorMode: Number(colorMode),
+        claimBlock: Number(claimBlock),
+        locked,
+        lockBlock: Number(lockBlock),
         entryCount: entryCountNum,
-        payload: finalPayload,
+        chosenEntry: Number(chosenEntry),
+        isVault,
+        isMachine,
+        machineAddress: machineAddress !== ZERO_ADDRESS ? machineAddress : null,
+        machineName,
+        chosenMachine: chosenMachine !== ZERO_ADDRESS ? chosenMachine : null,
         entries,
+        payload: finalPayload,
       }
     } catch (e: any) {
       error.value = e?.shortMessage || e?.message || 'failed to fetch vessel'
@@ -135,14 +197,4 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
   )
 
   return { vessel, loading, error }
-}
-
-function hexToBytes(hex: string): Uint8Array {
-  const clean = hex.startsWith('0x') ? hex.slice(2) : hex
-  if (!clean.length) return new Uint8Array(0)
-  const bytes = new Uint8Array(clean.length / 2)
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
-  }
-  return bytes
 }

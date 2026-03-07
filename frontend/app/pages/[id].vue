@@ -13,10 +13,12 @@
           <h1 class="vessel-title">
             vessel #{{ vessel.id }}
             <span :class="['type-badge', `type-${vessel.type}`]">[{{ vessel.type }}]</span>
+            <span v-if="!vessel.claimed" class="type-badge unclaimed">[unclaimed]</span>
+            <span v-if="vessel.locked" class="type-badge locked">[locked]</span>
           </h1>
 
           <div class="vessel-meta">
-            <div class="meta-row">
+            <div v-if="vessel.owner" class="meta-row">
               <span class="meta-label">owner</span>
               <span class="meta-value"><AddressDisplay :address="vessel.owner" /></span>
             </div>
@@ -24,22 +26,38 @@
               <span class="meta-label">delegate</span>
               <span class="meta-value"><AddressDisplay :address="vessel.delegate" /></span>
             </div>
-            <div v-if="vessel.type === 'machine' && vessel.machineHolder" class="meta-row">
+            <div v-if="vessel.type === 'machine' && vessel.machineAddress" class="meta-row">
               <span class="meta-label">machine</span>
               <span class="meta-value">
-                <AddressDisplay :address="vessel.machineHolder" />
+                <AddressDisplay :address="vessel.machineAddress" />
                 <template v-if="vessel.machineName"> ({{ vessel.machineName }})</template>
               </span>
             </div>
             <div class="meta-row">
+              <span class="meta-label">type</span>
+              <span class="meta-value">{{ vessel.type }}</span>
+            </div>
+            <div v-if="vessel.type === 'vault'" class="meta-row">
               <span class="meta-label">entries</span>
               <span class="meta-value">{{ vessel.entryCount }}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">color mode</span>
+              <span class="meta-value">{{ vessel.colorMode === 0 ? 'grayscale' : vessel.colorMode }}</span>
+            </div>
+            <div v-if="vessel.claimBlock" class="meta-row">
+              <span class="meta-label">claimed at</span>
+              <span class="meta-value">block {{ vessel.claimBlock }}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">capacity</span>
+              <span class="meta-value">{{ vessel.id }} bytes</span>
             </div>
           </div>
         </div>
 
-        <div v-if="vessel.type === 'machine' && vessel.machineHolder" class="machine-note">
-          sourced from <AddressDisplay :address="vessel.machineHolder" />
+        <div v-if="vessel.type === 'machine' && vessel.machineAddress" class="machine-note">
+          sourced from <AddressDisplay :address="vessel.machineAddress" />
         </div>
 
         <div class="grid-toolbar">
@@ -175,6 +193,7 @@ async function copyBytes() {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .type-badge {
@@ -184,8 +203,10 @@ async function copyBytes() {
 }
 
 .type-capsule { color: var(--accent); }
-.type-vault { color: var(--sh-string); }
-.type-machine { color: var(--sh-keyword); }
+.type-vault { color: var(--sh-string, #e5c07b); }
+.type-machine { color: var(--sh-keyword, #c678dd); }
+.unclaimed { color: var(--text-faint); }
+.locked { color: var(--error, #e06c75); }
 
 .vessel-meta {
   font-size: 13px;
@@ -200,7 +221,7 @@ async function copyBytes() {
 
 .meta-label {
   color: var(--muted);
-  width: 6rem;
+  width: 7rem;
   flex-shrink: 0;
 }
 
