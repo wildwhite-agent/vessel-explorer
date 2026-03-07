@@ -157,11 +157,14 @@ const svgDataUri = computed(() => {
   border: none;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   padding: 0;
   text-transform: lowercase;
-  line-height: 1;
+  line-height: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
 
   &:hover {
     color: var(--color);
