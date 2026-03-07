@@ -4,12 +4,21 @@
       <div class="panel panel-source">
         <div class="panel-header">source</div>
         <div class="panel-body">
-          <pre class="source-pre"><code><template v-for="(line, i) in sourceLines" :key="i"><span class="line-num">{{ String(i + 1).padStart(lineNumWidth, ' ') }}</span> <span v-if="highlighted" v-html="highlightedLines[i]"></span><span v-else>{{ line }}</span>
+          <pre class="source-pre"><code><template v-for="(line, i) in sourceLines" :key="i"><span class="line-num">{{ String(i + 1).padStart(lineNumWidth, ' ') }}</span> <span v-html="highlightedLines[i]"></span>
 </template></code></pre>
         </div>
       </div>
       <div class="panel panel-rendered">
-        <div class="panel-header">rendered</div>
+        <div class="panel-header">
+          rendered
+          <button
+            v-if="content.type === 'html' && !scriptsEnabled"
+            class="run-btn"
+            @click="scriptsEnabled = true"
+          >
+            [run]
+          </button>
+        </div>
         <div class="panel-body rendered-body">
           <img
             v-if="content.type === 'svg'"
@@ -20,7 +29,7 @@
           <iframe
             v-else-if="content.type === 'html'"
             :srcdoc="content.text"
-            sandbox="allow-same-origin"
+            :sandbox="scriptsEnabled ? 'allow-scripts' : ''"
             class="rendered-iframe"
           ></iframe>
           <pre v-else class="rendered-text">{{ content.text }}</pre>
@@ -38,6 +47,7 @@ const props = defineProps<{
 }>()
 
 const content = computed<DetectedContent>(() => detectContent(props.data))
+const scriptsEnabled = ref(false)
 
 const sourceLines = computed(() => {
   if (!content.value.text) return []
@@ -46,25 +56,32 @@ const sourceLines = computed(() => {
 
 const lineNumWidth = computed(() => String(sourceLines.value.length).length)
 
-const highlighted = computed(() =>
-  content.value.type === 'svg' || content.value.type === 'html'
-)
-
 const highlightedLines = computed(() => {
-  if (!highlighted.value) return []
-  return sourceLines.value.map((line: string) => highlightMarkup(line))
-})
+  const isMarkup = content.value.type === 'svg' || content.value.type === 'html'
+  return sourceLines.value.map((line: string) => {
+    // Always escape HTML first
+    let escaped = line
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
 
-function highlightMarkup(line: string): string {
-  return line
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/(&lt;\/?[\w:-]+)/g, '<span class="sh-keyword">$1</span>')
-    .replace(/([\w:-]+)=/g, '<span class="sh-type">$1</span>=')
-    .replace(/=(&quot;|")(.*?)(\1|")/g, '=<span class="sh-string">"$2"</span>')
-    .replace(/(&lt;!--.*?--&gt;)/g, '<span class="sh-comment">$1</span>')
-}
+    if (isMarkup) {
+      // Highlight tags: <tagname and </tagname and >
+      escaped = escaped.replace(/(&lt;\/?)([\w:-]+)/g, '$1<span class="sh-keyword">$2</span>')
+      // Highlight attribute names (only inside tags — simplified)
+      escaped = escaped.replace(/\s([\w:-]+)=/g, ' <span class="sh-type">$1</span>=')
+      // Highlight attribute values in quotes
+      escaped = escaped.replace(/=(&quot;)(.*?)(&quot;)/g, '=<span class="sh-string">&quot;$2&quot;</span>')
+      // Highlight single-quoted values
+      escaped = escaped.replace(/=&#39;(.*?)&#39;/g, '=<span class="sh-string">&#39;$1&#39;</span>')
+      // Highlight comments
+      escaped = escaped.replace(/(&lt;!--.*?--&gt;)/g, '<span class="sh-comment">$1</span>')
+    }
+
+    return escaped
+  })
+})
 
 const svgDataUri = computed(() => {
   if (content.value.type !== 'svg' || !content.value.text) return ''
@@ -103,6 +120,24 @@ const svgDataUri = computed(() => {
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.run-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  text-transform: lowercase;
+
+  &:hover {
+    color: var(--color);
+  }
 }
 
 .panel-body {
