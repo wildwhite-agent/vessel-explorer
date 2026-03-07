@@ -97,8 +97,8 @@ onMounted(async () => {
   try {
     const apiKey = config.public.etherscanKey as string
     const all = await fetchVesselActivity(apiKey)
-    // Only show successful interactions that have a vessel ID
-    activity.value = all.filter(tx => tx.vesselId !== null && tx.isError !== '1')
+    const showActions = new Set(['claim', 'transfer', 'write', 'machine', 'delegate', 'role', 'entry'])
+    activity.value = all.filter(tx => tx.vesselId !== null && tx.isError !== '1' && showActions.has(tx.action))
   } catch (e: any) {
     feedError.value = e?.message || 'failed to fetch activity'
   } finally {
@@ -222,8 +222,8 @@ onMounted(async () => {
 .action-delegate { color: #a78bfa; }
 .action-machine { color: #22d3ee; }
 .action-transfer { color: var(--muted); }
-.action-approve, .action-approval { color: var(--text-faint); }
-.action-refresh { color: #34d399; }
+.action-role { color: #fb923c; }
+.action-entry { color: #a78bfa; }
 .action-refresh { color: #34d399; }
 
 .vessel-link {

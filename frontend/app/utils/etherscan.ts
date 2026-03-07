@@ -12,6 +12,8 @@ const VESSEL_DECODE_ABI = [
   { type: 'function', name: 'setMachineHolder', inputs: [{ name: 'tokenId', type: 'uint256' }, { name: 'machine', type: 'address' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'transferFrom', inputs: [{ name: 'from', type: 'address' }, { name: 'to', type: 'address' }, { name: 'tokenId', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'safeTransferFrom', inputs: [{ name: 'from', type: 'address' }, { name: 'to', type: 'address' }, { name: 'tokenId', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
+  { type: 'function', name: 'setRole', inputs: [{ name: 'role', type: 'uint8' }], outputs: [], stateMutability: 'nonpayable' },
+  { type: 'function', name: 'setVaultEntryHolder', inputs: [{ name: 'tokenId', type: 'uint256' }, { name: 'entry', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'approve', inputs: [{ name: 'to', type: 'address' }, { name: 'tokenId', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'setApprovalForAll', inputs: [{ name: 'operator', type: 'address' }, { name: 'approved', type: 'bool' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'refreshMetadata', inputs: [{ name: 'tokenId', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
@@ -52,6 +54,10 @@ function decodeVesselTx(input: string, etherscanFnName: string): { action: strin
         return { action: 'transfer', vesselId: String(args[2]), detail: `transferred #${args[2]}` }
       case 'approve':
         return { action: 'approve', vesselId: String(args[1]), detail: `approved #${args[1]}` }
+      case 'setRole':
+        return { action: 'role', vesselId: null, detail: `set role ${args[0]}` }
+      case 'setVaultEntryHolder':
+        return { action: 'entry', vesselId: String(args[0]), detail: `set entry ${args[1]} on #${args[0]}` }
       case 'setApprovalForAll':
         return { action: 'approval', vesselId: null, detail: 'set approval for all' }
       case 'refreshMetadata':
