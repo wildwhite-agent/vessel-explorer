@@ -47,10 +47,10 @@
               </NuxtLink>
             </span>
             <span class="col-stat">{{ holder.count }}</span>
-            <span class="col-stat">{{ holder.machines || '-' }}</span>
-            <span class="col-stat">{{ holder.vaults || '-' }}</span>
-            <span class="col-stat">{{ holder.capsules || '-' }}</span>
-            <span class="col-stat">{{ holder.empty || '-' }}</span>
+            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.machines || '-') : '...' }}</span>
+            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.vaults || '-') : '...' }}</span>
+            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.capsules || '-') : '...' }}</span>
+            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.empty || '-') : '...' }}</span>
           </div>
         </div>
       </div>
@@ -141,10 +141,14 @@ interface Holder {
   vaults: number
   capsules: number
   empty: number
+  typesLoaded: boolean
 }
 const holders = ref<Holder[]>([])
 const holdersLoading = ref(false)
 const holdersLoaded = ref(false)
+
+// ownership map for type enrichment
+const ownershipMap = ref(new Map<string, string>())
 
 watch(activeTab, async (tab) => {
   if (tab === 'holders' && !holdersLoaded.value) {
@@ -160,6 +164,7 @@ watch(activeTab, async (tab) => {
       for (const tx of sorted) {
         ownership.set(tx.tokenID, tx.to.toLowerCase())
       }
+      ownershipMap.value = ownership
 
       // Group tokens by owner
       const ownerTokens = new Map<string, string[]>()
@@ -168,7 +173,7 @@ watch(activeTab, async (tab) => {
         ownerTokens.get(owner)!.push(tokenId)
       }
 
-      // Build initial holder list (sorted by count)
+      // Build holder list immediately (sorted by count)
       holders.value = [...ownerTokens.entries()]
         .map(([address, tokens]) => ({
           address,
@@ -177,50 +182,53 @@ watch(activeTab, async (tab) => {
           vaults: 0,
           capsules: 0,
           empty: 0,
+          typesLoaded: false,
         }))
         .sort((a, b) => b.count - a.count)
 
       holdersLoaded.value = true
+      holdersLoading.value = false
 
-      // Progressively fetch types for each token
-      const allTokenIds = [...ownership.entries()]
-      for (const [tokenId, owner] of allTokenIds) {
-        try {
-          const [typeStr, payload] = await Promise.all([
-            readContract(wagmiConfig, {
+      // Background: progressively enrich types per holder
+      for (let hi = 0; hi < holders.value.length; hi++) {
+        const h = holders.value[hi]
+        const tokens = ownerTokens.get(h.address) || []
+        let machines = 0, vaults = 0, capsules = 0, empty = 0
+
+        for (const tokenId of tokens) {
+          try {
+            const typeStr = await readContract(wagmiConfig, {
               address: VESSEL_ADDRESS,
               abi: VESSEL_ABI,
               functionName: 'craftToType',
               args: [BigInt(tokenId)],
-            }) as Promise<string>,
-            readContract(wagmiConfig, {
-              address: VESSEL_ADDRESS,
-              abi: VESSEL_ABI,
-              functionName: 'craftToPayload',
-              args: [BigInt(tokenId)],
-            }) as Promise<string>,
-          ])
+            }) as string
 
-          const holderIdx = holders.value.findIndex(h => h.address === owner)
-          if (holderIdx === -1) continue
+            const t = typeStr.toLowerCase()
+            if (t === 'machine') machines++
+            else if (t === 'vault') vaults++
+            else capsules++
 
-          const t = typeStr.toLowerCase()
-          const isEmpty = !payload || payload === '0x' || payload.length <= 2
-          const h = { ...holders.value[holderIdx] }
-
-          if (t === 'machine') h.machines++
-          else if (t === 'vault') h.vaults++
-          else h.capsules++
-          if (isEmpty) h.empty++
-
-          holders.value[holderIdx] = h
-        } catch {
-          // skip failed reads
+            // Check empty via entry count for vaults, payload for capsules
+            if (t === 'capsule') {
+              try {
+                const payload = await readContract(wagmiConfig, {
+                  address: VESSEL_ADDRESS,
+                  abi: VESSEL_ABI,
+                  functionName: 'craftToPayload',
+                  args: [BigInt(tokenId)],
+                }) as string
+                if (!payload || payload === '0x' || payload.length <= 2) empty++
+              } catch { empty++ }
+            }
+          } catch {
+            // skip
+          }
         }
+
+        holders.value[hi] = { ...h, machines, vaults, capsules, empty, typesLoaded: true }
       }
     } catch {
-      // silently fail
-    } finally {
       holdersLoading.value = false
     }
   }
@@ -428,7 +436,11 @@ onMounted(async () => {
 }
 
 .holder-row {
-  grid-template-columns: 2.5rem 1fr 3.5rem 4.5rem 3.5rem 4.5rem 3.5rem;
+  grid-template-columns: 2rem 1fr repeat(5, 3rem);
+}
+
+.dimmed {
+  color: var(--text-faint);
 }
 
 .col-rank {
