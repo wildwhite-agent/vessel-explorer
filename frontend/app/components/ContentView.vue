@@ -10,6 +10,16 @@
       </div>
     </div>
 
+    <!-- Bytecode: single panel -->
+    <div v-else-if="content.type === 'bytecode'" class="content-single">
+      <div class="panel">
+        <div class="panel-header">bytecode (evm)</div>
+        <div class="panel-body">
+          <pre class="bytecode-text">{{ formattedBytecode }}</pre>
+        </div>
+      </div>
+    </div>
+
     <!-- SVG/HTML: dual panels -->
     <div v-else class="content-panels">
       <div class="panel panel-source">
@@ -77,6 +87,19 @@ const highlightedLines = computed(() => {
       .replace(/"/g, '&quot;')
     return escaped
   })
+})
+
+const formattedBytecode = computed(() => {
+  if (content.value.type !== 'bytecode' || !content.value.text) return ''
+  // Format as rows of 32 bytes with offset
+  const hex = content.value.text
+  const lines = []
+  for (let i = 0; i < hex.length; i += 64) {
+    const offset = (i / 2).toString(16).padStart(4, '0')
+    const chunk = hex.slice(i, i + 64).match(/.{1,2}/g)?.join(' ') || ''
+    lines.push(`${offset}  ${chunk}`)
+  }
+  return lines.join('\n')
 })
 
 const svgDataUri = computed(() => {
@@ -199,6 +222,18 @@ const svgDataUri = computed(() => {
   height: 100%;
   border: none;
   background: #fff;
+}
+
+.bytecode-text {
+  margin: 0;
+  padding: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre;
+  color: var(--muted);
+  max-height: 20rem;
+  overflow: auto;
 }
 
 .rendered-text {
