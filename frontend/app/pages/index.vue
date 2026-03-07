@@ -325,13 +325,13 @@ onMounted(async () => {
   text-transform: lowercase;
 }
 
-.action-claim { color: var(--accent); }
+.action-claim { color: #22d3ee; }
 .action-write { color: var(--write, #f59e0b); }
-.action-delegate { color: #a78bfa; }
-.action-machine { color: #22d3ee; }
+.action-delegate { color: #fb923c; }
+.action-machine { color: #a78bfa; }
 .action-transfer { color: var(--muted); }
 .action-role { color: #fb923c; }
-.action-entry { color: #a78bfa; }
+.action-entry { color: var(--write, #f59e0b); }
 
 .vessel-link {
   color: var(--accent);

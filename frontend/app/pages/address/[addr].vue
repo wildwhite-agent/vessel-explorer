@@ -3,7 +3,7 @@
     <AppHeader />
 
     <div class="profile-content">
-      <NuxtLink to="/" class="back-link">[back]</NuxtLink>
+      <a href="#" class="back-link" @click.prevent="$router.back()">[back]</a>
 
       <div v-if="resolving" class="status">resolving address...</div>
       <div v-else-if="resolveError" class="status status-error">{{ resolveError }}</div>

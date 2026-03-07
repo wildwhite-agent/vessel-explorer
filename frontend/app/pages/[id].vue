@@ -3,7 +3,7 @@
     <AppHeader />
 
     <div class="detail-content">
-      <NuxtLink to="/" class="back-link">[back]</NuxtLink>
+      <a href="#" class="back-link" @click.prevent="$router.back()">[back]</a>
 
       <div v-if="loading" class="status">loading vessel #{{ id }}...</div>
       <div v-else-if="error" class="status status-error">{{ error }}</div>
@@ -212,9 +212,9 @@ async function copyBytes() {
   text-transform: lowercase;
 }
 
-.type-capsule { color: var(--accent); }
-.type-vault { color: var(--sh-string, #e5c07b); }
-.type-machine { color: var(--sh-keyword, #c678dd); }
+.type-capsule { color: #22d3ee; }
+.type-vault { color: var(--sh-string, #4ade80); }
+.type-machine { color: var(--sh-keyword, #a78bfa); }
 .unclaimed { color: var(--text-faint); }
 .locked { color: var(--error, #e06c75); }
 
