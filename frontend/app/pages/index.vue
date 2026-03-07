@@ -16,12 +16,46 @@
     </div>
 
     <div class="feed-section">
-      <div class="feed-header">recent vessel activity</div>
+      <div class="tab-bar">
+        <button :class="['tab-btn', { active: activeTab === 'activity' }]" @click="activeTab = 'activity'">
+          recent vessel activity
+        </button>
+        <button :class="['tab-btn', { active: activeTab === 'holders' }]" @click="activeTab = 'holders'">
+          holders
+        </button>
+      </div>
 
-      <div v-if="feedLoading" class="feed-status">loading...</div>
-      <div v-else-if="feedError" class="feed-status feed-error">{{ feedError }}</div>
+      <!-- Holders tab -->
+      <div v-if="activeTab === 'holders'">
+        <div v-if="holdersLoading" class="feed-status">loading holders...</div>
+        <div v-else class="feed-table">
+          <div class="feed-row feed-row-header holder-row">
+            <span class="col-rank">#</span>
+            <span class="col-holder">address</span>
+            <span class="col-count">vessels</span>
+          </div>
+          <div
+            v-for="(holder, i) in holders"
+            :key="holder.address"
+            class="feed-row holder-row"
+          >
+            <span class="col-rank">{{ i + 1 }}</span>
+            <span class="col-holder">
+              <NuxtLink :to="`/address/${holder.address}`" class="vessel-link">
+                <AddressDisplay :address="holder.address" />
+              </NuxtLink>
+            </span>
+            <span class="col-count">{{ holder.count }}</span>
+          </div>
+        </div>
+      </div>
 
-      <div v-else class="feed-table">
+      <!-- Activity tab -->
+      <div v-else>
+        <div v-if="feedLoading" class="feed-status">loading...</div>
+        <div v-else-if="feedError" class="feed-status feed-error">{{ feedError }}</div>
+
+        <div v-else class="feed-table">
         <div class="feed-row feed-row-header">
           <span class="col-action">action</span>
           <span class="col-id">vessel</span>
@@ -64,6 +98,7 @@
         </div>
       </div>
     </div>
+    </div>
 
     <!-- Hover preview tooltip -->
     <div
@@ -80,7 +115,7 @@
 <script setup lang="ts">
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
-import { fetchVesselActivity, type VesselTransaction } from '~/utils/etherscan'
+import { fetchVesselActivity, fetchVesselTransfersForAddress, type VesselTransaction } from '~/utils/etherscan'
 import { VESSEL_ADDRESS, VESSEL_ABI, getGridDimensions } from '~/utils/vessel'
 
 const router = useRouter()
@@ -88,10 +123,54 @@ const runtimeConfig = useRuntimeConfig()
 const wagmiConfig = useConfig()
 
 const searchQuery = ref('')
+const activeTab = ref<'activity' | 'holders'>('activity')
 const activity = ref<VesselTransaction[]>([])
 const feedLoading = ref(true)
 const feedError = ref<string | null>(null)
 const previewCanvas = ref<HTMLCanvasElement | null>(null)
+
+interface Holder {
+  address: string
+  count: number
+}
+const holders = ref<Holder[]>([])
+const holdersLoading = ref(false)
+const holdersLoaded = ref(false)
+
+watch(activeTab, async (tab) => {
+  if (tab === 'holders' && !holdersLoaded.value) {
+    holdersLoading.value = true
+    try {
+      const res = await fetch('/api/transfers?offset=10000')
+      const transfers = await res.json()
+      if (!Array.isArray(transfers)) { holdersLoading.value = false; return }
+
+      // Replay transfers to compute current ownership
+      const ownership = new Map<string, string>()
+      const sorted = [...transfers].sort((a: any, b: any) => Number(a.blockNumber) - Number(b.blockNumber))
+      for (const tx of sorted) {
+        ownership.set(tx.tokenID, tx.to.toLowerCase())
+      }
+
+      // Count per address
+      const counts = new Map<string, number>()
+      for (const owner of ownership.values()) {
+        counts.set(owner, (counts.get(owner) || 0) + 1)
+      }
+
+      // Sort by count descending
+      holders.value = [...counts.entries()]
+        .map(([address, count]) => ({ address, count }))
+        .sort((a, b) => b.count - a.count)
+
+      holdersLoaded.value = true
+    } catch {
+      // silently fail
+    } finally {
+      holdersLoading.value = false
+    }
+  }
+})
 
 // Vessel IDs that have data (from write actions in feed)
 const activeVesselIds = computed(() => {
@@ -267,11 +346,46 @@ onMounted(async () => {
   padding: 1rem;
 }
 
-.feed-header {
-  font-size: 13px;
-  color: var(--muted);
-  text-transform: lowercase;
+.tab-bar {
+  display: flex;
+  gap: 0;
   margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  text-transform: lowercase;
+  margin-bottom: -1px;
+
+  &:hover {
+    color: var(--color);
+  }
+
+  &.active {
+    color: var(--color);
+    border-bottom-color: var(--color);
+  }
+}
+
+.holder-row {
+  grid-template-columns: 3rem 1fr 5rem;
+}
+
+.col-rank {
+  color: var(--text-faint);
+}
+
+.col-count {
+  text-align: right;
+  font-weight: 700;
 }
 
 .feed-status {
