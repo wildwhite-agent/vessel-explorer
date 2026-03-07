@@ -33,7 +33,6 @@
             <span class="col-stat">machines</span>
             <span class="col-stat">vaults</span>
             <span class="col-stat">capsules</span>
-            <span class="col-stat">empty</span>
           </div>
           <div
             v-for="(holder, i) in holders"
@@ -50,7 +49,6 @@
             <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.machines || '-') : '...' }}</span>
             <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.vaults || '-') : '...' }}</span>
             <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.capsules || '-') : '...' }}</span>
-            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.empty || '-') : '...' }}</span>
           </div>
         </div>
       </div>
@@ -140,7 +138,6 @@ interface Holder {
   machines: number
   vaults: number
   capsules: number
-  empty: number
   typesLoaded: boolean
 }
 const holders = ref<Holder[]>([])
@@ -181,7 +178,6 @@ watch(activeTab, async (tab) => {
           machines: 0,
           vaults: 0,
           capsules: 0,
-          empty: 0,
           typesLoaded: false,
         }))
         .sort((a, b) => b.count - a.count)
@@ -193,7 +189,7 @@ watch(activeTab, async (tab) => {
       for (let hi = 0; hi < holders.value.length; hi++) {
         const h = holders.value[hi]
         const tokens = ownerTokens.get(h.address) || []
-        let machines = 0, vaults = 0, capsules = 0, empty = 0
+        let machines = 0, vaults = 0, capsules = 0
 
         for (const tokenId of tokens) {
           try {
@@ -208,25 +204,12 @@ watch(activeTab, async (tab) => {
             if (t === 'machine') machines++
             else if (t === 'vault') vaults++
             else capsules++
-
-            // Check empty via entry count for vaults, payload for capsules
-            if (t === 'capsule') {
-              try {
-                const payload = await readContract(wagmiConfig, {
-                  address: VESSEL_ADDRESS,
-                  abi: VESSEL_ABI,
-                  functionName: 'craftToPayload',
-                  args: [BigInt(tokenId)],
-                }) as string
-                if (!payload || payload === '0x' || payload.length <= 2) empty++
-              } catch { empty++ }
-            }
           } catch {
             // skip
           }
         }
 
-        holders.value[hi] = { ...h, machines, vaults, capsules, empty, typesLoaded: true }
+        holders.value[hi] = { ...h, machines, vaults, capsules, typesLoaded: true }
       }
     } catch {
       holdersLoading.value = false
@@ -436,7 +419,7 @@ onMounted(async () => {
 }
 
 .holder-row {
-  grid-template-columns: 2rem 1fr repeat(5, 3rem);
+  grid-template-columns: 2rem 1fr repeat(4, 3.5rem);
 }
 
 .dimmed {

@@ -17,9 +17,10 @@
 
         <div v-if="ownedVessels.length > 0" class="profile-stats">
           <span>{{ ownedVessels.length }} vessels</span>
-          <span v-if="stats.machine"> · {{ stats.machine }} machines</span>
-          <span v-if="stats.vault"> · {{ stats.vault }} vaults</span>
-          <span v-if="stats.capsule"> · {{ stats.capsule }} capsules</span>
+          <span v-if="stats.machine" class="stat-machine"> · {{ stats.machine }} machines</span>
+          <span v-if="stats.vault" class="stat-vault"> · {{ stats.vault }} vaults</span>
+          <span v-if="stats.capsule" class="stat-capsule"> · {{ stats.capsule }} capsules</span>
+          <span v-if="stats.empty" class="stat-empty"> · {{ stats.empty }} empty</span>
         </div>
 
         <div v-if="loading && ownedVessels.length === 0" class="status">loading vessels...</div>
@@ -30,7 +31,7 @@
             v-for="v in ownedVessels"
             :key="v.id"
             :to="`/${v.id}`"
-            class="vessel-card"
+            :class="['vessel-card', v.type ? `card-${v.type.toLowerCase()}` : '']"
           >
             <div class="card-id">#{{ v.id }}</div>
             <div class="card-thumb-wrap">
@@ -83,6 +84,9 @@ const stats = computed(() => {
     if (v.type) {
       const t = v.type.toLowerCase()
       counts[t] = (counts[t] || 0) + 1
+    }
+    if (v.loaded && (!v.payload || v.payload.length === 0)) {
+      counts.empty = (counts.empty || 0) + 1
     }
   }
   return counts
@@ -281,6 +285,11 @@ watch(addr, async (newAddr) => {
   margin-bottom: 1rem;
 }
 
+.stat-machine { color: #a78bfa; }
+.stat-vault { color: #4ade80; }
+.stat-capsule { color: #22d3ee; }
+.stat-empty { color: var(--text-faint); }
+
 .vessel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -301,7 +310,19 @@ watch(addr, async (newAddr) => {
   overflow: hidden;
 
   &:hover {
-    border-color: var(--accent);
+    border-color: var(--color);
+  }
+
+  &.card-machine:hover {
+    border-color: #a78bfa;
+  }
+
+  &.card-vault:hover {
+    border-color: #4ade80;
+  }
+
+  &.card-capsule:hover {
+    border-color: #22d3ee;
   }
 }
 
