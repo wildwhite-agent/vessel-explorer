@@ -16,5 +16,6 @@ export default defineEventHandler(async (event) => {
 
   const res = await fetch(url)
   const data = await res.json()
-  return data.result || []
+  if (!Array.isArray(data.result)) return []
+  return data.result
 })

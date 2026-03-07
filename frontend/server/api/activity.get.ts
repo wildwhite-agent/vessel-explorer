@@ -13,5 +13,6 @@ export default defineEventHandler(async (event) => {
   const url = `${BASE}&module=account&action=txlist&address=${VESSEL_ADDRESS}&page=${page}&offset=${offset}&sort=desc&apikey=${apiKey}`
   const res = await fetch(url)
   const data = await res.json()
-  return data.result || []
+  if (!Array.isArray(data.result)) return []
+  return data.result
 })

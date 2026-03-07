@@ -72,6 +72,7 @@ function decodeVesselTx(input: string, etherscanFnName: string): { action: strin
 export async function fetchVesselActivity(): Promise<VesselTransaction[]> {
   const res = await fetch('/api/activity')
   const txs = await res.json()
+  if (!Array.isArray(txs)) return []
 
   return txs.map((tx: any) => {
     const decoded = decodeVesselTx(tx.input, tx.functionName)
@@ -100,5 +101,6 @@ export interface TokenTransfer {
 
 export async function fetchVesselTransfersForAddress(address: string): Promise<TokenTransfer[]> {
   const res = await fetch(`/api/transfers?address=${address}`)
-  return await res.json()
+  const data = await res.json()
+  return Array.isArray(data) ? data : []
 }
