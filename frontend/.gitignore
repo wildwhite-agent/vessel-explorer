@@ -1,0 +1,18 @@
+# Vercel
+.vercel
+
+# Build output
+dist
+.output
+.nuxt
+
+# Dependencies
+node_modules
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# System
+.DS_Store

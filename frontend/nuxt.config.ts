@@ -4,6 +4,10 @@ export default defineNuxtConfig({
   ssr: false,
   devtools: { enabled: true },
 
+  nitro: {
+    preset: 'vercel',
+  },
+
   app: {
     head: {
       title: 'vessel explorer',
