@@ -153,8 +153,10 @@ const svgDataUri = computed(() => {
 }
 
 .run-btn {
-  background: none;
-  border: none;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
   color: var(--muted);
   font-family: var(--font-mono);
   font-size: 12px;
@@ -165,6 +167,7 @@ const svgDataUri = computed(() => {
   height: 2rem;
   display: flex;
   align-items: center;
+  min-inline-size: auto;
 
   &:hover {
     color: var(--color);
