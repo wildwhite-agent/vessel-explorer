@@ -5,23 +5,12 @@
       <button class="text-btn" @click="toggleDark">
         {{ isDark ? '[light]' : '[dark]' }}
       </button>
-      <ClientOnly>
-        <template v-if="address">
-          <NuxtLink :to="`/address/${address}`" class="text-btn profile-link">
-            [profile]
-          </NuxtLink>
-        </template>
-        <EvmConnectDialog class-name="text-btn" />
-      </ClientOnly>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { useAccount } from '@wagmi/vue'
-
 const isDark = ref(true)
-const { address } = useAccount()
 
 onMounted(() => {
   const root = document.documentElement
@@ -60,9 +49,5 @@ function toggleDark() {
   display: flex;
   align-items: center;
   gap: 1rem;
-}
-
-.profile-link {
-  text-decoration: none;
 }
 </style>
