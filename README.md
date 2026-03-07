@@ -1,6 +1,6 @@
 # Vessel Explorer
 
-A read-only explorer for [THE_VESSEL](https://etherscan.io/address/0xECb92Cc7112b80A2234936315BbB493fb48d1463), an on-chain storage protocol on Ethereum by [Stephen Santoro](https://x.com/stevesantoro) and [Produced By Dav](https://x.com/producedbydav). Browse vessels (capsules, vaults, and machines), view pixel-rendered payloads, inspect raw bytes, detect content types (SVG, HTML, bytecode), and explore holder leaderboards — all read directly from the blockchain.
+A read-only explorer for [THE_VESSEL](https://etherscan.io/address/0xECb92Cc7112b80A2234936315BbB493fb48d1463), an on-chain storage protocol on Ethereum by [@stephensantoro_](https://x.com/stephensantoro_) and [@producedbydav](https://x.com/producedbydav). Browse vessels (capsules, vaults, and machines), view pixel-rendered payloads, inspect raw bytes, detect content types (SVG, HTML, bytecode), and explore holder leaderboards — all read directly from the blockchain.
 
 ## Tech Stack
 
