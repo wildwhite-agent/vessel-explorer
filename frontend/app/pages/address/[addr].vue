@@ -15,6 +15,13 @@
         </h1>
         <div v-if="ensName" class="profile-address">{{ resolvedAddress }}</div>
 
+        <div v-if="ownedVessels.length > 0" class="profile-stats">
+          <span>{{ ownedVessels.length }} vessels</span>
+          <span v-if="stats.machine"> · {{ stats.machine }} machines</span>
+          <span v-if="stats.vault"> · {{ stats.vault }} vaults</span>
+          <span v-if="stats.capsule"> · {{ stats.capsule }} capsules</span>
+        </div>
+
         <div v-if="loading && ownedVessels.length === 0" class="status">loading vessels...</div>
         <div v-else-if="!loading && ownedVessels.length === 0" class="status">no vessels found</div>
 
@@ -67,7 +74,19 @@ interface OwnedVessel {
   id: string
   payload: Uint8Array | null
   loaded: boolean
+  type: string | null
 }
+
+const stats = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const v of ownedVessels.value) {
+    if (v.type) {
+      const t = v.type.toLowerCase()
+      counts[t] = (counts[t] || 0) + 1
+    }
+  }
+  return counts
+})
 
 const ownedVessels = ref<OwnedVessel[]>([])
 
@@ -158,17 +177,25 @@ async function loadVessels(address: string) {
       .sort((a, b) => Number(a) - Number(b))
 
     // Add all vessels immediately with loading state
-    ownedVessels.value = owned.map(id => ({ id, payload: null, loaded: false }))
+    ownedVessels.value = owned.map(id => ({ id, payload: null, loaded: false, type: null }))
 
-    // Load payloads one by one (progressive)
+    // Load payload + type one by one (progressive)
     for (const id of owned) {
       try {
-        const payload = await readContract(config, {
-          address: VESSEL_ADDRESS,
-          abi: VESSEL_ABI,
-          functionName: 'craftToPayload',
-          args: [BigInt(id)],
-        }) as string
+        const [payload, vesselType] = await Promise.all([
+          readContract(config, {
+            address: VESSEL_ADDRESS,
+            abi: VESSEL_ABI,
+            functionName: 'craftToPayload',
+            args: [BigInt(id)],
+          }) as Promise<string>,
+          readContract(config, {
+            address: VESSEL_ADDRESS,
+            abi: VESSEL_ABI,
+            functionName: 'craftToType',
+            args: [BigInt(id)],
+          }) as Promise<string>,
+        ])
         const clean = payload.startsWith('0x') ? payload.slice(2) : payload
         const bytes = new Uint8Array(clean.length / 2)
         for (let i = 0; i < bytes.length; i++) {
@@ -176,12 +203,12 @@ async function loadVessels(address: string) {
         }
         const idx = ownedVessels.value.findIndex(v => v.id === id)
         if (idx !== -1) {
-          ownedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true }
+          ownedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType }
         }
       } catch {
         const idx = ownedVessels.value.findIndex(v => v.id === id)
         if (idx !== -1) {
-          ownedVessels.value[idx] = { id, payload: null, loaded: true }
+          ownedVessels.value[idx] = { id, payload: null, loaded: true, type: null }
         }
       }
     }
@@ -244,8 +271,14 @@ watch(addr, async (newAddr) => {
 .profile-address {
   font-size: 12px;
   color: var(--muted);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   word-break: break-all;
+}
+
+.profile-stats {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 1rem;
 }
 
 .vessel-grid {
