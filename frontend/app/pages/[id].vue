@@ -271,6 +271,7 @@ async function copyBytes() {
 .grid-controls {
   display: flex;
   gap: 0.5rem;
+  margin-top: 0.75rem;
   margin-bottom: 0.75rem;
 
   & .active {
