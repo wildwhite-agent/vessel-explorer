@@ -66,7 +66,7 @@ function decodeVesselTx(input: string, etherscanFnName: string): { action: strin
   }
 }
 
-export async function fetchVesselActivity(apiKey: string, page = 1, offset = 25): Promise<VesselTransaction[]> {
+export async function fetchVesselActivity(apiKey: string, page = 1, offset = 100): Promise<VesselTransaction[]> {
   const url = `${BASE}&module=account&action=txlist&address=${VESSEL_ADDRESS}&page=${page}&offset=${offset}&sort=desc&apikey=${apiKey}`
   const res = await fetch(url)
   const data = await res.json()
