@@ -14,6 +14,7 @@ const VESSEL_DECODE_ABI = [
   { type: 'function', name: 'safeTransferFrom', inputs: [{ name: 'from', type: 'address' }, { name: 'to', type: 'address' }, { name: 'tokenId', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'approve', inputs: [{ name: 'to', type: 'address' }, { name: 'tokenId', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'setApprovalForAll', inputs: [{ name: 'operator', type: 'address' }, { name: 'approved', type: 'bool' }], outputs: [], stateMutability: 'nonpayable' },
+  { type: 'function', name: 'refreshMetadata', inputs: [{ name: 'tokenId', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
 ] as const
 
 export interface VesselTransaction {
@@ -53,6 +54,8 @@ function decodeVesselTx(input: string, etherscanFnName: string): { action: strin
         return { action: 'approve', vesselId: String(args[1]), detail: `approved #${args[1]}` }
       case 'setApprovalForAll':
         return { action: 'approval', vesselId: null, detail: 'set approval for all' }
+      case 'refreshMetadata':
+        return { action: 'refresh', vesselId: String(args[0]), detail: `refreshed metadata for #${args[0]}` }
       default:
         return { action: functionName, vesselId: null, detail: functionName }
     }
@@ -104,4 +107,11 @@ export async function fetchVesselTransfers(apiKey: string, page = 1, offset = 25
 export async function fetchVesselTransfersForToken(tokenId: string, apiKey: string): Promise<TokenTransfer[]> {
   const all = await fetchVesselTransfers(apiKey, 1, 100)
   return all.filter(tx => tx.tokenID === tokenId)
+}
+
+export async function fetchVesselTransfersForAddress(address: string, apiKey: string): Promise<TokenTransfer[]> {
+  const url = `${BASE}&module=account&action=tokennfttx&contractaddress=${VESSEL_ADDRESS}&address=${address}&page=1&offset=1000&sort=desc&apikey=${apiKey}`
+  const res = await fetch(url)
+  const data = await res.json()
+  return data.result || []
 }

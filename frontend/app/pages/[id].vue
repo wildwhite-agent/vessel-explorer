@@ -9,122 +9,73 @@
       <div v-else-if="error" class="status status-error">{{ error }}</div>
 
       <template v-else-if="vessel">
-        <div class="vessel-header">
-          <h1 class="vessel-title">
-            vessel #{{ vessel.id }}
-            <span :class="['type-badge', `type-${vessel.type}`]">[{{ vessel.type }}]</span>
-          </h1>
-        </div>
+        <div class="detail-layout">
+          <div class="detail-info">
+            <h1 class="vessel-title">
+              vessel #{{ vessel.id }}
+              <span :class="['type-badge', `type-${vessel.type}`]">[{{ vessel.type }}]</span>
+            </h1>
 
-        <div class="vessel-meta">
-          <div class="meta-row">
-            <span class="meta-label">owner</span>
-            <span class="meta-value"><AddressDisplay :address="vessel.owner" /></span>
+            <div class="vessel-meta">
+              <div class="meta-row">
+                <span class="meta-label">owner</span>
+                <span class="meta-value"><AddressDisplay :address="vessel.owner" /></span>
+              </div>
+              <div v-if="vessel.delegate" class="meta-row">
+                <span class="meta-label">delegate</span>
+                <span class="meta-value"><AddressDisplay :address="vessel.delegate" /></span>
+              </div>
+              <div v-if="vessel.type === 'machine' && vessel.machineHolder" class="meta-row">
+                <span class="meta-label">machine</span>
+                <span class="meta-value">
+                  <AddressDisplay :address="vessel.machineHolder" />
+                  <template v-if="vessel.machineName">
+                    ({{ vessel.machineName }})
+                  </template>
+                </span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">entries</span>
+                <span class="meta-value">{{ vessel.entryCount }}</span>
+              </div>
+            </div>
           </div>
-          <div v-if="vessel.delegate" class="meta-row">
-            <span class="meta-label">delegate</span>
-            <span class="meta-value"><AddressDisplay :address="vessel.delegate" /></span>
-          </div>
-          <div v-if="vessel.type === 'machine' && vessel.machineHolder" class="meta-row">
-            <span class="meta-label">machine</span>
-            <span class="meta-value">
-              <AddressDisplay :address="vessel.machineHolder" />
-              <template v-if="vessel.machineName">
-                ({{ vessel.machineName }})
-              </template>
-            </span>
-          </div>
-          <div v-if="vessel.type === 'vault'" class="meta-row">
-            <span class="meta-label">entries</span>
-            <span class="meta-value">{{ vessel.entryCount }}</span>
-          </div>
-        </div>
 
-        <div class="tabs">
-          <button
-            :class="['tab-btn', { active: activeTab === 'bytes' }]"
-            @click="activeTab = 'bytes'"
-          >
-            [bytes]
-          </button>
-          <button
-            :class="['tab-btn', { active: activeTab === 'rendered' }]"
-            @click="activeTab = 'rendered'"
-          >
-            [rendered]
-          </button>
-        </div>
+          <div class="detail-grid">
+            <div v-if="vessel.type === 'machine' && vessel.machineHolder" class="machine-note">
+              sourced from <AddressDisplay :address="vessel.machineHolder" />
+            </div>
 
-        <div class="tab-content">
-          <!-- Bytes tab -->
-          <template v-if="activeTab === 'bytes'">
-            <template v-if="vessel.type === 'vault' && vessel.entries.length">
-              <div
-                v-for="(entry, idx) in vessel.entries"
+            <div v-if="vessel.type === 'vault' && vessel.entries.length > 1" class="entry-selector">
+              <button
+                v-for="(_, idx) in vessel.entries"
                 :key="idx"
-                class="entry-section"
+                :class="['entry-btn', { active: activeEntry === idx }]"
+                @click="activeEntry = idx"
               >
-                <button
-                  class="entry-header"
-                  @click="toggleEntry(idx)"
-                >
-                  {{ openEntries.has(idx) ? '[-]' : '[+]' }} entry {{ idx }}
-                  <span class="entry-size">{{ entry.length }} bytes</span>
-                </button>
-                <div v-if="openEntries.has(idx)">
-                  <HexDump :data="entry" />
-                </div>
-              </div>
-            </template>
+                entry {{ idx }}
+              </button>
+            </div>
 
-            <template v-else-if="vessel.type === 'machine'">
-              <div class="machine-note">
-                bytes sourced from {{ vessel.machineHolder }}
-              </div>
-              <HexDump v-if="vessel.payload" :data="vessel.payload" />
-            </template>
+            <div class="grid-controls">
+              <button
+                :class="['text-btn', { active: showBytes }]"
+                @click="showBytes = !showBytes"
+              >
+                [bytes]
+              </button>
+            </div>
 
-            <template v-else>
-              <HexDump v-if="vessel.payload" :data="vessel.payload" />
+            <ClientOnly>
+              <PixelGrid
+                v-if="activePayload?.length"
+                :data="activePayload"
+                :token-id="vessel.id"
+                :show-bytes="showBytes"
+              />
               <div v-else class="status">no payload data</div>
-            </template>
-          </template>
-
-          <!-- Rendered tab -->
-          <template v-if="activeTab === 'rendered'">
-            <template v-if="vessel.type === 'vault' && vessel.entries.length">
-              <div class="vault-grid">
-                <div
-                  v-for="(entry, idx) in vessel.entries"
-                  :key="idx"
-                  class="vault-thumb"
-                >
-                  <div class="thumb-label">entry {{ idx }}</div>
-                  <ClientOnly>
-                    <PixelRender
-                      v-if="entry.length"
-                      :data="entry"
-                      :token-id="vessel.id"
-                      thumbnail
-                    />
-                  </ClientOnly>
-                </div>
-              </div>
-            </template>
-
-            <template v-else>
-              <ClientOnly>
-                <PixelRender
-                  v-if="vessel.payload?.length"
-                  :data="vessel.payload"
-                  :token-id="vessel.id"
-                />
-              </ClientOnly>
-              <div v-if="!vessel.payload?.length" class="status">
-                no payload data to render
-              </div>
-            </template>
-          </template>
+            </ClientOnly>
+          </div>
         </div>
       </template>
     </div>
@@ -142,15 +93,16 @@ const id = computed(() => {
 
 const { vessel, loading, error } = useVesselReader(id)
 
-const activeTab = ref<'bytes' | 'rendered'>('bytes')
-const openEntries = ref(new Set<number>())
+const showBytes = ref(false)
+const activeEntry = ref(0)
 
-function toggleEntry(idx: number) {
-  const s = new Set(openEntries.value)
-  if (s.has(idx)) s.delete(idx)
-  else s.add(idx)
-  openEntries.value = s
-}
+const activePayload = computed(() => {
+  if (!vessel.value) return null
+  if (vessel.value.type === 'vault' && vessel.value.entries.length > 0) {
+    return vessel.value.entries[activeEntry.value] || null
+  }
+  return vessel.value.payload
+})
 </script>
 
 <style scoped>
@@ -186,14 +138,29 @@ function toggleEntry(idx: number) {
   color: var(--error);
 }
 
-.vessel-header {
-  margin-bottom: 1rem;
+.detail-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.detail-info {
+  flex-shrink: 0;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.detail-grid {
+  flex: 1;
+  min-width: 0;
 }
 
 .vessel-title {
   font-size: 18px;
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 1rem 0;
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
@@ -210,7 +177,6 @@ function toggleEntry(idx: number) {
 .type-machine { color: var(--sh-keyword); }
 
 .vessel-meta {
-  margin-bottom: 1.5rem;
   font-size: 13px;
 }
 
@@ -233,22 +199,27 @@ function toggleEntry(idx: number) {
   text-overflow: ellipsis;
 }
 
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5rem;
+.machine-note {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 0.75rem;
 }
 
-.tab-btn {
+.entry-selector {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.entry-btn {
   background: none;
-  border: none;
+  border: 1px solid var(--border-color);
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
+  padding: 0.2rem 0.5rem;
 
   &:hover {
     color: var(--color);
@@ -256,59 +227,31 @@ function toggleEntry(idx: number) {
 
   &.active {
     color: var(--accent);
+    border-color: var(--accent);
     font-weight: 700;
   }
 }
 
-.tab-content {
-  padding-top: 0.5rem;
-}
-
-.entry-section {
-  margin-bottom: 0.75rem;
-}
-
-.entry-header {
-  background: none;
-  border: none;
-  color: var(--color);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  cursor: pointer;
-  padding: 0.35rem 0;
+.grid-controls {
   display: flex;
-  gap: 0.75rem;
-  width: 100%;
-  text-align: left;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 
-  &:hover {
+  & .active {
     color: var(--accent);
+    font-weight: 700;
   }
 }
 
-.entry-size {
-  color: var(--muted);
-}
+@media (max-width: 640px) {
+  .detail-layout {
+    flex-direction: column;
+    gap: 1rem;
+  }
 
-.machine-note {
-  color: var(--muted);
-  font-size: 13px;
-  margin-bottom: 0.75rem;
-}
-
-.vault-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 1rem;
-}
-
-.vault-thumb {
-  text-align: center;
-}
-
-.thumb-label {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 0.25rem;
+  .detail-info {
+    min-width: unset;
+    width: 100%;
+  }
 }
 </style>

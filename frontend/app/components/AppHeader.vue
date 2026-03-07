@@ -13,7 +13,11 @@
 </template>
 
 <script setup lang="ts">
+import { useAccount } from '@wagmi/vue'
+
 const isDark = ref(true)
+const router = useRouter()
+const { address } = useAccount()
 
 onMounted(() => {
   const root = document.documentElement
@@ -28,6 +32,13 @@ function toggleDark() {
   root.classList.toggle('dark')
   isDark.value = root.classList.contains('dark')
 }
+
+// Auto-navigate to profile on wallet connect
+watch(address, (addr) => {
+  if (addr) {
+    router.push(`/address/${addr}`)
+  }
+})
 </script>
 
 <style scoped>
