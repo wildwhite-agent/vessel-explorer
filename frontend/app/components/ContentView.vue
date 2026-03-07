@@ -100,7 +100,7 @@ const svgDataUri = computed(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid var(--border-color);
-  max-height: 24rem;
+  height: 20rem;
 }
 
 .panel {
@@ -114,7 +114,7 @@ const svgDataUri = computed(() => {
 }
 
 .panel-header {
-  padding: 0.4rem 0.75rem;
+  padding: 0 0.75rem;
   font-size: 12px;
   color: var(--muted);
   text-transform: uppercase;
@@ -125,26 +125,27 @@ const svgDataUri = computed(() => {
   align-items: center;
   justify-content: space-between;
   height: 2rem;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .run-btn {
   background: none;
-  border: 1px solid var(--border-color);
+  border: none;
   color: var(--muted);
   font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
-  padding: 0.15rem 0.5rem;
+  padding: 0;
   text-transform: lowercase;
+  line-height: 1;
 
   &:hover {
     color: var(--color);
-    border-color: var(--color);
   }
 
   &.active {
     color: var(--sh-string, #4ade80);
-    border-color: var(--sh-string, #4ade80);
   }
 }
 
@@ -176,24 +177,25 @@ const svgDataUri = computed(() => {
 }
 
 .rendered-body {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
+  position: relative;
   background: var(--bg-subtle);
   flex: 1;
+  min-height: 0;
 }
 
 .rendered-img {
   max-width: 100%;
-  max-height: 28rem;
+  max-height: 100%;
   object-fit: contain;
   background: #fff;
   padding: 1rem;
 }
 
 .rendered-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  min-height: 20rem;
   height: 100%;
   border: none;
   background: #fff;
