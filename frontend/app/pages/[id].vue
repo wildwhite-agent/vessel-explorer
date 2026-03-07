@@ -143,6 +143,33 @@ const contentType = computed(() => {
   return detectContent(activePayload.value).type
 })
 
+// Dynamic OG tags
+const ogDescription = computed(() => {
+  if (!vessel.value) return ''
+  const type = vessel.value.type?.toLowerCase() || 'unknown'
+  const hasData = vessel.value.payload && vessel.value.payload.length > 0
+  if (!hasData && type === 'capsule') return 'empty capsule'
+  if (type === 'vault' && vessel.value.entries.length > 0) return `vault · ${vessel.value.entries.length} entries`
+  if (type === 'vault') return 'empty vault'
+  if (type === 'machine') return 'machine'
+  if (type === 'capsule') return 'capsule'
+  return type
+})
+
+useHead(() => ({
+  title: id.value ? `vessel #${id.value}` : 'vessel explorer',
+  meta: [
+    { property: 'og:title', content: id.value ? `vessel #${id.value}` : 'vessel explorer' },
+    { property: 'og:description', content: ogDescription.value },
+    { property: 'og:image', content: id.value ? `/api/og/${id.value}` : '' },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: id.value ? `vessel #${id.value}` : 'vessel explorer' },
+    { name: 'twitter:description', content: ogDescription.value },
+    { name: 'twitter:image', content: id.value ? `/api/og/${id.value}` : '' },
+  ],
+}))
+
 async function copyBytes() {
   if (!activePayload.value) return
   const hex = Array.from(activePayload.value)
