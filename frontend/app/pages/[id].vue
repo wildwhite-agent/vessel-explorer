@@ -96,12 +96,19 @@
           />
           <div v-else class="status empty-label">empty</div>
         </ClientOnly>
+
+        <ContentView
+          v-if="activePayload?.length && contentType !== 'binary'"
+          :data="activePayload"
+        />
       </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { detectContent } from '~/utils/content'
+
 const route = useRoute()
 
 const id = computed(() => {
@@ -129,6 +136,11 @@ const activePayload = computed(() => {
     return vessel.value.entries[activeEntry.value] || null
   }
   return vessel.value.payload
+})
+
+const contentType = computed(() => {
+  if (!activePayload.value?.length) return 'binary'
+  return detectContent(activePayload.value).type
 })
 
 async function copyBytes() {
