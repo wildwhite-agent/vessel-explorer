@@ -376,7 +376,7 @@ onMounted(async () => {
 }
 
 .holder-row.feed-row {
-  grid-template-columns: 2rem 1fr repeat(4, 3.5rem);
+  grid-template-columns: 2rem minmax(6rem, 1fr) repeat(4, 4.5rem);
 }
 
 .dimmed {
