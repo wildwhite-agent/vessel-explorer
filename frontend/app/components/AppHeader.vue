@@ -6,6 +6,11 @@
         {{ isDark ? '[light]' : '[dark]' }}
       </button>
       <ClientOnly>
+        <template v-if="address">
+          <NuxtLink :to="`/address/${address}`" class="text-btn profile-link">
+            [profile]
+          </NuxtLink>
+        </template>
         <EvmConnectDialog class-name="text-btn" />
       </ClientOnly>
     </div>
@@ -16,7 +21,6 @@
 import { useAccount } from '@wagmi/vue'
 
 const isDark = ref(true)
-const router = useRouter()
 const { address } = useAccount()
 
 onMounted(() => {
@@ -32,13 +36,6 @@ function toggleDark() {
   root.classList.toggle('dark')
   isDark.value = root.classList.contains('dark')
 }
-
-// Auto-navigate to profile on wallet connect
-watch(address, (addr) => {
-  if (addr) {
-    router.push(`/address/${addr}`)
-  }
-})
 </script>
 
 <style scoped>
@@ -63,5 +60,9 @@ watch(address, (addr) => {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.profile-link {
+  text-decoration: none;
 }
 </style>

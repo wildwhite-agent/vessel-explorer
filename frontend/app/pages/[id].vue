@@ -3,80 +3,83 @@
     <AppHeader />
 
     <div class="detail-content">
-      <NuxtLink to="/" class="back-link">&lt;- back</NuxtLink>
+      <NuxtLink to="/" class="back-link">[back]</NuxtLink>
 
       <div v-if="loading" class="status">loading vessel #{{ id }}...</div>
       <div v-else-if="error" class="status status-error">{{ error }}</div>
 
       <template v-else-if="vessel">
-        <div class="detail-layout">
-          <div class="detail-info">
-            <h1 class="vessel-title">
-              vessel #{{ vessel.id }}
-              <span :class="['type-badge', `type-${vessel.type}`]">[{{ vessel.type }}]</span>
-            </h1>
+        <div class="detail-header">
+          <h1 class="vessel-title">
+            vessel #{{ vessel.id }}
+            <span :class="['type-badge', `type-${vessel.type}`]">[{{ vessel.type }}]</span>
+          </h1>
 
-            <div class="vessel-meta">
-              <div class="meta-row">
-                <span class="meta-label">owner</span>
-                <span class="meta-value"><AddressDisplay :address="vessel.owner" /></span>
-              </div>
-              <div v-if="vessel.delegate" class="meta-row">
-                <span class="meta-label">delegate</span>
-                <span class="meta-value"><AddressDisplay :address="vessel.delegate" /></span>
-              </div>
-              <div v-if="vessel.type === 'machine' && vessel.machineHolder" class="meta-row">
-                <span class="meta-label">machine</span>
-                <span class="meta-value">
-                  <AddressDisplay :address="vessel.machineHolder" />
-                  <template v-if="vessel.machineName">
-                    ({{ vessel.machineName }})
-                  </template>
-                </span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">entries</span>
-                <span class="meta-value">{{ vessel.entryCount }}</span>
-              </div>
+          <div class="vessel-meta">
+            <div class="meta-row">
+              <span class="meta-label">owner</span>
+              <span class="meta-value"><AddressDisplay :address="vessel.owner" /></span>
             </div>
-          </div>
-
-          <div class="detail-grid">
-            <div v-if="vessel.type === 'machine' && vessel.machineHolder" class="machine-note">
-              sourced from <AddressDisplay :address="vessel.machineHolder" />
+            <div v-if="vessel.delegate" class="meta-row">
+              <span class="meta-label">delegate</span>
+              <span class="meta-value"><AddressDisplay :address="vessel.delegate" /></span>
             </div>
-
-            <div v-if="vessel.type === 'vault' && vessel.entries.length > 1" class="entry-selector">
-              <button
-                v-for="(_, idx) in vessel.entries"
-                :key="idx"
-                :class="['entry-btn', { active: activeEntry === idx }]"
-                @click="activeEntry = idx"
-              >
-                entry {{ idx }}
-              </button>
+            <div v-if="vessel.type === 'machine' && vessel.machineHolder" class="meta-row">
+              <span class="meta-label">machine</span>
+              <span class="meta-value">
+                <AddressDisplay :address="vessel.machineHolder" />
+                <template v-if="vessel.machineName"> ({{ vessel.machineName }})</template>
+              </span>
             </div>
-
-            <div class="grid-controls">
-              <button
-                :class="['text-btn', { active: showBytes }]"
-                @click="showBytes = !showBytes"
-              >
-                [bytes]
-              </button>
+            <div class="meta-row">
+              <span class="meta-label">entries</span>
+              <span class="meta-value">{{ vessel.entryCount }}</span>
             </div>
-
-            <ClientOnly>
-              <PixelGrid
-                v-if="activePayload?.length"
-                :data="activePayload"
-                :token-id="vessel.id"
-                :show-bytes="showBytes"
-              />
-              <div v-else class="status">no payload data</div>
-            </ClientOnly>
           </div>
         </div>
+
+        <div v-if="vessel.type === 'machine' && vessel.machineHolder" class="machine-note">
+          sourced from <AddressDisplay :address="vessel.machineHolder" />
+        </div>
+
+        <div class="grid-toolbar">
+          <div v-if="vessel.type === 'vault' && vessel.entries.length > 1" class="entry-selector">
+            <button
+              v-for="(_, idx) in vessel.entries"
+              :key="idx"
+              :class="['entry-btn', { active: activeEntry === idx }]"
+              @click="activeEntry = idx"
+            >
+              entry {{ idx }}
+            </button>
+          </div>
+
+          <div class="grid-controls">
+            <button
+              :class="['text-btn', { active: showBytes }]"
+              @click="showBytes = !showBytes"
+            >
+              [bytes]
+            </button>
+            <button
+              v-if="activePayload?.length"
+              class="text-btn"
+              @click="copyBytes"
+            >
+              {{ copied ? '[copied]' : '[copy]' }}
+            </button>
+          </div>
+        </div>
+
+        <ClientOnly>
+          <PixelGrid
+            v-if="activePayload?.length"
+            :data="activePayload"
+            :token-id="vessel.id"
+            :show-bytes="showBytes"
+          />
+          <div v-else class="status empty-label">empty</div>
+        </ClientOnly>
       </template>
     </div>
   </div>
@@ -94,7 +97,15 @@ const id = computed(() => {
 const { vessel, loading, error } = useVesselReader(id)
 
 const showBytes = ref(false)
+const copied = ref(false)
+
+// Default to latest entry for vaults
 const activeEntry = ref(0)
+watch(vessel, (v) => {
+  if (v && v.type === 'vault' && v.entries.length > 0) {
+    activeEntry.value = v.entries.length - 1
+  }
+})
 
 const activePayload = computed(() => {
   if (!vessel.value) return null
@@ -103,6 +114,16 @@ const activePayload = computed(() => {
   }
   return vessel.value.payload
 })
+
+async function copyBytes() {
+  if (!activePayload.value) return
+  const hex = Array.from(activePayload.value)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+  await navigator.clipboard.writeText('0x' + hex)
+  copied.value = true
+  setTimeout(() => { copied.value = false }, 2000)
+}
 </script>
 
 <style scoped>
@@ -138,23 +159,13 @@ const activePayload = computed(() => {
   color: var(--error);
 }
 
-.detail-layout {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
+.empty-label {
+  text-align: center;
+  padding: 3rem 0;
 }
 
-.detail-info {
-  flex-shrink: 0;
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.detail-grid {
-  flex: 1;
-  min-width: 0;
+.detail-header {
+  margin-bottom: 1.5rem;
 }
 
 .vessel-title {
@@ -205,10 +216,18 @@ const activePayload = computed(() => {
   margin-bottom: 0.75rem;
 }
 
+.grid-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .entry-selector {
   display: flex;
   gap: 0.25rem;
-  margin-bottom: 0.75rem;
   flex-wrap: wrap;
 }
 
@@ -219,7 +238,9 @@ const activePayload = computed(() => {
   font-family: var(--font-mono);
   font-size: 12px;
   cursor: pointer;
-  padding: 0.2rem 0.5rem;
+  padding: 0.25rem 0.6rem;
+  text-align: center;
+  min-width: 5rem;
 
   &:hover {
     color: var(--color);
@@ -235,23 +256,10 @@ const activePayload = computed(() => {
 .grid-controls {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
 
   & .active {
     color: var(--accent);
     font-weight: 700;
-  }
-}
-
-@media (max-width: 640px) {
-  .detail-layout {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .detail-info {
-    min-width: unset;
-    width: 100%;
   }
 }
 </style>

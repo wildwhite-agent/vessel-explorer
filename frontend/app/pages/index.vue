@@ -217,6 +217,7 @@ onMounted(async () => {
 .action-transfer { color: var(--muted); }
 .action-approve, .action-approval { color: var(--text-faint); }
 .action-refresh { color: #34d399; }
+.action-refresh { color: #34d399; }
 
 .vessel-link {
   color: var(--accent);

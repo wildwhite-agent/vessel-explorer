@@ -44,20 +44,20 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
     vessel.value = null
 
     try {
-      // getDelegate and getMachineHolder may revert if not set
-      const safeRead = async (fnName: string, args: unknown[]) => {
-        try { return await read(fnName, args) }
-        catch { return ZERO_ADDRESS }
-      }
+      const owner = await read('ownerOf', [BigInt(id)]) as string
 
-      const [owner, delegate, machineHolder, entryCount, payload] =
-        await Promise.all([
-          read('ownerOf', [BigInt(id)]) as Promise<string>,
-          safeRead('getDelegate', [BigInt(id)]) as Promise<string>,
-          safeRead('getMachineHolder', [BigInt(id)]) as Promise<string>,
-          read('craftToEntry', [BigInt(id)]).catch(() => 0n) as Promise<bigint>,
-          read('craftToPayload', [BigInt(id)]).catch(() => '0x') as Promise<string>,
-        ])
+      // These can revert when not set
+      let delegate = ZERO_ADDRESS
+      try { delegate = await read('getDelegate', [BigInt(id)]) as string } catch {}
+
+      let machineHolder = ZERO_ADDRESS
+      try { machineHolder = await read('getMachineHolder', [BigInt(id)]) as string } catch {}
+
+      let entryCount = 0n
+      try { entryCount = await read('craftToEntry', [BigInt(id)]) as bigint } catch {}
+
+      let payload = '0x'
+      try { payload = await read('craftToPayload', [BigInt(id)]) as string } catch {}
 
       const hasMachine = machineHolder !== ZERO_ADDRESS
       const entryCountNum = Number(entryCount)
@@ -69,25 +69,29 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
 
       if (hasMachine) {
         type = 'machine'
-        // Fetch machine name and payload from machine contract
-        const [name, machinePayload] = await Promise.all([
-          readContract(config, {
-            address: machineHolder as `0x${string}`,
-            abi: MACHINE_ABI,
-            functionName: 'name',
-          }) as Promise<string>,
-          readContract(config, {
-            address: machineHolder as `0x${string}`,
-            abi: MACHINE_ABI,
-            functionName: 'craftToPayload',
-            args: [BigInt(id)],
-          }) as Promise<string>,
-        ])
-        machineName = name
-        finalPayload = hexToBytes(machinePayload)
-      } else if (entryCountNum > 1) {
+        try {
+          const [name, machinePayload] = await Promise.all([
+            readContract(config, {
+              address: machineHolder as `0x${string}`,
+              abi: MACHINE_ABI,
+              functionName: 'name',
+            }) as Promise<string>,
+            readContract(config, {
+              address: machineHolder as `0x${string}`,
+              abi: MACHINE_ABI,
+              functionName: 'craftToPayload',
+              args: [BigInt(id)],
+            }) as Promise<string>,
+          ])
+          machineName = name
+          finalPayload = hexToBytes(machinePayload)
+        } catch {
+          // machine contract call failed, show what we have
+          finalPayload = hexToBytes(payload)
+        }
+      } else if (entryCountNum >= 1) {
+        // craftToEntry >= 1 means it's a vault (capsules stay at 0)
         type = 'vault'
-        // Fetch all vault entries
         const entryPromises = []
         for (let i = 0; i < entryCountNum; i++) {
           entryPromises.push(
@@ -98,7 +102,6 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         for (const raw of rawEntries) {
           entries.push(hexToBytes(raw))
         }
-        // Main payload is the latest entry
         finalPayload = hexToBytes(payload)
       } else {
         type = 'capsule'
@@ -117,7 +120,7 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         entries,
       }
     } catch (e: any) {
-      error.value = e?.shortMessage || e?.message || 'Failed to fetch vessel'
+      error.value = e?.shortMessage || e?.message || 'failed to fetch vessel'
     } finally {
       loading.value = false
     }

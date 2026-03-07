@@ -3,7 +3,7 @@
     <AppHeader />
 
     <div class="profile-content">
-      <NuxtLink to="/" class="back-link">&lt;- back</NuxtLink>
+      <NuxtLink to="/" class="back-link">[back]</NuxtLink>
 
       <div v-if="resolving" class="status">resolving address...</div>
       <div v-else-if="resolveError" class="status status-error">{{ resolveError }}</div>
@@ -15,8 +15,8 @@
         </h1>
         <div v-if="ensName" class="profile-address">{{ resolvedAddress }}</div>
 
-        <div v-if="loading" class="status">loading vessels...</div>
-        <div v-else-if="ownedVessels.length === 0" class="status">no vessels found</div>
+        <div v-if="loading && ownedVessels.length === 0" class="status">loading vessels...</div>
+        <div v-else-if="!loading && ownedVessels.length === 0" class="status">no vessels found</div>
 
         <div v-else class="vessel-grid">
           <NuxtLink
@@ -26,14 +26,17 @@
             class="vessel-card"
           >
             <div class="card-id">#{{ v.id }}</div>
-            <ClientOnly>
-              <canvas
-                v-if="v.payload?.length"
-                ref="canvasRefs"
-                :data-vessel-id="v.id"
-                class="card-thumb"
-              />
-            </ClientOnly>
+            <div class="card-thumb-wrap">
+              <ClientOnly>
+                <canvas
+                  v-if="v.payload?.length"
+                  :ref="(el) => { if (el) renderCanvas(el as HTMLCanvasElement, v) }"
+                  class="card-thumb"
+                />
+                <div v-else-if="v.loaded" class="card-empty">empty</div>
+                <div v-else class="card-loading">...</div>
+              </ClientOnly>
+            </div>
           </NuxtLink>
         </div>
       </template>
@@ -45,8 +48,8 @@
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { VESSEL_ADDRESS, VESSEL_ABI, renderPixels, getGridDimensions } from '~/utils/vessel'
-import { fetchVesselTransfersForAddress, type TokenTransfer } from '~/utils/etherscan'
+import { VESSEL_ADDRESS, VESSEL_ABI, getGridDimensions } from '~/utils/vessel'
+import { fetchVesselTransfersForAddress } from '~/utils/etherscan'
 
 const route = useRoute()
 const config = useConfig()
@@ -63,6 +66,7 @@ const loading = ref(false)
 interface OwnedVessel {
   id: string
   payload: Uint8Array | null
+  loaded: boolean
 }
 
 const ownedVessels = ref<OwnedVessel[]>([])
@@ -70,6 +74,35 @@ const ownedVessels = ref<OwnedVessel[]>([])
 function shortenAddress(a: string): string {
   if (a.length <= 12) return a
   return `${a.slice(0, 6)}...${a.slice(-4)}`
+}
+
+function renderCanvas(canvas: HTMLCanvasElement, vessel: OwnedVessel) {
+  if (!vessel.payload?.length) return
+  const vesselId = Number(vessel.id)
+  const { cols, rows } = getGridDimensions(vesselId)
+  const scale = Math.max(1, Math.floor(100 / Math.max(cols, rows)))
+  canvas.width = cols * scale
+  canvas.height = rows * scale
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  ctx.imageSmoothingEnabled = false
+  const tmp = document.createElement('canvas')
+  tmp.width = cols
+  tmp.height = rows
+  const tmpCtx = tmp.getContext('2d')!
+  const img = tmpCtx.createImageData(cols, rows)
+  for (let i = 0; i < cols * rows; i++) {
+    const v = i < vessel.payload!.length ? vessel.payload![i]! : 0
+    const off = i * 4
+    img.data[off] = v
+    img.data[off + 1] = v
+    img.data[off + 2] = v
+    img.data[off + 3] = 255
+  }
+  tmpCtx.putImageData(img, 0, 0)
+  ctx.drawImage(tmp, 0, 0, cols * scale, rows * scale)
 }
 
 async function resolveAddr(identifier: string) {
@@ -84,7 +117,6 @@ async function resolveAddr(identifier: string) {
         if (val?.ens) ensName.value = val.ens
       }, { immediate: true })
     } else {
-      // ENS name - resolve to address
       const { data: ens } = useEns(() => identifier)
       await new Promise<void>((resolve) => {
         const stop = watch(ens, (val) => {
@@ -99,7 +131,6 @@ async function resolveAddr(identifier: string) {
             resolve()
           }
         }, { immediate: true })
-        // Timeout after 10s
         setTimeout(() => { stop(); resolve() }, 10000)
       })
     }
@@ -116,85 +147,50 @@ async function loadVessels(address: string) {
     const apiKey = runtimeConfig.public.etherscanKey as string
     const transfers = await fetchVesselTransfersForAddress(address, apiKey)
 
-    // Build ownership map from transfer history
     const ownership = new Map<string, string>()
-    // Sort by blockNumber ascending to replay history
     const sorted = [...transfers].sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber))
     for (const tx of sorted) {
       ownership.set(tx.tokenID, tx.to.toLowerCase())
     }
 
-    // Filter to tokens currently owned by this address
     const owned = [...ownership.entries()]
       .filter(([, owner]) => owner === address.toLowerCase())
       .map(([id]) => id)
+      .sort((a, b) => Number(a) - Number(b))
 
-    // Fetch payloads for thumbnails
-    const vessels: OwnedVessel[] = await Promise.all(
-      owned.map(async (id) => {
-        try {
-          const payload = await readContract(config, {
-            address: VESSEL_ADDRESS,
-            abi: VESSEL_ABI,
-            functionName: 'craftToPayload',
-            args: [BigInt(id)],
-          }) as string
-          const clean = payload.startsWith('0x') ? payload.slice(2) : payload
-          const bytes = new Uint8Array(clean.length / 2)
-          for (let i = 0; i < bytes.length; i++) {
-            bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
-          }
-          return { id, payload: bytes }
-        } catch {
-          return { id, payload: null }
+    // Add all vessels immediately with loading state
+    ownedVessels.value = owned.map(id => ({ id, payload: null, loaded: false }))
+
+    // Load payloads one by one (progressive)
+    for (const id of owned) {
+      try {
+        const payload = await readContract(config, {
+          address: VESSEL_ADDRESS,
+          abi: VESSEL_ABI,
+          functionName: 'craftToPayload',
+          args: [BigInt(id)],
+        }) as string
+        const clean = payload.startsWith('0x') ? payload.slice(2) : payload
+        const bytes = new Uint8Array(clean.length / 2)
+        for (let i = 0; i < bytes.length; i++) {
+          bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
         }
-      }),
-    )
-
-    ownedVessels.value = vessels.sort((a, b) => Number(a.id) - Number(b.id))
-  } catch (e: any) {
-    // silently fail, show empty
+        const idx = ownedVessels.value.findIndex(v => v.id === id)
+        if (idx !== -1) {
+          ownedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true }
+        }
+      } catch {
+        const idx = ownedVessels.value.findIndex(v => v.id === id)
+        if (idx !== -1) {
+          ownedVessels.value[idx] = { id, payload: null, loaded: true }
+        }
+      }
+    }
+  } catch {
+    // silently fail
   } finally {
     loading.value = false
   }
-}
-
-// Render thumbnails on canvas elements after DOM updates
-function renderThumbnails() {
-  nextTick(() => {
-    const canvases = document.querySelectorAll<HTMLCanvasElement>('.card-thumb')
-    canvases.forEach((canvas) => {
-      const vesselId = Number(canvas.dataset.vesselId)
-      const vessel = ownedVessels.value.find((v) => Number(v.id) === vesselId)
-      if (!vessel?.payload?.length) return
-
-      const { cols, rows } = getGridDimensions(vesselId)
-      const scale = Math.max(1, Math.floor(100 / Math.max(cols, rows)))
-      canvas.width = cols * scale
-      canvas.height = rows * scale
-
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-
-      ctx.imageSmoothingEnabled = false
-      // Draw pixel data
-      const img = ctx.createImageData(cols, rows)
-      for (let i = 0; i < cols * rows; i++) {
-        const v = i < vessel.payload!.length ? vessel.payload![i]! : 0
-        const off = i * 4
-        img.data[off] = v
-        img.data[off + 1] = v
-        img.data[off + 2] = v
-        img.data[off + 3] = 255
-      }
-      // Draw at 1:1 then scale
-      const tmp = document.createElement('canvas')
-      tmp.width = cols
-      tmp.height = rows
-      tmp.getContext('2d')!.putImageData(img, 0, 0)
-      ctx.drawImage(tmp, 0, 0, cols * scale, rows * scale)
-    })
-  })
 }
 
 watch(addr, async (newAddr) => {
@@ -202,12 +198,9 @@ watch(addr, async (newAddr) => {
     await resolveAddr(newAddr)
     if (resolvedAddress.value) {
       await loadVessels(resolvedAddress.value)
-      renderThumbnails()
     }
   }
 }, { immediate: true })
-
-watch(ownedVessels, () => renderThumbnails())
 </script>
 
 <style scoped>
@@ -272,6 +265,7 @@ watch(ownedVessels, () => renderThumbnails())
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   background: var(--bg-subtle);
+  aspect-ratio: 1;
 
   &:hover {
     border-color: var(--accent);
@@ -285,10 +279,28 @@ watch(ownedVessels, () => renderThumbnails())
   color: var(--accent);
 }
 
+.card-thumb-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .card-thumb {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   max-width: 100%;
-  height: auto;
+  max-height: 100%;
+}
+
+.card-empty {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.card-loading {
+  color: var(--text-faint);
+  font-size: 11px;
 }
 </style>
