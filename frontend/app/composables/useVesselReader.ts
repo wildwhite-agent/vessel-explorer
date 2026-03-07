@@ -44,13 +44,19 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
     vessel.value = null
 
     try {
+      // getDelegate and getMachineHolder may revert if not set
+      const safeRead = async (fnName: string, args: unknown[]) => {
+        try { return await read(fnName, args) }
+        catch { return ZERO_ADDRESS }
+      }
+
       const [owner, delegate, machineHolder, entryCount, payload] =
         await Promise.all([
           read('ownerOf', [BigInt(id)]) as Promise<string>,
-          read('getDelegate', [BigInt(id)]) as Promise<string>,
-          read('getMachineHolder', [BigInt(id)]) as Promise<string>,
-          read('craftToEntry', [BigInt(id)]) as Promise<bigint>,
-          read('craftToPayload', [BigInt(id)]) as Promise<string>,
+          safeRead('getDelegate', [BigInt(id)]) as Promise<string>,
+          safeRead('getMachineHolder', [BigInt(id)]) as Promise<string>,
+          read('craftToEntry', [BigInt(id)]).catch(() => 0n) as Promise<bigint>,
+          read('craftToPayload', [BigInt(id)]).catch(() => '0x') as Promise<string>,
         ])
 
       const hasMachine = machineHolder !== ZERO_ADDRESS

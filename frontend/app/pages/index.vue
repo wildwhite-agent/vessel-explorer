@@ -23,27 +23,29 @@
 
       <div v-else class="feed-table">
         <div class="feed-row feed-row-header">
-          <span class="col-id">id</span>
+          <span class="col-action">action</span>
+          <span class="col-id">vessel</span>
           <span class="col-from">from</span>
-          <span class="col-arrow"></span>
-          <span class="col-to">to</span>
           <span class="col-time">time</span>
           <span class="col-tx">tx</span>
         </div>
         <div
-          v-for="tx in transfers"
-          :key="tx.hash + tx.tokenID"
+          v-for="tx in activity"
+          :key="tx.hash"
           class="feed-row"
+          :class="{ 'feed-row-error': tx.isError === '1' }"
         >
-          <NuxtLink :to="`/${tx.tokenID}`" class="col-id vessel-link">
-            #{{ tx.tokenID }}
-          </NuxtLink>
+          <span class="col-action">
+            <span class="action-badge" :class="`action-${tx.action}`">{{ tx.action }}</span>
+          </span>
+          <span class="col-id">
+            <NuxtLink v-if="tx.vesselId" :to="`/${tx.vesselId}`" class="vessel-link">
+              #{{ tx.vesselId }}
+            </NuxtLink>
+            <span v-else class="text-faint">--</span>
+          </span>
           <span class="col-from">
             <AddressDisplay :address="tx.from" />
-          </span>
-          <span class="col-arrow">-&gt;</span>
-          <span class="col-to">
-            <AddressDisplay :address="tx.to" />
           </span>
           <span class="col-time">{{ formatTime(tx.timeStamp) }}</span>
           <a
@@ -61,13 +63,13 @@
 </template>
 
 <script setup lang="ts">
-import { fetchVesselTransfers, type TokenTransfer } from '~/utils/etherscan'
+import { fetchVesselActivity, type VesselTransaction } from '~/utils/etherscan'
 
 const router = useRouter()
 const config = useRuntimeConfig()
 
 const searchId = ref('')
-const transfers = ref<TokenTransfer[]>([])
+const activity = ref<VesselTransaction[]>([])
 const feedLoading = ref(true)
 const feedError = ref<string | null>(null)
 
@@ -89,9 +91,9 @@ function formatTime(ts: string): string {
 onMounted(async () => {
   try {
     const apiKey = config.public.etherscanKey as string
-    transfers.value = await fetchVesselTransfers(apiKey)
+    activity.value = await fetchVesselActivity(apiKey)
   } catch (e: any) {
-    feedError.value = e?.message || 'failed to fetch transfers'
+    feedError.value = e?.message || 'failed to fetch activity'
   } finally {
     feedLoading.value = false
   }
@@ -174,7 +176,7 @@ onMounted(async () => {
 
 .feed-row {
   display: grid;
-  grid-template-columns: 5rem 1fr 2ch 1fr 5rem 8rem;
+  grid-template-columns: 6rem 5rem 1fr 5rem 8rem;
   gap: 0.5rem;
   padding: 0.35rem 0;
   border-bottom: 1px solid var(--border-color);
@@ -188,13 +190,11 @@ onMounted(async () => {
   text-transform: lowercase;
 }
 
-.col-arrow {
-  color: var(--text-faint);
-  text-align: center;
+.feed-row-error {
+  opacity: 0.4;
 }
 
-.col-from,
-.col-to {
+.col-from {
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--muted);
@@ -203,6 +203,19 @@ onMounted(async () => {
 .col-time {
   color: var(--text-faint);
 }
+
+.action-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
+.action-claim { color: var(--accent); }
+.action-write { color: var(--write, #f59e0b); }
+.action-delegate { color: #a78bfa; }
+.action-machine { color: #22d3ee; }
+.action-transfer { color: var(--muted); }
+.action-approve, .action-approval { color: var(--text-faint); }
 
 .vessel-link {
   color: var(--accent);
@@ -225,17 +238,12 @@ onMounted(async () => {
 
 @media (max-width: 640px) {
   .feed-row {
-    grid-template-columns: 4rem 1fr 2ch 1fr;
+    grid-template-columns: 5rem 4rem 1fr;
     font-size: 12px;
   }
 
   .col-time,
   .col-tx {
-    display: none;
-  }
-
-  .feed-row-header .col-time,
-  .feed-row-header .col-tx {
     display: none;
   }
 }
