@@ -29,7 +29,7 @@
             <div v-if="vessel.type === 'machine' && vessel.machineAddress" class="meta-row">
               <span class="meta-label">machine</span>
               <span class="meta-value">
-                <AddressDisplay :address="vessel.machineAddress" />
+                <AddressDisplay :address="vessel.machineAddress" external />
                 <template v-if="vessel.machineName"> ({{ vessel.machineName }})</template>
               </span>
             </div>
@@ -57,7 +57,7 @@
         </div>
 
         <div v-if="vessel.type === 'machine' && vessel.machineAddress" class="machine-note">
-          sourced from <AddressDisplay :address="vessel.machineAddress" />
+          sourced from <AddressDisplay :address="vessel.machineAddress" external />
         </div>
 
         <div v-if="vessel.type === 'vault' && vessel.entries.length > 1" class="entry-selector">

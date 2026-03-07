@@ -1,12 +1,21 @@
 <template>
-  <NuxtLink :to="`/address/${address}`" class="address-display">
+  <a v-if="external" :href="`https://etherscan.io/address/${address}`" target="_blank" rel="noopener" class="address-display">
+    <template v-if="ens?.ens">{{ ens.ens }}</template>
+    <template v-else>{{ shortened }}</template>
+  </a>
+  <NuxtLink v-else :to="`/address/${address}`" class="address-display">
     <template v-if="ens?.ens">{{ ens.ens }}</template>
     <template v-else>{{ shortened }}</template>
   </NuxtLink>
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ address: string }>()
+const props = withDefaults(defineProps<{
+  address: string
+  external?: boolean
+}>(), {
+  external: false,
+})
 
 const { data: ens } = useEns(() => props.address)
 

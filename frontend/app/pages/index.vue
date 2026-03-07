@@ -97,8 +97,8 @@ onMounted(async () => {
   try {
     const apiKey = config.public.etherscanKey as string
     const all = await fetchVesselActivity(apiKey)
-    // Only show interactions that have a vessel ID
-    activity.value = all.filter(tx => tx.vesselId !== null)
+    // Only show successful interactions that have a vessel ID
+    activity.value = all.filter(tx => tx.vesselId !== null && tx.isError !== '1')
   } catch (e: any) {
     feedError.value = e?.message || 'failed to fetch activity'
   } finally {
