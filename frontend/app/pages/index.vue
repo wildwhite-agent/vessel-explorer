@@ -91,7 +91,9 @@ function formatTime(ts: string): string {
 onMounted(async () => {
   try {
     const apiKey = config.public.etherscanKey as string
-    activity.value = await fetchVesselActivity(apiKey)
+    const all = await fetchVesselActivity(apiKey)
+    // Only show interactions that have a vessel ID
+    activity.value = all.filter(tx => tx.vesselId !== null)
   } catch (e: any) {
     feedError.value = e?.message || 'failed to fetch activity'
   } finally {
