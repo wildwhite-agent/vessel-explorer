@@ -100,6 +100,7 @@ const svgDataUri = computed(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid var(--border-color);
+  max-height: 24rem;
 }
 
 .panel {
@@ -123,6 +124,7 @@ const svgDataUri = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 2rem;
 }
 
 .run-btn {
@@ -147,7 +149,7 @@ const svgDataUri = computed(() => {
 }
 
 .panel-body {
-  max-height: 28rem;
+  flex: 1;
   overflow: auto;
 }
 
@@ -175,10 +177,10 @@ const svgDataUri = computed(() => {
 
 .rendered-body {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  min-height: 8rem;
   background: var(--bg-subtle);
+  flex: 1;
 }
 
 .rendered-img {
@@ -191,7 +193,8 @@ const svgDataUri = computed(() => {
 
 .rendered-iframe {
   width: 100%;
-  height: 28rem;
+  min-height: 20rem;
+  height: 100%;
   border: none;
   background: #fff;
 }
