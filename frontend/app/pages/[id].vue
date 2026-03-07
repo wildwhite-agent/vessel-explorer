@@ -259,9 +259,13 @@ async function copyBytes() {
   font-family: var(--font-mono);
   font-size: 12px;
   cursor: pointer;
-  padding: 0.25rem 0.6rem;
-  text-align: center;
+  padding: 0;
   min-width: 5rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 
   &:hover {
     color: var(--color);
