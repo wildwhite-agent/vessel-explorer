@@ -5,10 +5,9 @@
     <div class="search-section">
       <form @submit.prevent="goToVessel" class="search-form">
         <input
-          v-model="searchId"
-          type="number"
-          min="0"
-          placeholder="enter vessel id..."
+          v-model="searchQuery"
+          type="text"
+          placeholder="enter vessel id or address..."
           class="search-input"
         />
         <button type="submit" class="text-btn">[go]</button>
@@ -68,14 +67,20 @@ import { fetchVesselActivity, type VesselTransaction } from '~/utils/etherscan'
 const router = useRouter()
 const config = useRuntimeConfig()
 
-const searchId = ref('')
+const searchQuery = ref('')
 const activity = ref<VesselTransaction[]>([])
 const feedLoading = ref(true)
 const feedError = ref<string | null>(null)
 
 function goToVessel() {
-  const id = searchId.value.trim()
-  if (id) router.push(`/${id}`)
+  const q = searchQuery.value.trim()
+  if (!q) return
+  // If it looks like an address (0x...) or ENS name (.eth), go to profile
+  if (q.startsWith('0x') && q.length === 42 || q.includes('.eth')) {
+    router.push(`/address/${q}`)
+  } else {
+    router.push(`/${q}`)
+  }
 }
 
 function formatTime(ts: string): string {
