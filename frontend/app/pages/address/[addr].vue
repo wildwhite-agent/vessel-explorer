@@ -25,29 +25,58 @@
         </div>
 
         <div v-if="loading && ownedVessels.length === 0" class="status">loading vessels...</div>
-        <div v-else-if="!loading && ownedVessels.length === 0" class="status">no vessels found</div>
+        <div v-else-if="!loading && ownedVessels.length === 0 && delegatedVessels.length === 0" class="status">no vessels found</div>
 
-        <div v-else class="vessel-grid">
-          <NuxtLink
-            v-for="v in ownedVessels"
-            :key="v.id"
-            :to="`/${v.id}`"
-            :class="['vessel-card', v.type ? `card-${v.type.toLowerCase()}` : '']"
-          >
-            <div class="card-id">#{{ v.id }}</div>
-            <div class="card-thumb-wrap">
-              <ClientOnly>
-                <canvas
-                  v-if="v.payload?.length"
-                  :ref="(el) => { if (el) renderCanvas(el as HTMLCanvasElement, v) }"
-                  class="card-thumb"
-                />
-                <div v-else-if="v.loaded" class="card-empty">empty</div>
-                <div v-else class="card-loading">...</div>
-              </ClientOnly>
-            </div>
-          </NuxtLink>
-        </div>
+        <template v-if="ownedVessels.length > 0">
+          <h2 class="section-title">owned</h2>
+          <div class="vessel-grid">
+            <NuxtLink
+              v-for="v in ownedVessels"
+              :key="v.id"
+              :to="`/${v.id}`"
+              :class="['vessel-card', v.type ? `card-${v.type.toLowerCase()}` : '']"
+            >
+              <div class="card-id">#{{ v.id }}</div>
+              <div class="card-thumb-wrap">
+                <ClientOnly>
+                  <canvas
+                    v-if="v.payload?.length"
+                    :ref="(el) => { if (el) renderCanvas(el as HTMLCanvasElement, v) }"
+                    class="card-thumb"
+                  />
+                  <div v-else-if="v.loaded" class="card-empty">empty</div>
+                  <div v-else class="card-loading">...</div>
+                </ClientOnly>
+              </div>
+            </NuxtLink>
+          </div>
+        </template>
+
+        <template v-if="delegatedVessels.length > 0 || delegateLoading">
+          <h2 class="section-title">delegated</h2>
+          <div v-if="delegateLoading && delegatedVessels.length === 0" class="status">scanning delegates...</div>
+          <div v-else class="vessel-grid">
+            <NuxtLink
+              v-for="v in delegatedVessels"
+              :key="v.id"
+              :to="`/${v.id}`"
+              :class="['vessel-card', v.type ? `card-${v.type.toLowerCase()}` : '']"
+            >
+              <div class="card-id">#{{ v.id }}</div>
+              <div class="card-thumb-wrap">
+                <ClientOnly>
+                  <canvas
+                    v-if="v.payload?.length"
+                    :ref="(el) => { if (el) renderCanvas(el as HTMLCanvasElement, v) }"
+                    class="card-thumb"
+                  />
+                  <div v-else-if="v.loaded" class="card-empty">empty</div>
+                  <div v-else class="card-loading">...</div>
+                </ClientOnly>
+              </div>
+            </NuxtLink>
+          </div>
+        </template>
       </div>
       </Transition>
     </div>
@@ -101,6 +130,10 @@ const stats = computed(() => {
 })
 
 const ownedVessels = ref<OwnedVessel[]>([])
+const delegatedVessels = ref<OwnedVessel[]>([])
+const delegateLoading = ref(false)
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 function renderCanvas(canvas: HTMLCanvasElement, vessel: OwnedVessel) {
   if (!vessel.payload?.length) return
@@ -188,11 +221,91 @@ async function loadVessels(address: string) {
   }
 }
 
+async function loadDelegatedVessels(address: string) {
+  delegateLoading.value = true
+  delegatedVessels.value = []
+
+  try {
+    // Get all claimed vessel IDs from global ownership
+    const { ownership } = await fetchOwnership()
+    const allIds = [...ownership.keys()]
+    // Exclude vessels already owned by this address
+    const ownedSet = new Set(ownedVessels.value.map(v => v.id))
+    const candidates = allIds.filter(id => !ownedSet.has(id))
+
+    // Batch-check delegates
+    const BATCH = 20
+    for (let i = 0; i < candidates.length; i += BATCH) {
+      const batch = candidates.slice(i, i + BATCH)
+      const delegates = await Promise.all(
+        batch.map(id =>
+          readContract(config, {
+            address: VESSEL_ADDRESS,
+            abi: VESSEL_ABI,
+            functionName: 'craftToDelegate',
+            args: [BigInt(id)],
+          }).catch(() => ZERO_ADDRESS) as Promise<string>
+        )
+      )
+
+      const matched: string[] = []
+      for (let j = 0; j < batch.length; j++) {
+        if (delegates[j].toLowerCase() === address.toLowerCase()) {
+          matched.push(batch[j])
+        }
+      }
+
+      if (matched.length > 0) {
+        // Add matched vessels with loading state
+        delegatedVessels.value = [
+          ...delegatedVessels.value,
+          ...matched.map(id => ({ id, payload: null, loaded: false, type: null })),
+        ]
+
+        // Load payload + type for matched vessels
+        for (const id of matched) {
+          try {
+            const [payload, vesselType] = await Promise.all([
+              readContract(config, {
+                address: VESSEL_ADDRESS,
+                abi: VESSEL_ABI,
+                functionName: 'craftToPayload',
+                args: [BigInt(id)],
+              }) as Promise<string>,
+              readContract(config, {
+                address: VESSEL_ADDRESS,
+                abi: VESSEL_ABI,
+                functionName: 'craftToType',
+                args: [BigInt(id)],
+              }) as Promise<string>,
+            ])
+            const bytes = hexToBytes(payload)
+            const idx = delegatedVessels.value.findIndex(v => v.id === id)
+            if (idx !== -1) {
+              delegatedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType }
+            }
+          } catch {
+            const idx = delegatedVessels.value.findIndex(v => v.id === id)
+            if (idx !== -1) {
+              delegatedVessels.value[idx] = { id, payload: null, loaded: true, type: null }
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // silently fail
+  } finally {
+    delegateLoading.value = false
+  }
+}
+
 watch(addr, async (newAddr) => {
   if (newAddr) {
     await resolveAddr(newAddr)
     if (resolvedAddress.value) {
       await loadVessels(resolvedAddress.value)
+      loadDelegatedVessels(resolvedAddress.value)
     }
   }
 }, { immediate: true })
@@ -238,11 +351,19 @@ watch(addr, async (newAddr) => {
 .stat-capsule { color: var(--color-capsule); }
 .stat-empty { color: var(--text-faint); }
 
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: lowercase;
+  margin: 1.5rem 0 0 0;
+}
+
 .vessel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 0.75rem;
 }
 
 .vessel-card {
