@@ -3,7 +3,10 @@
     <AppHeader />
 
     <div class="detail-content">
-      <a href="#" class="back-link" @click.prevent="$router.back()">[back]</a>
+      <div class="nav-bar">
+        <a href="#" class="back-link" @click.prevent="$router.back()">[back]</a>
+        <button class="text-btn" @click="randomVessel">[random]</button>
+      </div>
 
       <div v-if="loading" class="status">loading vessel #{{ id }}...</div>
       <div v-else-if="error" class="status status-error">{{ error }}</div>
@@ -108,8 +111,27 @@
 
 <script setup lang="ts">
 import { detectContent } from '~/utils/content'
+import { fetchVesselActivity } from '~/utils/etherscan'
 
+const router = useRouter()
 const route = useRoute()
+
+// Random vessel navigation (same logic as index — only vessels with writes)
+const activeVesselIds = ref<string[]>([])
+
+async function randomVessel() {
+  if (!activeVesselIds.value.length) {
+    const all = await fetchVesselActivity()
+    const ids = new Set<string>()
+    for (const tx of all) {
+      if (tx.vesselId && tx.action === 'write') ids.add(tx.vesselId)
+    }
+    activeVesselIds.value = [...ids]
+  }
+  if (!activeVesselIds.value.length) return
+  const pick = activeVesselIds.value[Math.floor(Math.random() * activeVesselIds.value.length)]
+  router.push(`/${pick}`)
+}
 
 const id = computed(() => {
   const raw = route.params.id as string
@@ -190,6 +212,12 @@ async function copyBytes() {
 
 .detail-content {
   padding: 1rem;
+}
+
+.nav-bar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
 }
 
 .empty-label {
