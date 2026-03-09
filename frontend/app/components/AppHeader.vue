@@ -39,6 +39,7 @@
       </div>
     </Tooltip>
     <div class="header-actions">
+      <NuxtLink to="/grid" class="text-btn">[grid]</NuxtLink>
       <button class="text-btn" @click="toggleDark">
         {{ isDark ? '[light]' : '[dark]' }}
       </button>
