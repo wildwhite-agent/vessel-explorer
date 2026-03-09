@@ -17,10 +17,10 @@
         <div v-if="ensName" class="profile-address" @click="copyAddress" title="click to copy">{{ resolvedAddress }}</div>
 
         <div v-if="ownedVessels.length > 0" class="profile-stats">
-          <span>{{ ownedVessels.length }} vessels</span>
-          <span v-if="stats.machine" class="stat-machine"> · {{ stats.machine }} machines</span>
-          <span v-if="stats.vault" class="stat-vault"> · {{ stats.vault }} vaults</span>
-          <span v-if="stats.capsule" class="stat-capsule"> · {{ stats.capsule }} capsules</span>
+          <span>{{ ownedVessels.length }} {{ ownedVessels.length === 1 ? 'vessel' : 'vessels' }}</span>
+          <span v-if="stats.machine" class="stat-machine"> · {{ stats.machine }} {{ stats.machine === 1 ? 'machine' : 'machines' }}</span>
+          <span v-if="stats.vault" class="stat-vault"> · {{ stats.vault }} {{ stats.vault === 1 ? 'vault' : 'vaults' }}</span>
+          <span v-if="stats.capsule" class="stat-capsule"> · {{ stats.capsule }} {{ stats.capsule === 1 ? 'capsule' : 'capsules' }}</span>
           <span v-if="stats.empty" class="stat-empty"> · {{ stats.empty }} empty</span>
         </div>
 
