@@ -279,9 +279,9 @@ async function copyBytes() {
 }
 
 .entry-selector {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
   gap: 0.25rem;
-  flex-wrap: wrap;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
 }
