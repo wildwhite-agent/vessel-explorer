@@ -403,7 +403,7 @@ onMounted(async () => {
 }
 
 .holder-row.feed-row {
-  grid-template-columns: 2rem minmax(6rem, 1fr) repeat(4, 4.5rem);
+  grid-template-columns: 2rem minmax(12rem, 1fr) repeat(4, 4.5rem);
 }
 
 .dimmed {
@@ -412,6 +412,11 @@ onMounted(async () => {
 
 .col-rank {
   color: var(--text-faint);
+}
+
+.col-holder {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .col-stat {
@@ -533,12 +538,8 @@ onMounted(async () => {
 
 @media (max-width: 640px) {
   .feed-row {
-    grid-template-columns: 5rem 4rem 1fr;
+    grid-template-columns: 5rem 3.5rem 1fr 4rem;
     font-size: 12px;
-  }
-
-  .col-time {
-    display: none;
   }
 }
 </style>
