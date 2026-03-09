@@ -94,6 +94,8 @@
             </a>
           </div>
         </template>
+        <div v-if="feedLoadingMore" class="feed-status">loading more...</div>
+        <div ref="sentinel" class="feed-sentinel" />
       </div>
     </div>
     </div>
@@ -125,6 +127,10 @@ const activeTab = ref<'activity' | 'holders'>('activity')
 const activity = ref<VesselTransaction[]>([])
 const feedLoading = ref(true)
 const feedError = ref<string | null>(null)
+const feedPage = ref(1)
+const feedLoadingMore = ref(false)
+const feedExhausted = ref(false)
+const sentinel = ref<HTMLElement | null>(null)
 const previewCanvas = ref<HTMLCanvasElement | null>(null)
 
 interface Holder {
@@ -320,16 +326,49 @@ function renderPreview(data: Uint8Array, tokenId: number) {
   renderToCanvas(canvas, data, tokenId, 80)
 }
 
+const showActions = new Set(['claim', 'transfer', 'write', 'machine', 'delegate', 'role', 'entry'])
+
+async function loadPage(page: number) {
+  const all = await fetchVesselActivity(page)
+  const filtered = all.filter(tx => tx.vesselId !== null && tx.isError !== '1' && showActions.has(tx.action))
+  if (all.length === 0) feedExhausted.value = true
+  return filtered
+}
+
+async function loadMore() {
+  if (feedLoadingMore.value || feedExhausted.value) return
+  feedLoadingMore.value = true
+  try {
+    feedPage.value++
+    const more = await loadPage(feedPage.value)
+    if (more.length === 0) {
+      feedExhausted.value = true
+    } else {
+      activity.value.push(...more)
+    }
+  } catch { /* silently fail */ }
+  finally { feedLoadingMore.value = false }
+}
+
 onMounted(async () => {
   try {
-    const all = await fetchVesselActivity()
-    const showActions = new Set(['claim', 'transfer', 'write', 'machine', 'delegate', 'role', 'entry'])
-    activity.value = all.filter(tx => tx.vesselId !== null && tx.isError !== '1' && showActions.has(tx.action))
+    activity.value = await loadPage(1)
   } catch (e: any) {
     feedError.value = e?.message || 'failed to fetch activity'
   } finally {
     feedLoading.value = false
   }
+
+  // Infinite scroll via IntersectionObserver
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0]?.isIntersecting && activeTab.value === 'activity') loadMore()
+  }, { rootMargin: '200px' })
+
+  watch(sentinel, (el) => {
+    if (el) observer.observe(el)
+  }, { immediate: true })
+
+  onUnmounted(() => observer.disconnect())
 })
 </script>
 
@@ -432,6 +471,10 @@ onMounted(async () => {
 
 .feed-error {
   color: var(--error);
+}
+
+.feed-sentinel {
+  height: 1px;
 }
 
 .feed-table {

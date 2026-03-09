@@ -5,7 +5,7 @@ import { decodeFunctionData } from 'viem'
 
 // Minimal ABI for decoding tx inputs
 const VESSEL_DECODE_ABI = [
-  { type: 'function', name: 'claim', inputs: [{ name: 'tokenId', type: 'uint256' }], outputs: [], stateMutability: 'payable' },
+  { type: 'function', name: 'claim', inputs: [{ name: '_to', type: 'address' }, { name: '_tokenIds', type: 'uint256[]' }, { name: '_bytes', type: 'bytes' }, { name: '_machine', type: 'address' }], outputs: [], stateMutability: 'payable' },
   { type: 'function', name: 'setPayloadHolder', inputs: [{ name: 'tokenId', type: 'uint256' }, { name: 'data', type: 'bytes' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'setDelegate', inputs: [{ name: 'tokenId', type: 'uint256' }, { name: 'delegate', type: 'address' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'setMachineHolder', inputs: [{ name: 'tokenId', type: 'uint256' }, { name: 'machine', type: 'address' }], outputs: [], stateMutability: 'nonpayable' },
@@ -40,8 +40,10 @@ function decodeVesselTx(input: string, etherscanFnName: string): { action: strin
     const { functionName, args } = decodeFunctionData({ abi: VESSEL_DECODE_ABI, data: input as `0x${string}` })
 
     switch (functionName) {
-      case 'claim':
-        return { action: 'claim', vesselId: String(args[0]), detail: `claimed vessel #${args[0]}` }
+      case 'claim': {
+        const ids = args[1] as bigint[]
+        return { action: 'claim', vesselId: ids.length > 0 ? String(ids[0]) : null, detail: `claimed ${ids.length} vessel(s)` }
+      }
       case 'setPayloadHolder':
         return { action: 'write', vesselId: String(args[0]), detail: `wrote ${(args[1] as string).length / 2 - 1} bytes to #${args[0]}` }
       case 'setDelegate':
@@ -70,8 +72,8 @@ function decodeVesselTx(input: string, etherscanFnName: string): { action: strin
   }
 }
 
-export async function fetchVesselActivity(): Promise<VesselTransaction[]> {
-  const res = await fetch('/api/activity')
+export async function fetchVesselActivity(page = 1, offset = 50): Promise<VesselTransaction[]> {
+  const res = await fetch(`/api/activity?page=${page}&offset=${offset}`)
   const txs = await res.json()
   if (!Array.isArray(txs)) return []
 
