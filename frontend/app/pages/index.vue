@@ -59,46 +59,41 @@
         <div v-else-if="feedError" class="feed-status feed-error">{{ feedError }}</div>
 
         <div v-else class="feed-table">
-        <div class="feed-row feed-row-header">
-          <span class="col-action">action</span>
-          <span class="col-id">vessel</span>
-          <span class="col-from">from</span>
-          <span class="col-time">time</span>
-          <span class="col-tx">tx</span>
-        </div>
-        <div
-          v-for="tx in activity"
-          :key="tx.hash"
-          class="feed-row"
-        >
-          <span class="col-action">
-            <span class="action-badge" :class="`action-${tx.action}`">{{ tx.action }}</span>
-          </span>
-          <span class="col-id vessel-id-cell">
-            <NuxtLink
-              v-if="tx.vesselId"
-              :to="`/${tx.vesselId}`"
-              class="vessel-link"
-              @mouseenter="showPreview(tx.vesselId, $event)"
-              @mouseleave="hidePreview"
-            >
-              #{{ tx.vesselId }}
-            </NuxtLink>
-            <span v-else class="text-faint">--</span>
-          </span>
-          <span class="col-from">
-            <AddressDisplay :address="tx.from" />
-          </span>
-          <span class="col-time">{{ formatTime(tx.timeStamp) }}</span>
-          <a
-            :href="`${ETHERSCAN_BASE}/tx/${tx.hash}`"
-            target="_blank"
-            rel="noopener"
-            class="col-tx etherscan-link"
+        <template v-for="(group, gi) in activityGroups" :key="gi">
+          <div class="feed-date-separator">{{ group.label }}</div>
+          <div
+            v-for="tx in group.txs"
+            :key="tx.hash"
+            class="feed-row"
           >
-            {{ tx.hash.slice(0, 10) }}...
-          </a>
-        </div>
+            <span class="col-action">
+              <span class="action-badge" :class="`action-${tx.action}`">{{ tx.action }}</span>
+            </span>
+            <span class="col-id vessel-id-cell">
+              <NuxtLink
+                v-if="tx.vesselId"
+                :to="`/${tx.vesselId}`"
+                class="vessel-link"
+                @mouseenter="showPreview(tx.vesselId, $event)"
+                @mouseleave="hidePreview"
+              >
+                #{{ tx.vesselId }}
+              </NuxtLink>
+              <span v-else class="text-faint">--</span>
+            </span>
+            <span class="col-from">
+              <AddressDisplay :address="tx.from" />
+            </span>
+            <a
+              :href="`${ETHERSCAN_BASE}/tx/${tx.hash}`"
+              target="_blank"
+              rel="noopener"
+              class="col-time etherscan-link"
+            >
+              {{ formatTime(tx.timeStamp) }}
+            </a>
+          </div>
+        </template>
       </div>
     </div>
     </div>
@@ -199,6 +194,38 @@ watch(activeTab, async (tab) => {
       holdersLoading.value = false
     }
   }
+})
+
+// Group activity by day
+const activityGroups = computed(() => {
+  const groups: { label: string; txs: VesselTransaction[] }[] = []
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const yesterdayStart = todayStart - 86400_000
+
+  let currentLabel = ''
+  let currentGroup: VesselTransaction[] = []
+
+  for (const tx of activity.value) {
+    const ts = Number(tx.timeStamp) * 1000
+    let label: string
+    if (ts >= todayStart) label = 'today'
+    else if (ts >= yesterdayStart) label = 'yesterday'
+    else {
+      const d = new Date(ts)
+      label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }
+
+    if (label !== currentLabel) {
+      if (currentGroup.length) groups.push({ label: currentLabel, txs: currentGroup })
+      currentLabel = label
+      currentGroup = [tx]
+    } else {
+      currentGroup.push(tx)
+    }
+  }
+  if (currentGroup.length) groups.push({ label: currentLabel, txs: currentGroup })
+  return groups
 })
 
 // Vessel IDs that have data (from write actions in feed)
@@ -407,14 +434,26 @@ onMounted(async () => {
   overflow-x: auto;
 }
 
+.feed-date-separator {
+  color: var(--text-faint);
+  font-size: 11px;
+  text-transform: lowercase;
+  padding: 0.6rem 0 0.25rem;
+  letter-spacing: 0.05em;
+}
+
 .feed-row {
   display: grid;
-  grid-template-columns: 6rem 5rem 1fr 5rem 8rem;
+  grid-template-columns: 5.5rem 4.5rem 1fr 5rem;
   gap: 0.5rem;
-  padding: 0.35rem 0;
+  padding: 0.35rem 0.25rem;
   border-bottom: 1px solid var(--border-color);
   align-items: baseline;
   white-space: nowrap;
+
+  &:hover {
+    background: var(--bg-subtle);
+  }
 }
 
 .feed-row-header {
@@ -431,6 +470,7 @@ onMounted(async () => {
 
 .col-time {
   color: var(--text-faint);
+  text-align: right;
 }
 
 .vessel-id-cell {
@@ -441,15 +481,17 @@ onMounted(async () => {
   font-size: 11px;
   font-weight: 700;
   text-transform: lowercase;
+  padding: 1px 5px;
+  border-radius: 2px;
 }
 
-.action-claim { color: var(--color-capsule); }
-.action-write { color: var(--write, #f59e0b); }
-.action-delegate { color: #fb923c; }
-.action-machine { color: var(--color-machine); }
-.action-transfer { color: var(--muted); }
-.action-role { color: #fb923c; }
-.action-entry { color: var(--write, #f59e0b); }
+.action-claim { color: var(--color-capsule); background: rgba(34, 211, 238, 0.2); }
+.action-write { color: var(--write, #f59e0b); background: rgba(245, 158, 11, 0.2); }
+.action-delegate { color: #60a5fa; background: rgba(96, 165, 250, 0.2); }
+.action-machine { color: var(--color-machine); background: rgba(167, 139, 250, 0.2); }
+.action-transfer { color: var(--muted); background: rgba(128, 128, 128, 0.15); }
+.action-role { color: #f472b6; background: rgba(244, 114, 182, 0.2); }
+.action-entry { color: var(--color-vault); background: rgba(74, 222, 128, 0.2); }
 
 .vessel-link {
   color: var(--accent);
@@ -462,7 +504,7 @@ onMounted(async () => {
 }
 
 .etherscan-link {
-  color: var(--muted);
+  color: var(--text-faint);
   text-decoration: none;
 
   &:hover {
@@ -495,8 +537,7 @@ onMounted(async () => {
     font-size: 12px;
   }
 
-  .col-time,
-  .col-tx {
+  .col-time {
     display: none;
   }
 }
