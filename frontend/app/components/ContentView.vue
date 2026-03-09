@@ -162,7 +162,7 @@ const svgDataUri = computed(() => {
   font-size: 12px;
   cursor: pointer;
   padding: 0;
-  text-transform: lowercase;
+  text-transform: uppercase;
   line-height: 2rem;
   height: 2rem;
   display: flex;
