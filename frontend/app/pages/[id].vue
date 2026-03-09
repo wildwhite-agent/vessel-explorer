@@ -75,29 +75,25 @@
           </button>
         </div>
 
-        <div class="grid-controls">
-          <button
-            :class="['text-btn', { active: showBytes }]"
-            @click="showBytes = !showBytes"
-          >
-            [bytes]
-          </button>
-          <button
-            v-if="activePayload?.length"
-            class="text-btn"
-            @click="copyBytes"
-          >
-            {{ copied ? '[copied]' : '[copy]' }}
-          </button>
-        </div>
-
         <ClientOnly>
           <PixelGrid
             v-if="activePayload?.length"
             :data="activePayload"
             :token-id="vessel.id"
             :show-bytes="showBytes"
-          />
+          >
+            <template #actions>
+              <button
+                :class="['text-btn', { active: showBytes }]"
+                @click="showBytes = !showBytes"
+              >
+                [bytes]
+              </button>
+              <button class="text-btn" @click="copyBytes">
+                {{ copied ? '[copied]' : '[copy]' }}
+              </button>
+            </template>
+          </PixelGrid>
           <div v-else class="status empty-label">empty</div>
         </ClientOnly>
 
@@ -286,7 +282,8 @@ async function copyBytes() {
   display: flex;
   gap: 0.25rem;
   flex-wrap: wrap;
-  margin-bottom: 0.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .entry-btn {
@@ -311,18 +308,6 @@ async function copyBytes() {
   &.active {
     color: var(--accent);
     border-color: var(--accent);
-    font-weight: 700;
-  }
-}
-
-.grid-controls {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-
-  & .active {
-    color: var(--accent);
     font-weight: 700;
   }
 }

@@ -1,6 +1,9 @@
 <template>
   <div class="pixel-grid">
-    <div class="grid-meta">{{ cols }} x {{ rows }} (mode 0: grayscale)</div>
+    <div class="grid-meta">
+      <span>{{ cols }} x {{ rows }} (mode 0: grayscale)</span>
+      <span class="grid-meta-actions"><slot name="actions" /></span>
+    </div>
     <div class="grid-frame">
       <div
         class="grid-container"
@@ -82,6 +85,15 @@ const cells = computed(() => {
 .grid-meta {
   color: var(--muted);
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.grid-meta-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .grid-frame {
