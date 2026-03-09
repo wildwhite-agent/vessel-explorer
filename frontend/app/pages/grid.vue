@@ -3,7 +3,7 @@
     <AppHeader />
 
     <div class="grid-toolbar">
-      <NuxtLink to="/" class="back-link">[BACK]</NuxtLink>
+      <NuxtLink to="/" class="back-link">[back]</NuxtLink>
       <div class="zoom-controls">
         <button class="text-btn" @click="zoomIn">[+]</button>
         <button class="text-btn" @click="zoomOut">[-]</button>
@@ -228,6 +228,11 @@ function getTouchDist(e: TouchEvent): number {
   return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
 }
 
+function getTouchMidpoint(e: TouchEvent): { x: number; y: number } {
+  const [a, b] = [e.touches[0]!, e.touches[1]!]
+  return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 }
+}
+
 function onTouchStart(e: TouchEvent) {
   if (e.touches.length === 2) {
     pinching = true
@@ -238,10 +243,30 @@ function onTouchStart(e: TouchEvent) {
 function onTouchMove(e: TouchEvent) {
   if (!pinching || e.touches.length !== 2) return
   e.preventDefault()
+  const el = scrollContainer.value!
+  const rect = el.getBoundingClientRect()
+  const mid = getTouchMidpoint(e)
+
+  // Midpoint relative to scroll container viewport
+  const cx = mid.x - rect.left
+  const cy = mid.y - rect.top
+
+  // Position in grid content coordinates
+  const gridX = el.scrollLeft + cx
+  const gridY = el.scrollTop + cy
+
+  const oldSize = cellSize.value
   const dist = getTouchDist(e)
   const scale = dist / lastPinchDist
-  cellSize.value = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(cellSize.value * scale)))
+  const newSize = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(oldSize * scale)))
   lastPinchDist = dist
+  if (newSize === oldSize) return
+  cellSize.value = newSize
+
+  // Adjust scroll so midpoint stays under fingers
+  const ratio = newSize / oldSize
+  el.scrollLeft = gridX * ratio - cx
+  el.scrollTop = gridY * ratio - cy
 }
 
 function onTouchEnd(e: TouchEvent) {
@@ -330,6 +355,10 @@ useHead({ title: 'all vessels' })
   border-bottom: 1px solid var(--border-color);
   font-size: 13px;
   flex-shrink: 0;
+
+  .back-link {
+    margin-bottom: 0;
+  }
 }
 
 .zoom-controls {
@@ -397,7 +426,7 @@ useHead({ title: 'all vessels' })
 
 @media (max-width: 640px) {
   .grid-toolbar {
-    padding: 0.5rem;
+    padding: 0.75rem 1rem;
     gap: 0.5rem;
     font-size: 12px;
   }
