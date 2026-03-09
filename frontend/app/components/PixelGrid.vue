@@ -26,7 +26,7 @@
           <span
             v-if="showBytes"
             class="cell-hex"
-            :style="{ color: byte > 128 ? '#000' : '#fff' }"
+            :style="{ color: byte > 128 ? '#000' : '#fff', fontSize: cellSize * 0.45 + 'px' }"
           >{{ byte.toString(16).padStart(2, '0') }}</span>
         </div>
       </div>
@@ -161,11 +161,11 @@ const cells = computed(() => {
 }
 
 .cell-hex {
-  font-size: 8px;
   font-family: var(--font-mono);
   line-height: 1;
   pointer-events: none;
   user-select: none;
+  overflow: hidden;
 }
 
 .grid-download {
