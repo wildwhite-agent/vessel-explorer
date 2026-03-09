@@ -11,7 +11,8 @@
       <div v-if="loading" class="status">loading vessel #{{ id }}...</div>
       <div v-else-if="error" class="status status-error">{{ error }}</div>
 
-      <template v-else-if="vessel">
+      <Transition name="vessel-in">
+      <div v-if="vessel" :key="vessel.id" class="vessel-loaded">
         <div class="detail-header">
           <h1 class="vessel-title">
             vessel #{{ vessel.id }}
@@ -104,7 +105,8 @@
           v-if="activePayload?.length && contentType !== 'binary'"
           :data="activePayload"
         />
-      </template>
+      </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -323,6 +325,15 @@ async function copyBytes() {
     color: var(--accent);
     font-weight: 700;
   }
+}
+
+.vessel-in-enter-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.vessel-in-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
 }
 
 @media (max-width: 640px) {

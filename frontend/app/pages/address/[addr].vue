@@ -8,7 +8,8 @@
       <div v-if="resolving" class="status">resolving address...</div>
       <div v-else-if="resolveError" class="status status-error">{{ resolveError }}</div>
 
-      <template v-else>
+      <Transition name="vessel-in">
+      <div v-if="!resolving && !resolveError" :key="resolvedAddress" class="profile-loaded">
         <h1 class="profile-title">
           <template v-if="ensName">{{ ensName }}</template>
           <template v-else>{{ shortenAddress(resolvedAddress) }}</template>
@@ -47,7 +48,8 @@
             </div>
           </NuxtLink>
         </div>
-      </template>
+      </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -305,6 +307,15 @@ watch(addr, async (newAddr) => {
 .card-loading {
   color: var(--text-faint);
   font-size: 11px;
+}
+
+.vessel-in-enter-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.vessel-in-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
 }
 
 @media (max-width: 640px) {
