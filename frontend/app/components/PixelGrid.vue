@@ -31,6 +31,9 @@
         </div>
       </div>
     </div>
+    <div class="grid-download">
+      <button class="text-btn" @click="download">[download]</button>
+    </div>
   </div>
 </template>
 
@@ -44,6 +47,45 @@ const props = defineProps<{
 }>()
 
 const { cols, rows } = getGridDimensions(props.tokenId)
+
+const EXPORT_CELL = 40 // px per cell in exported PNG
+
+function download() {
+  const w = cols * EXPORT_CELL
+  const h = rows * EXPORT_CELL
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')!
+
+  // Draw cells
+  for (let i = 0; i < cols * rows; i++) {
+    const byte = i < props.data.length ? props.data[i]! : 0
+    const x = (i % cols) * EXPORT_CELL
+    const y = Math.floor(i / cols) * EXPORT_CELL
+    ctx.fillStyle = `rgb(${byte},${byte},${byte})`
+    ctx.fillRect(x, y, EXPORT_CELL, EXPORT_CELL)
+  }
+
+  // Draw hex bytes if showing
+  if (props.showBytes) {
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.font = `${Math.max(8, EXPORT_CELL * 0.35)}px monospace`
+    for (let i = 0; i < cols * rows; i++) {
+      const byte = i < props.data.length ? props.data[i]! : 0
+      const x = (i % cols) * EXPORT_CELL + EXPORT_CELL / 2
+      const y = Math.floor(i / cols) * EXPORT_CELL + EXPORT_CELL / 2
+      ctx.fillStyle = byte > 128 ? '#000' : '#fff'
+      ctx.fillText(byte.toString(16).padStart(2, '0'), x, y)
+    }
+  }
+
+  const link = document.createElement('a')
+  link.download = `vessel-${props.tokenId}.png`
+  link.href = canvas.toDataURL('image/png')
+  link.click()
+}
 
 const containerWidth = ref(600)
 
@@ -124,6 +166,12 @@ const cells = computed(() => {
   line-height: 1;
   pointer-events: none;
   user-select: none;
+}
+
+.grid-download {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
 }
 
 @media (max-width: 640px) {
