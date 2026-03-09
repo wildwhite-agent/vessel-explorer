@@ -1,6 +1,43 @@
 <template>
   <header class="app-header">
     <NuxtLink to="/" class="app-title">vessel explorer</NuxtLink>
+    <Tooltip v-if="claimed != null" side="bottom" align="center" :side-offset="8" :delay-duration="100" :arrow="false">
+      <template #trigger>
+        <span class="header-stats" @mouseenter="loadFilledBytes">
+          {{ claimed }}<span class="stat-sep">/</span>{{ maxSupply }} claimed
+        </span>
+      </template>
+      <div class="stats-popover">
+        <div class="stats-row">
+          <span class="stats-label">capacity claimed</span>
+          <span class="stats-value">{{ formatBytes(claimedCapacity) }} <span class="stat-sep">/ {{ formatBytes(TOTAL_CAPACITY) }}</span></span>
+        </div>
+        <div class="stats-row">
+          <span class="stats-label">bytes filled</span>
+          <span class="stats-value">
+            <template v-if="filledBytes != null">{{ formatBytes(filledBytes) }}</template>
+            <template v-else>loading...</template>
+          </span>
+        </div>
+        <div class="stats-row" v-if="holderCount">
+          <span class="stats-label">unique holders</span>
+          <span class="stats-value">{{ holderCount }}</span>
+        </div>
+        <div class="stats-row" v-if="holderCount && claimed">
+          <span class="stats-label">avg vessels/holder</span>
+          <span class="stats-value">{{ (claimed / holderCount).toFixed(1) }}</span>
+        </div>
+        <div class="stats-row" v-if="largestHolder">
+          <span class="stats-label">largest holder</span>
+          <span class="stats-value">
+            <NuxtLink :to="`/address/${largestHolder.address}`" class="stats-link">
+              <AddressDisplay :address="largestHolder.address" />
+            </NuxtLink>
+            <span class="stat-sep"> ({{ largestHolder.count }})</span>
+          </span>
+        </div>
+      </div>
+    </Tooltip>
     <div class="header-actions">
       <button class="text-btn" @click="toggleDark">
         {{ isDark ? '[light]' : '[dark]' }}
@@ -10,15 +47,102 @@
 </template>
 
 <script setup lang="ts">
-const isDark = ref(true)
+import { readContract } from '@wagmi/core'
+import { useConfig } from '@wagmi/vue'
+import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes } from '~/utils/vessel'
+import { fetchOwnership } from '~/composables/useOwnership'
 
-onMounted(() => {
+const wagmiConfig = useConfig()
+const isDark = ref(true)
+const claimed = ref<number | null>(null)
+const maxSupply = ref(10000)
+const claimedIds = ref<string[]>([])
+const holderCount = ref(0)
+const largestHolder = ref<{ address: string; count: number } | null>(null)
+const filledBytes = ref<number | null>(null)
+const filledLoading = ref(false)
+
+const TOTAL_CAPACITY = 50_005_000
+
+const claimedCapacity = computed(() => {
+  let sum = 0
+  for (const id of claimedIds.value) sum += Number(id)
+  return sum
+})
+
+function formatBytes(bytes: number): string {
+  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`
+  if (bytes >= 1_000) return `${(bytes / 1_000).toFixed(0)} KB`
+  return `${bytes} B`
+}
+
+onMounted(async () => {
   const root = document.documentElement
   if (!root.classList.contains('dark')) {
     root.classList.add('dark')
   }
   isDark.value = root.classList.contains('dark')
+
+  try {
+    const [claimedCount, supply] = await Promise.all([
+      readContract(wagmiConfig, {
+        address: VESSEL_ADDRESS,
+        abi: VESSEL_ABI,
+        functionName: 'claimedCount',
+      }) as Promise<bigint>,
+      readContract(wagmiConfig, {
+        address: VESSEL_ADDRESS,
+        abi: VESSEL_ABI,
+        functionName: 'MAX_SUPPLY',
+      }) as Promise<bigint>,
+    ])
+    claimed.value = Number(claimedCount)
+    maxSupply.value = Number(supply)
+  } catch { /* silently fail */ }
+
+  // Background: fetch ownership to compute claimed capacity + holder stats
+  try {
+    const { ownership, ownerTokens } = await fetchOwnership()
+    claimedIds.value = [...ownership.keys()]
+    holderCount.value = ownerTokens.size
+
+    let maxCount = 0
+    let maxAddr = ''
+    for (const [addr, tokens] of ownerTokens.entries()) {
+      if (tokens.length > maxCount) {
+        maxCount = tokens.length
+        maxAddr = addr
+      }
+    }
+    if (maxAddr) largestHolder.value = { address: maxAddr, count: maxCount }
+  } catch { /* silently fail */ }
 })
+
+// Lazy load filled bytes on first hover
+async function loadFilledBytes() {
+  if (filledLoading.value || filledBytes.value != null || claimedIds.value.length === 0) return
+  filledLoading.value = true
+
+  let total = 0
+  const BATCH = 20
+  for (let i = 0; i < claimedIds.value.length; i += BATCH) {
+    const batch = claimedIds.value.slice(i, i + BATCH)
+    const results = await Promise.all(
+      batch.map(id =>
+        readContract(wagmiConfig, {
+          address: VESSEL_ADDRESS,
+          abi: VESSEL_ABI,
+          functionName: 'craftToPayload',
+          args: [BigInt(id)],
+        }).catch(() => '0x') as Promise<string>
+      )
+    )
+    for (const raw of results) {
+      total += hexToBytes(raw).length
+    }
+    filledBytes.value = total
+  }
+}
 
 function toggleDark() {
   const root = document.documentElement
@@ -45,9 +169,63 @@ function toggleDark() {
   text-transform: lowercase;
 }
 
+.header-stats {
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color);
+  }
+}
+
+.stat-sep {
+  color: var(--text-faint);
+}
+
+.stats-popover {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  min-width: 14rem;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stats-label {
+  color: var(--muted);
+}
+
+.stats-value {
+  color: var(--color);
+  text-align: right;
+}
+
+.stats-link {
+  color: var(--color);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .header-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .header-stats {
+    display: none;
+  }
 }
 </style>

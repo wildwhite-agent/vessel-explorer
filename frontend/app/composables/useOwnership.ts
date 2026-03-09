@@ -6,6 +6,9 @@ export interface OwnerTokens {
   ownerTokens: Map<string, string[]>
 }
 
+// Cache for the global (no-address) ownership fetch
+let globalCache: Promise<OwnerTokens> | null = null
+
 /**
  * Fetch all transfers (optionally filtered by address) and compute
  * the current ownership map via transfer replay.
@@ -15,6 +18,14 @@ export interface OwnerTokens {
  *  - ownerTokens: Map<ownerAddress, tokenId[]>
  */
 export async function fetchOwnership(address?: string): Promise<OwnerTokens> {
+  if (!address && globalCache) return globalCache
+
+  const promise = _fetchOwnership(address)
+  if (!address) globalCache = promise
+  return promise
+}
+
+async function _fetchOwnership(address?: string): Promise<OwnerTokens> {
   let transfers: TokenTransfer[]
 
   if (address) {

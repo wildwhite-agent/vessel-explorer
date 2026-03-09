@@ -58,7 +58,7 @@ function decodeVesselTx(input: string, etherscanFnName: string): { action: strin
       case 'setRole':
         return { action: 'role', vesselId: null, detail: `set role ${args[0]}` }
       case 'setVaultEntryHolder':
-        return { action: 'entry', vesselId: String(args[0]), detail: `set entry ${args[1]} on #${args[0]}` }
+        return { action: 'setvaultentry', vesselId: String(args[0]), detail: `set entry ${args[1]} on #${args[0]}` }
       case 'setApprovalForAll':
         return { action: 'approval', vesselId: null, detail: 'set approval for all' }
       case 'refreshMetadata':

@@ -58,7 +58,18 @@
         <div v-if="feedLoading" class="feed-status">loading...</div>
         <div v-else-if="feedError" class="feed-status feed-error">{{ feedError }}</div>
 
-        <div v-else class="feed-table">
+        <div v-else class="feed-filters">
+          <button
+            v-for="action in actionTypes"
+            :key="action"
+            :class="['filter-btn', `action-${action}`, { inactive: !activeFilters.has(action) }]"
+            @click="toggleFilter(action)"
+          >
+            {{ action }}
+          </button>
+        </div>
+
+        <div v-if="!feedLoading && !feedError" class="feed-table">
         <template v-for="(group, gi) in activityGroups" :key="gi">
           <div class="feed-date-separator">{{ group.label }}</div>
           <div
@@ -132,6 +143,9 @@ const feedLoadingMore = ref(false)
 const feedExhausted = ref(false)
 const sentinel = ref<HTMLElement | null>(null)
 const previewCanvas = ref<HTMLCanvasElement | null>(null)
+
+const actionTypes = ['claim', 'write', 'transfer', 'machine', 'delegate', 'setvaultentry'] as const
+const activeFilters = ref(new Set<string>(actionTypes))
 
 interface Holder {
   address: string
@@ -212,7 +226,8 @@ const activityGroups = computed(() => {
   let currentLabel = ''
   let currentGroup: VesselTransaction[] = []
 
-  for (const tx of activity.value) {
+  const filtered = activity.value.filter(tx => activeFilters.value.has(tx.action))
+  for (const tx of filtered) {
     const ts = Number(tx.timeStamp) * 1000
     let label: string
     if (ts >= todayStart) label = 'today'
@@ -326,7 +341,17 @@ function renderPreview(data: Uint8Array, tokenId: number) {
   renderToCanvas(canvas, data, tokenId, 80)
 }
 
-const showActions = new Set(['claim', 'transfer', 'write', 'machine', 'delegate', 'role', 'entry'])
+const showActions = new Set(['claim', 'transfer', 'write', 'machine', 'delegate', 'setvaultentry'])
+
+function toggleFilter(action: string) {
+  const f = activeFilters.value
+  if (f.has(action)) {
+    if (f.size > 1) f.delete(action)
+  } else {
+    f.add(action)
+  }
+  activeFilters.value = new Set(f)
+}
 
 async function loadPage(page: number) {
   const all = await fetchVesselActivity(page)
@@ -482,6 +507,39 @@ onMounted(async () => {
   overflow-x: auto;
 }
 
+.feed-filters {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.filter-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: lowercase;
+  padding: 6px 10px !important;
+  margin: 0 !important;
+  border-radius: 2px;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  background: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  height: auto !important;
+  min-height: 0 !important;
+  block-size: auto !important;
+  min-inline-size: 0 !important;
+
+  &.inactive {
+    opacity: 0.3;
+  }
+}
+
 .feed-date-separator {
   color: var(--text-faint);
   font-size: 11px;
@@ -539,7 +597,7 @@ onMounted(async () => {
 .action-machine { color: var(--color-machine); background: rgba(167, 139, 250, 0.2); }
 .action-transfer { color: var(--muted); background: rgba(128, 128, 128, 0.15); }
 .action-role { color: #f472b6; background: rgba(244, 114, 182, 0.2); }
-.action-entry { color: var(--color-vault); background: rgba(74, 222, 128, 0.2); }
+.action-setvaultentry { color: var(--color-vault); background: rgba(74, 222, 128, 0.2); }
 
 .vessel-link {
   color: var(--accent);
