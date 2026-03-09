@@ -54,6 +54,7 @@ import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes } from '~/utils/vessel'
 import { fetchOwnership } from '~/composables/useOwnership'
 
 const wagmiConfig = useConfig()
+const COLOR_MODE_KEY = 'vessel-color-mode'
 const isDark = ref(true)
 const claimed = ref<number | null>(null)
 const maxSupply = ref(10000)
@@ -79,10 +80,10 @@ function formatBytes(bytes: number): string {
 
 onMounted(async () => {
   const root = document.documentElement
-  if (!root.classList.contains('dark')) {
-    root.classList.add('dark')
-  }
-  isDark.value = root.classList.contains('dark')
+  const stored = localStorage.getItem(COLOR_MODE_KEY)
+  const shouldBeDark = stored ? stored === 'dark' : true
+  root.classList.toggle('dark', shouldBeDark)
+  isDark.value = shouldBeDark
 
   try {
     const [claimedCount, supply] = await Promise.all([
@@ -149,6 +150,7 @@ function toggleDark() {
   const root = document.documentElement
   root.classList.toggle('dark')
   isDark.value = root.classList.contains('dark')
+  localStorage.setItem(COLOR_MODE_KEY, isDark.value ? 'dark' : 'light')
 }
 </script>
 
