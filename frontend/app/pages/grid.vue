@@ -15,6 +15,8 @@
       ref="scrollContainer"
       class="grid-scroll"
       @scroll="onScroll"
+      @touchstart="onTouchStart"
+      @touchend="onTouchEnd"
     >
       <div
         class="grid-sizer"
@@ -217,6 +219,62 @@ function onScroll() {
   })
 }
 
+// Pinch-to-zoom
+let lastPinchDist = 0
+let pinching = false
+
+function getTouchDist(e: TouchEvent): number {
+  const [a, b] = [e.touches[0]!, e.touches[1]!]
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+}
+
+function onTouchStart(e: TouchEvent) {
+  if (e.touches.length === 2) {
+    pinching = true
+    lastPinchDist = getTouchDist(e)
+  }
+}
+
+function onTouchMove(e: TouchEvent) {
+  if (!pinching || e.touches.length !== 2) return
+  e.preventDefault()
+  const dist = getTouchDist(e)
+  const scale = dist / lastPinchDist
+  cellSize.value = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(cellSize.value * scale)))
+  lastPinchDist = dist
+}
+
+function onTouchEnd(e: TouchEvent) {
+  if (e.touches.length < 2) pinching = false
+}
+
+// Trackpad / ctrl+wheel zoom — centered on cursor
+function onWheel(e: WheelEvent) {
+  if (!e.ctrlKey && !e.metaKey) return
+  e.preventDefault()
+  const el = scrollContainer.value!
+  const rect = el.getBoundingClientRect()
+
+  // Cursor position relative to the scroll container viewport
+  const cx = e.clientX - rect.left
+  const cy = e.clientY - rect.top
+
+  // Position in the grid (content coordinates)
+  const gridX = el.scrollLeft + cx
+  const gridY = el.scrollTop + cy
+
+  const oldSize = cellSize.value
+  const scale = 1 - e.deltaY * 0.005
+  const newSize = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(oldSize * scale)))
+  if (newSize === oldSize) return
+  cellSize.value = newSize
+
+  // Adjust scroll so the point under the cursor stays put
+  const ratio = newSize / oldSize
+  el.scrollLeft = gridX * ratio - cx
+  el.scrollTop = gridY * ratio - cy
+}
+
 function updateSize() {
   if (!scrollContainer.value) return
   viewportWidth.value = scrollContainer.value.clientWidth
@@ -225,6 +283,8 @@ function updateSize() {
 
 onMounted(async () => {
   window.addEventListener('resize', updateSize)
+  scrollContainer.value?.addEventListener('touchmove', onTouchMove, { passive: false })
+  scrollContainer.value?.addEventListener('wheel', onWheel, { passive: false })
 
   await nextTick()
   updateSize()
@@ -247,6 +307,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateSize)
+  scrollContainer.value?.removeEventListener('touchmove', onTouchMove)
+  scrollContainer.value?.removeEventListener('wheel', onWheel)
 })
 
 useHead({ title: 'all vessels' })
@@ -284,6 +346,7 @@ useHead({ title: 'all vessels' })
 .grid-scroll {
   flex: 1;
   overflow: auto;
+  touch-action: pan-x pan-y;
 }
 
 .grid-sizer {
