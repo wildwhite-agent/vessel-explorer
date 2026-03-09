@@ -55,10 +55,7 @@
 
       <!-- Activity tab -->
       <div v-else>
-        <div v-if="feedLoading" class="feed-status">loading...</div>
-        <div v-else-if="feedError" class="feed-status feed-error">{{ feedError }}</div>
-
-        <div v-else class="feed-filters">
+        <div class="feed-filters">
           <button
             v-for="action in actionTypes"
             :key="action"
@@ -69,7 +66,10 @@
           </button>
         </div>
 
-        <div v-if="!feedLoading && !feedError" class="feed-table">
+        <div v-if="feedLoading" class="feed-status">loading...</div>
+        <div v-else-if="feedError" class="feed-status feed-error">{{ feedError }}</div>
+
+        <div v-else class="feed-table">
         <template v-for="(group, gi) in activityGroups" :key="gi">
           <div class="feed-date-separator">{{ group.label }}</div>
           <div
@@ -546,6 +546,10 @@ onMounted(async () => {
   text-transform: lowercase;
   padding: 0.6rem 0 0.25rem;
   letter-spacing: 0.05em;
+
+  &:first-child {
+    padding-top: 0;
+  }
 }
 
 .feed-row {
