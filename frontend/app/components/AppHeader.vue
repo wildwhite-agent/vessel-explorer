@@ -4,7 +4,7 @@
     <Tooltip v-if="claimed != null" side="bottom" align="center" :side-offset="8" :delay-duration="100" :arrow="false">
       <template #trigger>
         <span class="header-stats" @mouseenter="loadFilledBytes">
-          {{ claimed }}/{{ maxSupply }} claimed<template v-if="blocksSinceDeploy != null"> since {{ blocksSinceDeploy.toLocaleString() }} blocks</template>
+          {{ claimed }} claimed<template v-if="blocksSinceDeploy != null"> since {{ blocksSinceDeploy.toLocaleString() }} blocks</template>
         </span>
       </template>
       <div class="stats-popover">
@@ -18,10 +18,6 @@
             <template v-if="filledBytes != null">{{ formatBytes(filledBytes) }}<span v-if="filledLoading" class="spinner" /></template>
             <template v-else>loading...</template>
           </span>
-        </div>
-        <div class="stats-row" v-if="blocksSinceDeploy != null">
-          <span class="stats-label">blocks since deploy</span>
-          <span class="stats-value">{{ blocksSinceDeploy.toLocaleString() }}</span>
         </div>
         <div class="stats-row" v-if="holderCount">
           <span class="stats-label">unique holders</span>
