@@ -4,7 +4,7 @@
     <Tooltip v-if="claimed != null" side="bottom" align="center" :side-offset="8" :delay-duration="100" :arrow="false">
       <template #trigger>
         <span class="header-stats" @mouseenter="loadFilledBytes">
-          {{ claimed }}<span class="stat-sep">/</span>{{ maxSupply }} claimed
+          {{ claimed }}/{{ maxSupply }} claimed<template v-if="blocksSinceDeploy != null"> since {{ blocksSinceDeploy.toLocaleString() }} blocks</template>
         </span>
       </template>
       <div class="stats-popover">
@@ -15,9 +15,13 @@
         <div class="stats-row">
           <span class="stats-label">bytes filled</span>
           <span class="stats-value">
-            <template v-if="filledBytes != null">{{ formatBytes(filledBytes) }}</template>
+            <template v-if="filledBytes != null">{{ formatBytes(filledBytes) }}<span v-if="filledLoading" class="spinner" /></template>
             <template v-else>loading...</template>
           </span>
+        </div>
+        <div class="stats-row" v-if="blocksSinceDeploy != null">
+          <span class="stats-label">blocks since deploy</span>
+          <span class="stats-value">{{ blocksSinceDeploy.toLocaleString() }}</span>
         </div>
         <div class="stats-row" v-if="holderCount">
           <span class="stats-label">unique holders</span>
@@ -48,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { readContract } from '@wagmi/core'
+import { readContract, getBlockNumber } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes } from '~/utils/vessel'
 import { fetchOwnership } from '~/composables/useOwnership'
@@ -63,6 +67,7 @@ const holderCount = ref(0)
 const largestHolder = ref<{ address: string; count: number } | null>(null)
 const filledBytes = ref<number | null>(null)
 const filledLoading = ref(false)
+const blocksSinceDeploy = ref<number | null>(null)
 
 const TOTAL_CAPACITY = 50_005_000
 
@@ -100,6 +105,13 @@ onMounted(async () => {
     ])
     claimed.value = Number(claimedCount)
     maxSupply.value = Number(supply)
+  } catch { /* silently fail */ }
+
+  // Blocks since deployment
+  try {
+    const DEPLOY_BLOCK = 24624612n
+    const currentBlock = await getBlockNumber(wagmiConfig)
+    blocksSinceDeploy.value = Number(currentBlock - DEPLOY_BLOCK)
   } catch { /* silently fail */ }
 
   // Background: fetch ownership to compute claimed capacity + holder stats
@@ -144,6 +156,7 @@ async function loadFilledBytes() {
     }
     filledBytes.value = total
   }
+  filledLoading.value = false
 }
 
 function toggleDark() {
@@ -224,6 +237,22 @@ function toggleDark() {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 4px;
+  border: 1.5px solid var(--text-faint);
+  border-top-color: var(--color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: -1px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 640px) {
