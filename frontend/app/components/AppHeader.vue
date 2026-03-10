@@ -107,11 +107,12 @@ onMounted(async () => {
     maxSupply.value = Number(supply)
   } catch { /* silently fail */ }
 
-  // Blocks since deployment
+  // Blocks since deployment (increment locally every ~12s)
   try {
     const DEPLOY_BLOCK = 24624612n
     const currentBlock = await getBlockNumber(wagmiConfig)
     blocksSinceDeploy.value = Number(currentBlock - DEPLOY_BLOCK)
+    setInterval(() => { blocksSinceDeploy.value!++ }, 12_000)
   } catch { /* silently fail */ }
 
   // Background: fetch ownership to compute claimed capacity + holder stats
