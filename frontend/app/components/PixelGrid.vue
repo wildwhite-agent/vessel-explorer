@@ -1,7 +1,7 @@
 <template>
   <div class="pixel-grid">
     <div class="grid-meta">
-      <span>{{ cols }} x {{ rows }} (mode 0: grayscale)</span>
+      <span>{{ cols }} x {{ rows }} (mode {{ colorMode }}: {{ colorModeName(colorMode) }})</span>
       <span class="grid-meta-actions"><slot name="actions" /></span>
     </div>
     <div class="grid-frame">
@@ -17,7 +17,7 @@
           :key="i"
           class="grid-cell"
           :style="{
-            backgroundColor: `rgb(${byte},${byte},${byte})`,
+            backgroundColor: `rgb(${byteToRGB(byte, colorMode).join(',')})`,
             width: cellSize + 'px',
             height: cellSize + 'px',
           }"
@@ -26,7 +26,7 @@
           <span
             v-if="showBytes"
             class="cell-hex"
-            :style="{ color: byte > 128 ? '#000' : '#fff', fontSize: cellSize * 0.45 + 'px' }"
+            :style="{ color: perceivedLuminance(...byteToRGB(byte, colorMode)) > 128 ? '#000' : '#fff', fontSize: cellSize * 0.45 + 'px' }"
           >{{ byte.toString(16).padStart(2, '0') }}</span>
         </div>
       </div>
@@ -38,13 +38,14 @@
 </template>
 
 <script setup lang="ts">
-import { getGridDimensions } from '~/utils/vessel'
+import { getGridDimensions, byteToRGB, perceivedLuminance, colorModeName, type ColorMode } from '~/utils/vessel'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   data: Uint8Array
   tokenId: number
   showBytes: boolean
-}>()
+  colorMode?: ColorMode
+}>(), { colorMode: 0 })
 
 const { cols, rows } = getGridDimensions(props.tokenId)
 
@@ -63,7 +64,7 @@ function download() {
     const byte = i < props.data.length ? props.data[i]! : 0
     const x = (i % cols) * EXPORT_CELL
     const y = Math.floor(i / cols) * EXPORT_CELL
-    ctx.fillStyle = `rgb(${byte},${byte},${byte})`
+    ctx.fillStyle = `rgb(${byteToRGB(byte, props.colorMode).join(',')})`
     ctx.fillRect(x, y, EXPORT_CELL, EXPORT_CELL)
   }
 
@@ -76,7 +77,7 @@ function download() {
       const byte = i < props.data.length ? props.data[i]! : 0
       const x = (i % cols) * EXPORT_CELL + EXPORT_CELL / 2
       const y = Math.floor(i / cols) * EXPORT_CELL + EXPORT_CELL / 2
-      ctx.fillStyle = byte > 128 ? '#000' : '#fff'
+      ctx.fillStyle = perceivedLuminance(...byteToRGB(byte, props.colorMode)) > 128 ? '#000' : '#fff'
       ctx.fillText(byte.toString(16).padStart(2, '0'), x, y)
     }
   }

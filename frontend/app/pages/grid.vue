@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
-import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, renderToCanvas } from '~/utils/vessel'
+import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, renderToCanvas, type ColorMode } from '~/utils/vessel'
 import { fetchOwnership } from '~/composables/useOwnership'
 
 const wagmiConfig = useConfig()
@@ -130,9 +130,10 @@ const prioritizedIds = computed(() => {
 // Claimed vessels
 const claimedSet = ref(new Set<number>())
 
-// Payload + type cache
+// Payload + type + colorMode cache
 const payloadCache = reactive(new Map<number, Uint8Array>())
 const typeCache = reactive(new Map<number, string>())
+const colorModeCache = reactive(new Map<number, ColorMode>())
 const loadingSet = new Set<number>()
 
 function typeClass(id: number): string {
@@ -144,7 +145,7 @@ function typeClass(id: number): string {
 function renderCell(canvas: HTMLCanvasElement, id: number) {
   const data = payloadCache.get(id)
   if (!data) return
-  renderToCanvas(canvas, data, id, cellSize.value)
+  renderToCanvas(canvas, data, id, cellSize.value, colorModeCache.get(id) ?? 0)
 }
 
 // Loading with cancellation via token
@@ -176,7 +177,7 @@ async function loadVisible() {
     }
   }
 
-  // Load payloads — each renders individually as it arrives
+  // Load payloads + colorModes — each renders individually as it arrives
   const claimedIds = ids.filter(id => claimedSet.value.has(id) && !payloadCache.has(id))
   for (let i = 0; i < claimedIds.length && token === currentToken; i += 10) {
     const batch = claimedIds.slice(i, i + 10)
@@ -184,12 +185,21 @@ async function loadVisible() {
       batch.map(async (id) => {
         if (token !== currentToken) return
         try {
-          const raw = await readContract(wagmiConfig, {
-            address: VESSEL_ADDRESS,
-            abi: VESSEL_ABI,
-            functionName: 'craftToPayload',
-            args: [BigInt(id)],
-          }) as string
+          const [raw, cm] = await Promise.all([
+            readContract(wagmiConfig, {
+              address: VESSEL_ADDRESS,
+              abi: VESSEL_ABI,
+              functionName: 'craftToPayload',
+              args: [BigInt(id)],
+            }) as Promise<string>,
+            readContract(wagmiConfig, {
+              address: VESSEL_ADDRESS,
+              abi: VESSEL_ABI,
+              functionName: 'craftToColorMode',
+              args: [BigInt(id)],
+            }).catch(() => 0) as Promise<number>,
+          ])
+          colorModeCache.set(id, cm as ColorMode)
           const bytes = hexToBytes(raw)
           if (bytes.length > 0) payloadCache.set(id, bytes)
         } catch { /* skip */ }

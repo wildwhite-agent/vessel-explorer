@@ -47,7 +47,7 @@
             </div>
             <div class="meta-row">
               <span class="meta-label">color mode</span>
-              <span class="meta-value">{{ vessel.colorMode === 0 ? 'grayscale' : vessel.colorMode }}</span>
+              <span class="meta-value">{{ colorModeName(vessel.colorMode) }}</span>
             </div>
             <div v-if="vessel.claimBlock" class="meta-row">
               <span class="meta-label">claimed at</span>
@@ -81,6 +81,7 @@
             :data="activePayload"
             :token-id="vessel.id"
             :show-bytes="showBytes"
+            :color-mode="vessel.colorMode"
           >
             <template #actions>
               <button
@@ -109,6 +110,7 @@
 
 <script setup lang="ts">
 import { detectContent } from '~/utils/content'
+import { colorModeName } from '~/utils/vessel'
 import { fetchVesselActivity } from '~/utils/etherscan'
 
 const router = useRouter()

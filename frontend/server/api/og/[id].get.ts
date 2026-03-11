@@ -16,13 +16,21 @@ const craftToPayloadAbi = [{
   outputs: [{ name: '', type: 'bytes' }],
 }] as const
 
+const craftToColorModeAbi = [{
+  name: 'craftToColorMode',
+  type: 'function',
+  stateMutability: 'view',
+  inputs: [{ name: 'tokenId', type: 'uint256' }],
+  outputs: [{ name: '', type: 'uint8' }],
+}] as const
+
 function getGridDimensions(tokenId: number) {
   const cols = Math.ceil(Math.sqrt(tokenId))
   const rows = Math.ceil(tokenId / cols)
   return { cols, rows }
 }
 
-function buildBmp(pixels: Uint8Array, width: number, height: number, scale: number): Buffer {
+function buildBmp(pixels: Uint8Array, width: number, height: number, scale: number, colorMode: number = 0): Buffer {
   const w = width * scale
   const h = height * scale
   const rowSize = Math.ceil(w / 4) * 4 // rows padded to 4 bytes
@@ -52,13 +60,22 @@ function buildBmp(pixels: Uint8Array, width: number, height: number, scale: numb
   buf.writeUInt32LE(256, 46) // colors used
   buf.writeUInt32LE(0, 50) // important colors
 
-  // Grayscale palette
+  // Color palette (BGRA byte order)
   for (let i = 0; i < 256; i++) {
     const off = 54 + i * 4
-    buf[off] = i     // blue
-    buf[off + 1] = i // green
-    buf[off + 2] = i // red
-    buf[off + 3] = 0 // reserved
+    switch (colorMode) {
+      case 1: // red: (i, 0, 0) → BGRA: [0, 0, i, 0]
+        buf[off] = 0; buf[off + 1] = 0; buf[off + 2] = i; buf[off + 3] = 0
+        break
+      case 2: // green: (0, i, 0) → BGRA: [0, i, 0, 0]
+        buf[off] = 0; buf[off + 1] = i; buf[off + 2] = 0; buf[off + 3] = 0
+        break
+      case 3: // blue: (0, 0, i) → BGRA: [i, 0, 0, 0]
+        buf[off] = i; buf[off + 1] = 0; buf[off + 2] = 0; buf[off + 3] = 0
+        break
+      default: // grayscale
+        buf[off] = i; buf[off + 1] = i; buf[off + 2] = i; buf[off + 3] = 0
+    }
   }
 
   // Pixel data (bottom-up, scaled)
@@ -88,12 +105,20 @@ export default defineEventHandler(async (event) => {
   const scale = Math.max(1, Math.floor(400 / cols))
 
   try {
-    const payload = await client.readContract({
-      address: VESSEL_ADDRESS,
-      abi: craftToPayloadAbi,
-      functionName: 'craftToPayload',
-      args: [BigInt(tokenId)],
-    })
+    const [payload, colorMode] = await Promise.all([
+      client.readContract({
+        address: VESSEL_ADDRESS,
+        abi: craftToPayloadAbi,
+        functionName: 'craftToPayload',
+        args: [BigInt(tokenId)],
+      }),
+      client.readContract({
+        address: VESSEL_ADDRESS,
+        abi: craftToColorModeAbi,
+        functionName: 'craftToColorMode',
+        args: [BigInt(tokenId)],
+      }).catch(() => 0),
+    ])
 
     const hex = (payload as string).startsWith('0x') ? (payload as string).slice(2) : payload as string
     const pixels = new Uint8Array(hex.length / 2)
@@ -101,7 +126,7 @@ export default defineEventHandler(async (event) => {
       pixels[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16)
     }
 
-    const bmp = buildBmp(pixels, cols, rows, scale)
+    const bmp = buildBmp(pixels, cols, rows, scale, Number(colorMode))
 
     setResponseHeaders(event, {
       'Content-Type': 'image/bmp',

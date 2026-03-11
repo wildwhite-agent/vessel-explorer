@@ -1,6 +1,6 @@
 <template>
   <div class="pixel-render">
-    <div class="pixel-meta">{{ cols }} x {{ rows }} (mode 0: grayscale)</div>
+    <div class="pixel-meta">{{ cols }} x {{ rows }} (mode {{ colorMode }}: {{ colorModeName(colorMode) }})</div>
     <div class="pixel-frame">
       <img
         v-if="dataUrl"
@@ -15,13 +15,14 @@
 </template>
 
 <script setup lang="ts">
-import { renderPixels, getGridDimensions } from '~/utils/vessel'
+import { renderPixels, getGridDimensions, colorModeName, type ColorMode } from '~/utils/vessel'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   data: Uint8Array
   tokenId: number
   thumbnail?: boolean
-}>()
+  colorMode?: ColorMode
+}>(), { colorMode: 0 })
 
 const { cols, rows } = getGridDimensions(props.tokenId)
 
@@ -29,7 +30,7 @@ const scale = computed(() => (props.thumbnail ? 2 : Math.max(1, Math.floor(400 /
 
 const dataUrl = computed(() => {
   if (!props.data.length) return null
-  return renderPixels(props.data, props.tokenId)
+  return renderPixels(props.data, props.tokenId, props.colorMode)
 })
 </script>
 

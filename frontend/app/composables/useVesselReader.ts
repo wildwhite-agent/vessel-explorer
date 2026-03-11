@@ -7,6 +7,7 @@ import {
   MACHINE_ABI,
   hexToBytes,
   type VesselType,
+  type ColorMode,
 } from '~/utils/vessel'
 
 export interface VesselData {
@@ -16,7 +17,7 @@ export interface VesselData {
   owner: string | null
   delegate: string | null
   role: number
-  colorMode: number
+  colorMode: ColorMode
   claimBlock: number
   locked: boolean
   lockBlock: number
@@ -158,7 +159,7 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         owner,
         delegate: delegate !== ZERO_ADDRESS ? delegate : null,
         role: Number(role),
-        colorMode: Number(colorMode),
+        colorMode: Number(colorMode) as ColorMode,
         claimBlock: Number(claimBlock),
         locked,
         lockBlock: Number(lockBlock),

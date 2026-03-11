@@ -87,7 +87,7 @@
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, shortenAddress, renderToCanvas } from '~/utils/vessel'
+import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, shortenAddress, renderToCanvas, type ColorMode } from '~/utils/vessel'
 
 async function copyAddress() {
   if (resolvedAddress.value) {
@@ -113,6 +113,7 @@ interface OwnedVessel {
   payload: Uint8Array | null
   loaded: boolean
   type: string | null
+  colorMode: ColorMode
 }
 
 const stats = computed(() => {
@@ -137,7 +138,7 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 function renderCanvas(canvas: HTMLCanvasElement, vessel: OwnedVessel) {
   if (!vessel.payload?.length) return
-  renderToCanvas(canvas, vessel.payload, Number(vessel.id), 100)
+  renderToCanvas(canvas, vessel.payload, Number(vessel.id), 100, vessel.colorMode)
 }
 
 async function resolveAddr(identifier: string) {
@@ -183,12 +184,12 @@ async function loadVessels(address: string) {
     const owned = tokensOwnedBy(ownership, address)
 
     // Add all vessels immediately with loading state
-    ownedVessels.value = owned.map(id => ({ id, payload: null, loaded: false, type: null }))
+    ownedVessels.value = owned.map(id => ({ id, payload: null, loaded: false, type: null, colorMode: 0 as ColorMode }))
 
-    // Load payload + type one by one (progressive)
+    // Load payload + type + colorMode one by one (progressive)
     for (const id of owned) {
       try {
-        const [payload, vesselType] = await Promise.all([
+        const [payload, vesselType, cm] = await Promise.all([
           readContract(config, {
             address: VESSEL_ADDRESS,
             abi: VESSEL_ABI,
@@ -201,16 +202,22 @@ async function loadVessels(address: string) {
             functionName: 'craftToType',
             args: [BigInt(id)],
           }) as Promise<string>,
+          readContract(config, {
+            address: VESSEL_ADDRESS,
+            abi: VESSEL_ABI,
+            functionName: 'craftToColorMode',
+            args: [BigInt(id)],
+          }).catch(() => 0) as Promise<number>,
         ])
         const bytes = hexToBytes(payload)
         const idx = ownedVessels.value.findIndex(v => v.id === id)
         if (idx !== -1) {
-          ownedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType }
+          ownedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType, colorMode: cm as ColorMode }
         }
       } catch {
         const idx = ownedVessels.value.findIndex(v => v.id === id)
         if (idx !== -1) {
-          ownedVessels.value[idx] = { id, payload: null, loaded: true, type: null }
+          ownedVessels.value[idx] = { id, payload: null, loaded: true, type: null, colorMode: 0 }
         }
       }
     }
@@ -259,13 +266,13 @@ async function loadDelegatedVessels(address: string) {
         // Add matched vessels with loading state
         delegatedVessels.value = [
           ...delegatedVessels.value,
-          ...matched.map(id => ({ id, payload: null, loaded: false, type: null })),
+          ...matched.map(id => ({ id, payload: null, loaded: false, type: null, colorMode: 0 as ColorMode })),
         ]
 
-        // Load payload + type for matched vessels
+        // Load payload + type + colorMode for matched vessels
         for (const id of matched) {
           try {
-            const [payload, vesselType] = await Promise.all([
+            const [payload, vesselType, cm] = await Promise.all([
               readContract(config, {
                 address: VESSEL_ADDRESS,
                 abi: VESSEL_ABI,
@@ -278,16 +285,22 @@ async function loadDelegatedVessels(address: string) {
                 functionName: 'craftToType',
                 args: [BigInt(id)],
               }) as Promise<string>,
+              readContract(config, {
+                address: VESSEL_ADDRESS,
+                abi: VESSEL_ABI,
+                functionName: 'craftToColorMode',
+                args: [BigInt(id)],
+              }).catch(() => 0) as Promise<number>,
             ])
             const bytes = hexToBytes(payload)
             const idx = delegatedVessels.value.findIndex(v => v.id === id)
             if (idx !== -1) {
-              delegatedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType }
+              delegatedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType, colorMode: cm as ColorMode }
             }
           } catch {
             const idx = delegatedVessels.value.findIndex(v => v.id === id)
             if (idx !== -1) {
-              delegatedVessels.value[idx] = { id, payload: null, loaded: true, type: null }
+              delegatedVessels.value[idx] = { id, payload: null, loaded: true, type: null, colorMode: 0 }
             }
           }
         }

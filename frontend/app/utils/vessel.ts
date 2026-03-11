@@ -64,8 +64,30 @@ export const MACHINE_ABI = [
 
 export type VesselType = 'capsule' | 'vault' | 'machine'
 
-// Color modes: 0 = grayscale, others TBD
-export type ColorMode = 0
+// Color modes: 0 = grayscale, 1 = red, 2 = green, 3 = blue
+export type ColorMode = 0 | 1 | 2 | 3
+
+export function byteToRGB(v: number, mode: ColorMode = 0): [number, number, number] {
+  switch (mode) {
+    case 1: return [v, 0, 0]
+    case 2: return [0, v, 0]
+    case 3: return [0, 0, v]
+    default: return [v, v, v]
+  }
+}
+
+export function colorModeName(mode: ColorMode): string {
+  switch (mode) {
+    case 1: return 'red'
+    case 2: return 'green'
+    case 3: return 'blue'
+    default: return 'grayscale'
+  }
+}
+
+export function perceivedLuminance(r: number, g: number, b: number): number {
+  return 0.299 * r + 0.587 * g + 0.114 * b
+}
 
 // Roles: 0 = default, 2 = creator(?)
 export type VesselRole = number
@@ -94,7 +116,7 @@ export function computeOwnership(transfers: { tokenID: string; to: string; block
   return ownership
 }
 
-export function renderToCanvas(canvas: HTMLCanvasElement, data: Uint8Array, tokenId: number, maxSize = 80) {
+export function renderToCanvas(canvas: HTMLCanvasElement, data: Uint8Array, tokenId: number, maxSize = 80, colorMode: ColorMode = 0) {
   const { cols, rows } = getGridDimensions(tokenId)
   const scale = Math.max(1, Math.floor(maxSize / Math.max(cols, rows)))
   canvas.width = cols * scale
@@ -111,10 +133,11 @@ export function renderToCanvas(canvas: HTMLCanvasElement, data: Uint8Array, toke
   const img = tmpCtx.createImageData(cols, rows)
   for (let i = 0; i < cols * rows; i++) {
     const v = i < data.length ? data[i]! : 0
+    const [r, g, b] = byteToRGB(v, colorMode)
     const off = i * 4
-    img.data[off] = v
-    img.data[off + 1] = v
-    img.data[off + 2] = v
+    img.data[off] = r
+    img.data[off + 1] = g
+    img.data[off + 2] = b
     img.data[off + 3] = 255
   }
   tmpCtx.putImageData(img, 0, 0)
@@ -127,8 +150,8 @@ export function getGridDimensions(tokenId: number): { cols: number; rows: number
   return { cols, rows }
 }
 
-/** Render grayscale pixel data to a data URL (mode 0) */
-export function renderPixels(data: Uint8Array, tokenId: number): string {
+/** Render pixel data to a data URL */
+export function renderPixels(data: Uint8Array, tokenId: number, colorMode: ColorMode = 0): string {
   const { cols, rows } = getGridDimensions(tokenId)
   const canvas = document.createElement('canvas')
   canvas.width = cols
@@ -137,11 +160,12 @@ export function renderPixels(data: Uint8Array, tokenId: number): string {
   const img = ctx.createImageData(cols, rows)
 
   for (let i = 0; i < cols * rows; i++) {
-    const v = i < data.length ? data[i] : 0
+    const v = i < data.length ? data[i]! : 0
+    const [r, g, b] = byteToRGB(v, colorMode)
     const off = i * 4
-    img.data[off] = v
-    img.data[off + 1] = v
-    img.data[off + 2] = v
+    img.data[off] = r
+    img.data[off + 1] = g
+    img.data[off + 2] = b
     img.data[off + 3] = 255
   }
 

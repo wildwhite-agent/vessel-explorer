@@ -127,7 +127,7 @@
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import { fetchVesselActivity, type VesselTransaction } from '~/utils/etherscan'
-import { VESSEL_ADDRESS, VESSEL_ABI, ETHERSCAN_BASE, hexToBytes, renderToCanvas } from '~/utils/vessel'
+import { VESSEL_ADDRESS, VESSEL_ABI, ETHERSCAN_BASE, hexToBytes, renderToCanvas, type ColorMode } from '~/utils/vessel'
 import { fetchOwnership } from '~/composables/useOwnership'
 
 const router = useRouter()
@@ -266,8 +266,9 @@ const preview = reactive({
   vesselId: null as string | null,
 })
 
-// Cache fetched payloads
+// Cache fetched payloads and color modes
 const payloadCache = new Map<string, Uint8Array>()
+const colorModeCache = new Map<string, ColorMode>()
 
 function goToVessel() {
   const q = searchQuery.value.trim()
@@ -304,14 +305,25 @@ async function showPreview(vesselId: string, event: MouseEvent) {
   preview.loading = true
 
   let payload = payloadCache.get(vesselId)
+  let colorMode = colorModeCache.get(vesselId) ?? 0 as ColorMode
   if (!payload) {
     try {
-      const raw = await readContract(wagmiConfig, {
-        address: VESSEL_ADDRESS,
-        abi: VESSEL_ABI,
-        functionName: 'craftToPayload',
-        args: [BigInt(vesselId)],
-      }) as string
+      const [raw, cm] = await Promise.all([
+        readContract(wagmiConfig, {
+          address: VESSEL_ADDRESS,
+          abi: VESSEL_ABI,
+          functionName: 'craftToPayload',
+          args: [BigInt(vesselId)],
+        }) as Promise<string>,
+        readContract(wagmiConfig, {
+          address: VESSEL_ADDRESS,
+          abi: VESSEL_ABI,
+          functionName: 'craftToColorMode',
+          args: [BigInt(vesselId)],
+        }).catch(() => 0) as Promise<number>,
+      ])
+      colorMode = cm as ColorMode
+      colorModeCache.set(vesselId, colorMode)
       const bytes = hexToBytes(raw)
       if (bytes.length > 0) {
         payload = bytes
@@ -326,7 +338,7 @@ async function showPreview(vesselId: string, event: MouseEvent) {
 
   if (payload?.length) {
     await nextTick()
-    renderPreview(payload, Number(vesselId))
+    renderPreview(payload, Number(vesselId), colorMode)
   }
 }
 
@@ -335,10 +347,10 @@ function hidePreview() {
   preview.vesselId = null
 }
 
-function renderPreview(data: Uint8Array, tokenId: number) {
+function renderPreview(data: Uint8Array, tokenId: number, colorMode: ColorMode = 0) {
   const canvas = previewCanvas.value
   if (!canvas) return
-  renderToCanvas(canvas, data, tokenId, 80)
+  renderToCanvas(canvas, data, tokenId, 80, colorMode)
 }
 
 const showActions = new Set(['claim', 'transfer', 'write', 'machine', 'delegate', 'setvaultentry'])
