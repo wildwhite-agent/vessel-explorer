@@ -215,6 +215,7 @@ const loadingSet = new Set<number>()
 const allClaimedPayloadsLoading = ref(false)
 const allClaimedPayloadsLoaded = ref(false)
 const overviewTileCache = new Map<string, ImageData>()
+const MAX_TILE_CACHE_SIZE = 2000
 
 function typeClass(id: number): string {
   const t = typeCache.get(id)
@@ -291,6 +292,38 @@ async function loadVisible() {
 
 let allClaimedToken = 0
 
+async function loadClaimedBatch(ids: number[], token: number) {
+  for (let i = 0; i < ids.length && token === allClaimedToken; i += 10) {
+    const batch = ids.slice(i, i + 10).filter(id => !payloadCache.has(id))
+    if (!batch.length) continue
+
+    await Promise.all(
+      batch.map(async (id) => {
+        if (token !== allClaimedToken) return
+        try {
+          const [raw, cm] = await Promise.all([
+            readContract(wagmiConfig, {
+              address: VESSEL_ADDRESS,
+              abi: VESSEL_ABI,
+              functionName: 'craftToPayload',
+              args: [BigInt(id)],
+            }) as Promise<string>,
+            readContract(wagmiConfig, {
+              address: VESSEL_ADDRESS,
+              abi: VESSEL_ABI,
+              functionName: 'craftToColorMode',
+              args: [BigInt(id)],
+            }).catch(() => 0) as Promise<number>,
+          ])
+          colorModeCache.set(id, cm as ColorMode)
+          const bytes = hexToBytes(raw)
+          if (bytes.length > 0) payloadCache.set(id, bytes)
+        } catch { /* skip */ }
+      })
+    )
+  }
+}
+
 async function loadAllClaimedPayloads() {
   if (allClaimedPayloadsLoading.value || allClaimedPayloadsLoaded.value || claimedSet.value.size === 0) return
 
@@ -299,35 +332,29 @@ async function loadAllClaimedPayloads() {
   allClaimedPayloadsLoading.value = true
 
   try {
-    for (let i = 0; i < claimedIds.length && token === allClaimedToken; i += 10) {
-      const batch = claimedIds.slice(i, i + 10).filter(id => !payloadCache.has(id))
-      if (!batch.length) continue
+    // Prioritize IDs currently visible in the viewport
+    const vpRowStart = Math.max(0, Math.floor(scrollTop.value / cellSize.value))
+    const vpRowEnd = Math.min(gridSide, Math.ceil((scrollTop.value + viewportHeight.value) / cellSize.value))
+    const vpColStart = Math.max(0, Math.floor(scrollLeft.value / cellSize.value))
+    const vpColEnd = Math.min(gridSide, Math.ceil((scrollLeft.value + viewportWidth.value) / cellSize.value))
 
-      await Promise.all(
-        batch.map(async (id) => {
-          if (token !== allClaimedToken) return
-          try {
-            const [raw, cm] = await Promise.all([
-              readContract(wagmiConfig, {
-                address: VESSEL_ADDRESS,
-                abi: VESSEL_ABI,
-                functionName: 'craftToPayload',
-                args: [BigInt(id)],
-              }) as Promise<string>,
-              readContract(wagmiConfig, {
-                address: VESSEL_ADDRESS,
-                abi: VESSEL_ABI,
-                functionName: 'craftToColorMode',
-                args: [BigInt(id)],
-              }).catch(() => 0) as Promise<number>,
-            ])
-            colorModeCache.set(id, cm as ColorMode)
-            const bytes = hexToBytes(raw)
-            if (bytes.length > 0) payloadCache.set(id, bytes)
-          } catch { /* skip */ }
-        })
-      )
+    const visibleSet = new Set<number>()
+    for (let row = vpRowStart; row < vpRowEnd; row++) {
+      for (let col = vpColStart; col < vpColEnd; col++) {
+        const id = row * gridSide + col + 1
+        if (id <= totalVessels) visibleSet.add(id)
+      }
     }
+
+    const visibleClaimed = claimedIds.filter(id => visibleSet.has(id))
+    const restClaimed = claimedIds.filter(id => !visibleSet.has(id))
+
+    // Load visible viewport IDs first
+    await loadClaimedBatch(visibleClaimed, token)
+    if (token !== allClaimedToken) return
+
+    // Then load the rest in background
+    await loadClaimedBatch(restClaimed, token)
 
     if (token === allClaimedToken) {
       allClaimedPayloadsLoaded.value = [...claimedSet.value].every(id => payloadCache.has(id))
@@ -347,26 +374,33 @@ function buildOverviewTile(id: number, size: number): ImageData | null {
   const data = payloadCache.get(id)
   if (!data) return null
 
-  const image = new ImageData(size, size)
-  const { cols, rows } = getGridDimensions(id)
+  try {
+    const image = new ImageData(size, size)
+    const { cols, rows } = getGridDimensions(id)
 
-  for (let dy = 0; dy < size; dy++) {
-    const srcRow = Math.min(rows - 1, Math.floor(dy * rows / size))
-    for (let dx = 0; dx < size; dx++) {
-      const srcCol = Math.min(cols - 1, Math.floor(dx * cols / size))
-      const srcIndex = srcRow * cols + srcCol
-      const value = srcIndex < data.length ? data[srcIndex]! : 0
-      const [r, g, b] = byteToRGB(value, colorModeCache.get(id) ?? 0)
-      const offset = (dy * size + dx) * 4
-      image.data[offset] = r
-      image.data[offset + 1] = g
-      image.data[offset + 2] = b
-      image.data[offset + 3] = 255
+    for (let dy = 0; dy < size; dy++) {
+      const srcRow = Math.min(rows - 1, Math.floor(dy * rows / size))
+      for (let dx = 0; dx < size; dx++) {
+        const srcCol = Math.min(cols - 1, Math.floor(dx * cols / size))
+        const srcIndex = srcRow * cols + srcCol
+        const value = srcIndex < data.length ? data[srcIndex]! : 0
+        const [r, g, b] = byteToRGB(value, colorModeCache.get(id) ?? 0)
+        const offset = (dy * size + dx) * 4
+        image.data[offset] = r
+        image.data[offset + 1] = g
+        image.data[offset + 2] = b
+        image.data[offset + 3] = 255
+      }
     }
-  }
 
-  overviewTileCache.set(key, image)
-  return image
+    if (overviewTileCache.size >= MAX_TILE_CACHE_SIZE) {
+      overviewTileCache.clear()
+    }
+    overviewTileCache.set(key, image)
+    return image
+  } catch {
+    return null
+  }
 }
 
 function renderOverviewCanvas() {
