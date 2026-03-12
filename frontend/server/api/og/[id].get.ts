@@ -1,5 +1,6 @@
 import { createPublicClient, http } from 'viem'
 import { mainnet } from 'viem/chains'
+import { deflateSync } from 'node:zlib'
 
 const VESSEL_ADDRESS = '0xECb92Cc7112b80A2234936315BbB493fb48d1463' as const
 
@@ -30,66 +31,87 @@ function getGridDimensions(tokenId: number) {
   return { cols, rows }
 }
 
-function buildBmp(pixels: Uint8Array, width: number, height: number, scale: number, colorMode: number = 0): Buffer {
+// CRC32 lookup table
+const crcTable = new Uint32Array(256)
+for (let n = 0; n < 256; n++) {
+  let c = n
+  for (let k = 0; k < 8; k++) {
+    c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1)
+  }
+  crcTable[n] = c >>> 0
+}
+
+function crc32(buf: Buffer): number {
+  let c = 0xFFFFFFFF
+  for (let i = 0; i < buf.length; i++) {
+    c = crcTable[(c ^ buf[i]!) & 0xFF]! ^ (c >>> 8)
+  }
+  return (c ^ 0xFFFFFFFF) >>> 0
+}
+
+function pngChunk(type: string, data: Buffer): Buffer {
+  const len = Buffer.alloc(4)
+  len.writeUInt32BE(data.length)
+  const typeAndData = Buffer.concat([Buffer.from(type, 'ascii'), data])
+  const crc = Buffer.alloc(4)
+  crc.writeUInt32BE(crc32(typeAndData))
+  return Buffer.concat([len, typeAndData, crc])
+}
+
+function byteToRGB(v: number, mode: number): [number, number, number] {
+  switch (mode) {
+    case 1: return [v, 0, 0]
+    case 2: return [0, v, 0]
+    case 3: return [0, 0, v]
+    default: return [v, v, v]
+  }
+}
+
+function buildPng(pixels: Uint8Array, width: number, height: number, scale: number, colorMode: number = 0): Buffer {
   const w = width * scale
   const h = height * scale
-  const rowSize = Math.ceil(w / 4) * 4 // rows padded to 4 bytes
-  const paletteSize = 256 * 4
-  const pixelDataSize = rowSize * h
-  const headerSize = 14 + 40 + paletteSize
-  const fileSize = headerSize + pixelDataSize
 
-  const buf = Buffer.alloc(fileSize)
+  // Raw scanlines: filter byte (0 = None) + RGB per pixel
+  const stride = 1 + w * 3
+  const raw = Buffer.alloc(h * stride)
 
-  // File header (14 bytes)
-  buf.write('BM', 0)
-  buf.writeUInt32LE(fileSize, 2)
-  buf.writeUInt32LE(0, 6) // reserved
-  buf.writeUInt32LE(headerSize, 10) // pixel data offset
-
-  // Info header (40 bytes)
-  buf.writeUInt32LE(40, 14) // header size
-  buf.writeInt32LE(w, 18) // width
-  buf.writeInt32LE(h, 22) // height (positive = bottom-up)
-  buf.writeUInt16LE(1, 26) // planes
-  buf.writeUInt16LE(8, 28) // bits per pixel
-  buf.writeUInt32LE(0, 30) // compression (none)
-  buf.writeUInt32LE(pixelDataSize, 34)
-  buf.writeInt32LE(2835, 38) // x ppi
-  buf.writeInt32LE(2835, 42) // y ppi
-  buf.writeUInt32LE(256, 46) // colors used
-  buf.writeUInt32LE(0, 50) // important colors
-
-  // Color palette (BGRA byte order)
-  for (let i = 0; i < 256; i++) {
-    const off = 54 + i * 4
-    switch (colorMode) {
-      case 1: // red: (i, 0, 0) → BGRA: [0, 0, i, 0]
-        buf[off] = 0; buf[off + 1] = 0; buf[off + 2] = i; buf[off + 3] = 0
-        break
-      case 2: // green: (0, i, 0) → BGRA: [0, i, 0, 0]
-        buf[off] = 0; buf[off + 1] = i; buf[off + 2] = 0; buf[off + 3] = 0
-        break
-      case 3: // blue: (0, 0, i) → BGRA: [i, 0, 0, 0]
-        buf[off] = i; buf[off + 1] = 0; buf[off + 2] = 0; buf[off + 3] = 0
-        break
-      default: // grayscale
-        buf[off] = i; buf[off + 1] = i; buf[off + 2] = i; buf[off + 3] = 0
-    }
-  }
-
-  // Pixel data (bottom-up, scaled)
   for (let y = 0; y < h; y++) {
-    const srcY = height - 1 - Math.floor(y / scale) // BMP is bottom-up, flip
-    const rowOffset = headerSize + y * rowSize
+    const srcY = Math.floor(y / scale)
+    const off = y * stride
+    raw[off] = 0 // filter: None
     for (let x = 0; x < w; x++) {
       const srcX = Math.floor(x / scale)
       const srcIdx = srcY * width + srcX
-      buf[rowOffset + x] = srcIdx < pixels.length ? pixels[srcIdx] : 0
+      const v = srcIdx < pixels.length ? pixels[srcIdx]! : 0
+      const [r, g, b] = byteToRGB(v, colorMode)
+      const px = off + 1 + x * 3
+      raw[px] = r
+      raw[px + 1] = g
+      raw[px + 2] = b
     }
   }
 
-  return buf
+  const compressed = deflateSync(raw)
+
+  // PNG signature
+  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+
+  // IHDR: width, height, bit depth 8, color type 2 (RGB)
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(w, 0)
+  ihdr.writeUInt32BE(h, 4)
+  ihdr[8] = 8   // bit depth
+  ihdr[9] = 2   // color type: RGB
+  ihdr[10] = 0  // compression
+  ihdr[11] = 0  // filter
+  ihdr[12] = 0  // interlace
+
+  return Buffer.concat([
+    sig,
+    pngChunk('IHDR', ihdr),
+    pngChunk('IDAT', compressed),
+    pngChunk('IEND', Buffer.alloc(0)),
+  ])
 }
 
 export default defineEventHandler(async (event) => {
@@ -126,24 +148,24 @@ export default defineEventHandler(async (event) => {
       pixels[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16)
     }
 
-    const bmp = buildBmp(pixels, cols, rows, scale, Number(colorMode))
+    const png = buildPng(pixels, cols, rows, scale, Number(colorMode))
 
     setResponseHeaders(event, {
-      'Content-Type': 'image/bmp',
+      'Content-Type': 'image/png',
       'Cache-Control': 'public, max-age=3600',
     })
 
-    return bmp
+    return png
   } catch {
     // Empty vessel — return black image
     const pixels = new Uint8Array(cols * rows)
-    const bmp = buildBmp(pixels, cols, rows, scale)
+    const png = buildPng(pixels, cols, rows, scale)
 
     setResponseHeaders(event, {
-      'Content-Type': 'image/bmp',
+      'Content-Type': 'image/png',
       'Cache-Control': 'public, max-age=300',
     })
 
-    return bmp
+    return png
   }
 })

@@ -14,12 +14,6 @@ export default defineNuxtConfig({
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1' },
         { name: 'description', content: 'explore THE_VESSEL on-chain storage protocol on ethereum' },
-        { property: 'og:title', content: 'vessel explorer' },
-        { property: 'og:description', content: 'explore THE_VESSEL on-chain storage protocol on ethereum' },
-        { property: 'og:type', content: 'website' },
-        { name: 'twitter:card', content: 'summary' },
-        { name: 'twitter:title', content: 'vessel explorer' },
-        { name: 'twitter:description', content: 'explore THE_VESSEL on-chain storage protocol on ethereum' },
         { name: 'theme-color', content: '#000000' },
       ],
       link: [
