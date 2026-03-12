@@ -78,7 +78,10 @@ export async function fetchVesselActivity(page = 1, offset = 50): Promise<Vessel
   if (!Array.isArray(txs)) return []
 
   return txs.map((tx: any) => {
-    const decoded = decodeVesselTx(tx.input, tx.functionName)
+    // Server pre-decodes synthetic entries (delegated writes from event logs)
+    const decoded = tx._action
+      ? { action: tx._action, vesselId: tx._vesselId, detail: tx._detail }
+      : decodeVesselTx(tx.input, tx.functionName)
     return {
       hash: tx.hash,
       from: tx.from,
