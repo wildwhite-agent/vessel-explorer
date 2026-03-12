@@ -750,7 +750,7 @@ useHead({ title: 'all vessels' })
 .grid-toolbar {
   display: flex;
   align-items: baseline;
-  gap: 1rem;
+  gap: 0.5rem;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color);
   font-size: 13px;
