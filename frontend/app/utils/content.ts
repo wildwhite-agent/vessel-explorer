@@ -10,8 +10,14 @@ export function detectContent(data: Uint8Array): DetectedContent {
     return { type: 'binary', text: null }
   }
 
+  let end = data.length
+  while (end > 0 && data[end - 1] === 0x00) {
+    end--
+  }
+
+  const meaningfulData = end === data.length ? data : data.slice(0, end)
   const decoder = new TextDecoder('utf-8', { fatal: false })
-  const text = decoder.decode(data)
+  const text = decoder.decode(meaningfulData)
   const trimmed = text.trimStart()
 
   if (/^<svg/i.test(trimmed)) {
@@ -24,14 +30,14 @@ export function detectContent(data: Uint8Array): DetectedContent {
 
   // Check if >90% printable ASCII (must come BEFORE bytecode check)
   let printable = 0
-  for (let i = 0; i < data.length; i++) {
-    const b = data[i]
+  for (let i = 0; i < meaningfulData.length; i++) {
+    const b = meaningfulData[i]
     if ((b >= 0x20 && b <= 0x7e) || b === 0x0a || b === 0x0d || b === 0x09) {
       printable++
     }
   }
 
-  if (printable / data.length > 0.9) {
+  if (meaningfulData.length > 0 && printable / meaningfulData.length > 0.9) {
     return { type: 'text', text }
   }
 
