@@ -113,21 +113,32 @@ const svgDataUri = computed(() => {
   margin-top: 1.5rem;
   font-family: var(--font-mono);
   font-size: 13px;
+  width: 100%;
+  min-width: 0;
 }
 
 .content-single {
+  --decoded-panel-max-height: min(70vh, 32rem);
   border: 1px solid var(--border-color);
+  max-height: var(--decoded-panel-max-height);
+  overflow: hidden;
+}
+
+.content-single .panel {
+  max-height: var(--decoded-panel-max-height);
 }
 
 .content-panels {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   border: 1px solid var(--border-color);
-  height: 20rem;
+  height: clamp(20rem, 55vh, 34rem);
+  overflow: hidden;
 }
 
 .panel {
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -180,7 +191,11 @@ const svgDataUri = computed(() => {
 
 .panel-body {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .source-pre {
@@ -210,6 +225,9 @@ const svgDataUri = computed(() => {
   background: var(--bg-subtle);
   flex: 1;
   min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
 }
 
 .rendered-img {
@@ -218,6 +236,7 @@ const svgDataUri = computed(() => {
   object-fit: contain;
   background: #fff;
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .rendered-iframe {
@@ -238,8 +257,6 @@ const svgDataUri = computed(() => {
   line-height: 1.6;
   white-space: pre;
   color: var(--muted);
-  max-height: 20rem;
-  overflow: auto;
 }
 
 .rendered-text {
@@ -249,14 +266,16 @@ const svgDataUri = computed(() => {
   font-size: 12px;
   line-height: 1.5;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
   width: 100%;
   align-self: flex-start;
+  box-sizing: border-box;
 }
 
 @media (max-width: 640px) {
   .content-panels {
     grid-template-columns: 1fr;
+    height: auto;
   }
 
   .panel-source {
@@ -264,12 +283,12 @@ const svgDataUri = computed(() => {
     border-bottom: 1px solid var(--border-color);
   }
 
-  .panel-body {
-    max-height: 20rem;
+  .content-panels .panel {
+    height: clamp(14rem, 44vh, 24rem);
   }
 
-  .rendered-iframe {
-    height: 20rem;
+  .content-single {
+    --decoded-panel-max-height: min(65vh, 28rem);
   }
 }
 </style>
