@@ -10,12 +10,28 @@
       </div>
     </div>
 
-    <!-- Bytecode: single panel -->
-    <div v-else-if="content.type === 'bytecode'" class="content-single">
-      <div class="panel">
-        <div class="panel-header">bytecode (evm)</div>
+    <!-- Bytecode: disassembly + raw bytes -->
+    <div v-else-if="content.type === 'bytecode'" class="content-panels bytecode-panels">
+      <div class="panel panel-source">
+        <div class="panel-header">
+          bytecode
+          <button class="panel-action-btn" @click="copyBytecode">
+            {{ copiedBytecode ? '[copied]' : '[copy]' }}
+          </button>
+        </div>
         <div class="panel-body">
           <pre class="bytecode-text">{{ formattedBytecode }}</pre>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          evm disassembly
+          <button class="panel-action-btn" @click="copyDisassembly">
+            {{ copiedDisassembly ? '[copied]' : '[copy]' }}
+          </button>
+        </div>
+        <div class="panel-body">
+          <pre class="bytecode-text">{{ formattedDisassembly }}</pre>
         </div>
       </div>
     </div>
@@ -34,7 +50,7 @@
           rendered
           <button
             v-if="content.type === 'html'"
-            :class="['run-btn', { active: scriptsEnabled }]"
+            :class="['panel-action-btn', { active: scriptsEnabled }]"
             @click="scriptsEnabled = !scriptsEnabled"
           >
             {{ scriptsEnabled ? '[running]' : '[run]' }}
@@ -61,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { detectContent, type DetectedContent } from '~/utils/content'
+import { detectContent, formatEvmDisassembly, type DetectedContent } from '~/utils/content'
 
 const props = defineProps<{
   data: Uint8Array
@@ -69,6 +85,8 @@ const props = defineProps<{
 
 const content = computed<DetectedContent>(() => detectContent(props.data))
 const scriptsEnabled = ref(false)
+const copiedBytecode = ref(false)
+const copiedDisassembly = ref(false)
 
 const sourceLines = computed(() => {
   if (!content.value.text) return []
@@ -101,6 +119,32 @@ const formattedBytecode = computed(() => {
   }
   return lines.join('\n')
 })
+
+const formattedDisassembly = computed(() => {
+  if (content.value.type !== 'bytecode' || !content.value.text) return ''
+  return formatEvmDisassembly(content.value.text)
+})
+
+async function copyBytecode() {
+  if (content.value.type !== 'bytecode' || !content.value.text) return
+  await copyPanelText('bytecode', `0x${content.value.text}`)
+}
+
+async function copyDisassembly() {
+  if (!formattedDisassembly.value) return
+  await copyPanelText('disassembly', formattedDisassembly.value)
+}
+
+async function copyPanelText(kind: 'bytecode' | 'disassembly', text: string) {
+  await navigator.clipboard.writeText(text)
+  if (kind === 'bytecode') {
+    copiedBytecode.value = true
+    setTimeout(() => { copiedBytecode.value = false }, 2000)
+  } else {
+    copiedDisassembly.value = true
+    setTimeout(() => { copiedDisassembly.value = false }, 2000)
+  }
+}
 
 const svgDataUri = computed(() => {
   if (content.value.type !== 'svg' || !content.value.text) return ''
@@ -163,7 +207,7 @@ const svgDataUri = computed(() => {
   box-sizing: border-box;
 }
 
-.run-btn {
+.panel-action-btn {
   background: none !important;
   border: none !important;
   box-shadow: none !important;
