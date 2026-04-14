@@ -13,21 +13,23 @@ Read-only. No wallet connect, no transactions.
 
 ## Setup
 
+Run the frontend at `http://127.0.0.1:3001`.
+
+### Frontend
+
 ```bash
 git clone <repo-url>
 cd vessel-explorer/frontend
 cp .env.example .env
-```
-
-Edit `.env`:
-
-- `NUXT_ETHERSCAN_KEY` — Etherscan API key (required for activity feed and holder data)
-- `NUXT_PUBLIC_EVM_CHAINS_MAINNET_RPC1/2/3` — Ethereum RPC endpoints (defaults provided)
-
-```bash
 npm install
 npm run dev
 ```
+
+Edit `.env` before starting the frontend if needed:
+
+- `NUXT_ETHERSCAN_KEY` is required for the activity feed, holder data, and
+  `/all` ownership.
+- `NUXT_PUBLIC_EVM_CHAINS_MAINNET_RPC1/2/3` are the browser RPC fallbacks.
 
 ## Project Structure
 
@@ -61,6 +63,7 @@ frontend/
 ## Pages
 
 - **`/`** — live activity feed (claims, writes, transfers, delegates, machines), holders leaderboard with progressive type enrichment, search by vessel ID or address/ENS
+- **`/all`** — table of all vessel token IDs, ownership from transfer replay, and sortable/filterable traits hydrated through RPC
 - **`/[id]`** — vessel detail with pixel grid, metadata (type, capacity, color mode, claim block), entry navigation for vaults, content detection (renders SVG/HTML, shows bytecode hex dumps), [bytes] toggle, [copy] button
 - **`/address/[addr]`** — profile page with owned vessels grid, type stats (machines/vaults/capsules/empty), progressive payload loading
 

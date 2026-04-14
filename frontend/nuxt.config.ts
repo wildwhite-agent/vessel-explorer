@@ -3,6 +3,10 @@ export default defineNuxtConfig({
   extends: ['@1001-digital/layers.evm'],
   ssr: false,
   devtools: { enabled: true },
+  devServer: {
+    host: '127.0.0.1',
+    port: 3001,
+  },
 
   nitro: {
     preset: 'vercel',
