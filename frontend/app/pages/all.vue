@@ -7,7 +7,8 @@
         <button class="text-btn back-link" type="button" @click="$router.back()">[back]</button>
         <h1 class="all-heading">all vessel tokens</h1>
         <span class="all-meta">{{ totalRows.toLocaleString() }} matched</span>
-        <span v-if="ownershipLoading" class="all-meta">loading ownership</span>
+        <span v-if="databaseLoading" class="all-meta">loading database</span>
+        <span v-else-if="ownershipLoading" class="all-meta">loading ownership</span>
         <span v-else-if="detailsLoading" class="all-meta">{{ detailLoadLabel }}</span>
         <div class="pager">
           <button class="text-btn" type="button" :disabled="page <= 1" @click="page--">[prev]</button>
@@ -196,10 +197,15 @@ const DETAIL_CALLS = [
 
 const wagmiConfig = useConfig()
 const allRows = ref<VesselRow[]>([])
+const databaseRows = ref<VesselRow[]>([])
+const databaseTotalRows = ref(0)
+const databaseLoading = ref(false)
+const databaseAvailable = ref(false)
 const ownershipLoading = ref(false)
 const detailsLoading = ref(false)
 const fullDetailsLoading = ref(false)
 const fullDetailsLoaded = ref(false)
+const databaseError = ref<string | null>(null)
 const ownershipError = ref<string | null>(null)
 const detailsError = ref<string | null>(null)
 
@@ -212,6 +218,7 @@ const page = ref(1)
 const sortKey = ref<SortKey>('claimed')
 const sortDir = ref<'asc' | 'desc'>('desc')
 let detailsToken = 0
+let databaseToken = 0
 let detailsTimer: ReturnType<typeof setTimeout> | null = null
 
 const columns: { key: SortKey; label: string }[] = [
@@ -252,8 +259,8 @@ const searchError = computed(() => {
   return 'search currently supports token ids and exact owner addresses'
 })
 
-const hasError = computed(() => Boolean(ownershipError.value || detailsError.value || searchError.value))
-const statusMessage = computed(() => searchError.value || ownershipError.value || detailsError.value)
+const hasError = computed(() => Boolean(databaseError.value || ownershipError.value || detailsError.value || searchError.value))
+const statusMessage = computed(() => searchError.value || databaseError.value || ownershipError.value || detailsError.value)
 const queryNeedsFullDetails = computed(() => (
   filledFilter.value !== 'all'
   || typeFilter.value !== 'all'
@@ -292,7 +299,7 @@ const filteredRows = computed(() => {
   })
 })
 
-const totalRows = computed(() => filteredRows.value.length)
+const totalRows = computed(() => databaseAvailable.value ? databaseTotalRows.value : filteredRows.value.length)
 const detailsLoadedCount = computed(() => allRows.value.filter(row => row.detailsLoaded).length)
 const detailLoadLabel = computed(() => (
   fullDetailsLoading.value
@@ -300,6 +307,7 @@ const detailLoadLabel = computed(() => (
     : 'loading traits'
 ))
 const visibleRows = computed(() => {
+  if (databaseAvailable.value) return databaseRows.value
   const start = (page.value - 1) * PAGE_SIZE
   return filteredRows.value.slice(start, start + PAGE_SIZE)
 })
@@ -307,6 +315,7 @@ const visibleRowIds = computed(() => visibleRows.value.map(row => row.id).join('
 const pageStart = computed(() => visibleRows.value.length === 0 ? 0 : (page.value - 1) * PAGE_SIZE + 1)
 const pageEnd = computed(() => Math.min(totalRows.value, (page.value - 1) * PAGE_SIZE + visibleRows.value.length))
 const emptyMessage = computed(() => {
+  if (databaseLoading.value) return 'loading vessels...'
   if (queryNeedsFullDetails.value && fullDetailsLoading.value) return 'loading matching vessels...'
   if (ownershipLoading.value || detailsLoading.value) return 'loading vessels...'
   if (searchError.value) return 'invalid search'
@@ -333,6 +342,29 @@ function createRow(id: number): VesselRow {
     delegate: null,
     machineAddress: null,
     chosenMachine: null,
+  }
+}
+
+function rowFromDatabase(row: any): VesselRow {
+  return {
+    id: Number(row.id),
+    claimed: typeof row.claimed === 'boolean' ? row.claimed : null,
+    hydrated: true,
+    detailsLoaded: true,
+    loadingDetails: false,
+    owner: row.owner || null,
+    type: row.type || null,
+    filled: typeof row.filled === 'boolean' ? row.filled : null,
+    payloadBytes: numberValue(row.payloadBytes),
+    capacityBytes: numberValue(row.capacityBytes) ?? Number(row.id),
+    colorMode: numberValue(row.colorMode) as ColorMode | null,
+    role: numberValue(row.role),
+    claimBlock: numberValue(row.claimBlock),
+    entryCount: numberValue(row.entryCount),
+    chosenEntry: numberValue(row.chosenEntry),
+    delegate: row.delegate || null,
+    machineAddress: row.machineAddress || null,
+    chosenMachine: row.chosenMachine || null,
   }
 }
 
@@ -452,7 +484,62 @@ async function loadOwnership() {
   }
 }
 
+async function loadDatabaseRows(initial = false) {
+  if (searchError.value) {
+    if (databaseAvailable.value) {
+      databaseRows.value = []
+      databaseTotalRows.value = 0
+    }
+    return false
+  }
+
+  const token = ++databaseToken
+  databaseLoading.value = true
+  databaseError.value = null
+
+  const params = new URLSearchParams({
+    page: String(page.value),
+    pageSize: String(PAGE_SIZE),
+    search: search.value.trim(),
+    claim: claimFilter.value,
+    filled: filledFilter.value,
+    type: typeFilter.value,
+    color: colorFilter.value,
+    sort: sortKey.value,
+    dir: sortDir.value,
+  })
+
+  try {
+    const res = await fetch(`/api/tokens?${params.toString()}`)
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      throw new Error(body?.message || body?.statusMessage || 'database token index unavailable')
+    }
+
+    const data = await res.json()
+    if (token !== databaseToken) return true
+
+    databaseRows.value = Array.isArray(data.rows) ? data.rows.map(rowFromDatabase) : []
+    databaseTotalRows.value = Number(data.total || 0)
+    databaseAvailable.value = true
+    return true
+  } catch (e: any) {
+    if (initial) {
+      databaseAvailable.value = false
+      databaseRows.value = []
+      databaseTotalRows.value = 0
+      return false
+    }
+
+    databaseError.value = e?.message || 'database token index unavailable'
+    return false
+  } finally {
+    if (token === databaseToken) databaseLoading.value = false
+  }
+}
+
 function scheduleDetailsLoad() {
+  if (databaseAvailable.value) return
   if (detailsTimer) clearTimeout(detailsTimer)
   detailsTimer = setTimeout(() => {
     if (queryNeedsFullDetails.value) {
@@ -580,6 +667,12 @@ function resetDetailState() {
 }
 
 async function reload() {
+  if (databaseAvailable.value) {
+    databaseError.value = null
+    await loadDatabaseRows()
+    return
+  }
+
   ownershipError.value = null
   detailsError.value = null
   resetDetailState()
@@ -653,17 +746,32 @@ watch(
 )
 
 watch(visibleRowIds, () => {
+  if (databaseAvailable.value) return
   scheduleDetailsLoad()
 })
 
 watch(queryNeedsFullDetails, (needsFullDetails) => {
-  if (needsFullDetails) void loadAllDetails()
+  if (!databaseAvailable.value && needsFullDetails) void loadAllDetails()
 })
 
-onMounted(() => {
+watch(
+  [page, search, claimFilter, filledFilter, typeFilter, colorFilter, sortKey, sortDir],
+  () => {
+    if (databaseAvailable.value) void loadDatabaseRows()
+  },
+)
+
+async function loadInitialRows() {
   allRows.value = Array.from({ length: TOTAL_VESSELS }, (_, index) => createRow(index + 1))
+
+  if (await loadDatabaseRows(true)) return
+
   void loadOwnership()
   scheduleDetailsLoad()
+}
+
+onMounted(() => {
+  void loadInitialRows()
 })
 
 onUnmounted(() => {
