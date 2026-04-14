@@ -127,7 +127,7 @@ export default defineEventHandler(async (event) => {
   const scale = Math.max(1, Math.floor(400 / cols))
 
   try {
-    const [payload, colorMode] = await Promise.all([
+    const [rawPayload, rawColorMode] = await Promise.all([
       client.readContract({
         address: VESSEL_ADDRESS,
         abi: craftToPayloadAbi,
@@ -142,13 +142,15 @@ export default defineEventHandler(async (event) => {
       }).catch(() => 0),
     ])
 
-    const hex = (payload as string).startsWith('0x') ? (payload as string).slice(2) : payload as string
+    const payload = rawPayload as string
+    const colorMode = Number(rawColorMode)
+    const hex = payload.startsWith('0x') ? payload.slice(2) : payload
     const pixels = new Uint8Array(hex.length / 2)
     for (let i = 0; i < pixels.length; i++) {
       pixels[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16)
     }
 
-    const png = buildPng(pixels, cols, rows, scale, Number(colorMode))
+    const png = buildPng(pixels, cols, rows, scale, colorMode)
 
     setResponseHeaders(event, {
       'Content-Type': 'image/png',
@@ -157,7 +159,6 @@ export default defineEventHandler(async (event) => {
 
     return png
   } catch {
-    // Empty vessel — return black image
     const pixels = new Uint8Array(cols * rows)
     const png = buildPng(pixels, cols, rows, scale)
 

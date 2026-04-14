@@ -43,6 +43,7 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
   const error = ref<string | null>(null)
 
   const config = useConfig()
+  let requestSeq = 0
 
   async function read(fnName: string, args: unknown[] = []) {
     return readContract(config, {
@@ -59,6 +60,7 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
   }
 
   async function fetchVessel(id: number) {
+    const seq = ++requestSeq
     loading.value = true
     error.value = null
     vessel.value = null
@@ -70,6 +72,8 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         safeRead<string>('craftToType', [BigInt(id)], 'Capsule'),
       ])
 
+      if (seq !== requestSeq) return
+
       const type = typeStr.toLowerCase() as VesselType
 
       // If not claimed, we can still show the type but not much else
@@ -78,6 +82,8 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         try { owner = await read('ownerOf', [BigInt(id)]) as string }
         catch { /* unclaimed or burned */ }
       }
+
+      if (seq !== requestSeq) return
 
       // Fetch all metadata in parallel
       const [
@@ -138,6 +144,8 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         }
       }
 
+      if (seq !== requestSeq) return
+
       // For vaults: fetch all entries
       if (type === 'vault' && entryCountNum > 0) {
         const entryPromises = []
@@ -151,6 +159,8 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
           entries.push(hexToBytes(raw))
         }
       }
+
+      if (seq !== requestSeq) return
 
       vessel.value = {
         id,
@@ -174,16 +184,17 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         payload: finalPayload,
       }
     } catch (e: any) {
+      if (seq !== requestSeq) return
       error.value = e?.shortMessage || e?.message || 'failed to fetch vessel'
     } finally {
-      loading.value = false
+      if (seq === requestSeq) loading.value = false
     }
   }
 
   watch(
     () => toValue(tokenId),
     (id) => {
-      if (id != null && id >= 0) fetchVessel(id)
+      if (id != null && id > 0) fetchVessel(id)
     },
     { immediate: true },
   )

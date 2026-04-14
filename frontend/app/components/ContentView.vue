@@ -66,7 +66,7 @@
           <iframe
             v-else-if="content.type === 'html'"
             :key="'iframe-' + scriptsEnabled"
-            :srcdoc="content.text"
+            :srcdoc="content.text || ''"
             :sandbox="scriptsEnabled ? 'allow-scripts' : ''"
             class="rendered-iframe"
           ></iframe>

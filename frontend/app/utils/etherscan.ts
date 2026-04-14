@@ -81,6 +81,8 @@ export async function fetchVesselActivity(page = 1, offset = 50): Promise<Vessel
     // Server pre-decodes synthetic entries (delegated writes from event logs)
     const decoded = tx._action
       ? { action: tx._action, vesselId: tx._vesselId, detail: tx._detail }
+      : tx.action
+        ? { action: tx.action, vesselId: tx.vesselId ?? tx.vessel_id ?? null, detail: tx.detail ?? tx.action }
       : decodeVesselTx(tx.input, tx.functionName)
     return {
       hash: tx.hash,
@@ -88,9 +90,9 @@ export async function fetchVesselActivity(page = 1, offset = 50): Promise<Vessel
       to: tx.to,
       timeStamp: tx.timeStamp,
       blockNumber: tx.blockNumber,
-      input: tx.input,
-      isError: tx.isError,
-      functionName: tx.functionName,
+      input: tx.input ?? '0x',
+      isError: tx.isError ?? '0',
+      functionName: tx.functionName ?? '',
       ...decoded,
     }
   })

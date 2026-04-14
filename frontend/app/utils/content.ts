@@ -131,7 +131,7 @@ export function detectContent(data: Uint8Array): DetectedContent {
   // Check if >90% printable ASCII after bytecode detection.
   let printable = 0
   for (let i = 0; i < meaningfulData.length; i++) {
-    const b = meaningfulData[i]
+    const b = meaningfulData[i]!
     if ((b >= 0x20 && b <= 0x7e) || b === 0x0a || b === 0x0d || b === 0x09) {
       printable++
     }

@@ -35,13 +35,19 @@ async function logToTx(log: any, apiKey: string) {
 }
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const apiKey = config.etherscanKey as string
-  if (!apiKey) throw createError({ statusCode: 500, message: 'etherscan key not configured' })
-
   const query = getQuery(event)
   const page = Number(query.page) || 1
-  const offset = Math.min(Number(query.offset) || 500, 1000)
+  const rawOffset = Number(query.offset)
+  const offset = Math.min(Number.isFinite(rawOffset) ? rawOffset : 500, 1000)
+
+  const config = useRuntimeConfig()
+  const apiKey = config.etherscanKey as string
+  if (!apiKey) {
+    throw createError({
+      statusCode: 503,
+      message: 'Etherscan fallback is unavailable; set NUXT_ETHERSCAN_KEY and restart the frontend',
+    })
+  }
 
   // Fetch external transactions
   const txUrl = `${BASE}&module=account&action=txlist&address=${VESSEL_ADDRESS}&page=${page}&offset=${offset}&sort=desc&apikey=${apiKey}`

@@ -1,5 +1,5 @@
 import { computeOwnership } from '~/utils/vessel'
-import { fetchVesselTransfersForAddress, type TokenTransfer } from '~/utils/etherscan'
+import { type TokenTransfer } from '~/utils/etherscan'
 
 export interface OwnerTokens {
   ownership: Map<string, string>
@@ -18,23 +18,21 @@ let globalCache: Promise<OwnerTokens> | null = null
  *  - ownerTokens: Map<ownerAddress, tokenId[]>
  */
 export async function fetchOwnership(address?: string): Promise<OwnerTokens> {
-  if (!address && globalCache) return globalCache
+  const normalizedAddress = address?.trim() || undefined
+  if (!normalizedAddress && globalCache) return globalCache
 
-  const promise = _fetchOwnership(address)
-  if (!address) globalCache = promise
+  const promise = _fetchOwnership(normalizedAddress)
+  if (!normalizedAddress) {
+    globalCache = promise.catch((error) => {
+      if (globalCache === promise) globalCache = null
+      throw error
+    })
+  }
   return promise
 }
 
 async function _fetchOwnership(address?: string): Promise<OwnerTokens> {
-  let transfers: TokenTransfer[]
-
-  if (address) {
-    transfers = await fetchVesselTransfersForAddress(address)
-  } else {
-    const res = await fetch('/api/transfers?offset=10000')
-    transfers = await res.json()
-    if (!Array.isArray(transfers)) transfers = []
-  }
+  const transfers = await fetchTransfers(address)
 
   const ownership = computeOwnership(transfers)
 
@@ -44,7 +42,32 @@ async function _fetchOwnership(address?: string): Promise<OwnerTokens> {
     ownerTokens.get(owner)!.push(tokenId)
   }
 
+  for (const tokens of ownerTokens.values()) {
+    tokens.sort((a, b) => Number(a) - Number(b))
+  }
+
   return { ownership, ownerTokens }
+}
+
+async function fetchTransfers(address?: string): Promise<TokenTransfer[]> {
+  const transfers: TokenTransfer[] = []
+  const pageSize = 10000
+
+  for (let page = 1; page <= 20; page++) {
+    const params = new URLSearchParams({
+      page: String(page),
+      offset: String(pageSize),
+    })
+    if (address) params.set('address', address)
+
+    const res = await fetch(`/api/transfers?${params.toString()}`)
+    const pageTransfers = await res.json()
+    if (!Array.isArray(pageTransfers) || pageTransfers.length === 0) break
+    transfers.push(...pageTransfers)
+    if (pageTransfers.length < pageSize) break
+  }
+
+  return transfers
 }
 
 /**
