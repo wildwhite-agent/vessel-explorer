@@ -25,6 +25,8 @@
       <!-- Holders tab -->
       <div v-if="activeTab === 'holders'">
         <div v-if="holdersLoading" class="feed-status">loading holders...</div>
+        <div v-else-if="holdersError" class="feed-status feed-error">{{ holdersError }}</div>
+        <div v-else-if="holders.length === 0" class="feed-status">no holders yet</div>
         <div v-else class="feed-table">
           <div class="feed-row feed-row-header holder-row">
             <span class="col-rank">#</span>
@@ -46,9 +48,9 @@
               </NuxtLink>
             </span>
             <span class="col-stat">{{ holder.count }}</span>
-            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.machines || '-') : '...' }}</span>
-            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.vaults || '-') : '...' }}</span>
-            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.capsules || '-') : '...' }}</span>
+            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.machines ?? '-') : '...' }}</span>
+            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.vaults ?? '-') : '...' }}</span>
+            <span class="col-stat" :class="{ dimmed: !holder.typesLoaded }">{{ holder.typesLoaded ? (holder.capsules ?? '-') : '...' }}</span>
           </div>
         </div>
       </div>
@@ -150,69 +152,78 @@ const activeFilters = ref(new Set<string>(actionTypes))
 interface Holder {
   address: string
   count: number
-  machines: number
-  vaults: number
-  capsules: number
+  machines: number | null
+  vaults: number | null
+  capsules: number | null
   typesLoaded: boolean
 }
 const holders = ref<Holder[]>([])
 const holdersLoading = ref(false)
 const holdersLoaded = ref(false)
+const holdersError = ref<string | null>(null)
 
-// ownership map for type enrichment
-const ownershipMap = ref(new Map<string, string>())
+async function loadHolders() {
+  holdersLoading.value = true
+  holdersError.value = null
+  try {
+    const { ownerTokens } = await fetchOwnership()
+
+    holders.value = [...ownerTokens.entries()]
+      .map(([address, tokens]) => ({
+        address,
+        count: tokens.length,
+        machines: null,
+        vaults: null,
+        capsules: null,
+        typesLoaded: false,
+      }))
+      .sort((a, b) => b.count - a.count)
+
+    holdersLoaded.value = true
+
+    for (let hi = 0; hi < holders.value.length; hi++) {
+      const h = holders.value[hi]
+      if (!h) continue
+      const tokens = ownerTokens.get(h.address) || []
+      let machines = 0, vaults = 0, capsules = 0
+
+      for (const tokenId of tokens) {
+        try {
+          const typeStr = await readContract(wagmiConfig, {
+            address: VESSEL_ADDRESS,
+            abi: VESSEL_ABI,
+            functionName: 'craftToType',
+            args: [BigInt(tokenId)],
+          }) as string
+
+          const t = typeStr.toLowerCase()
+          if (t === 'machine') machines++
+          else if (t === 'vault') vaults++
+          else capsules++
+        } catch {
+          // skip
+        }
+      }
+
+      holders.value[hi] = {
+        address: h.address,
+        count: h.count,
+        machines,
+        vaults,
+        capsules,
+        typesLoaded: true,
+      }
+    }
+  } catch (e: any) {
+    holdersError.value = e?.data?.message || e?.message || 'failed to load holders'
+  } finally {
+    holdersLoading.value = false
+  }
+}
 
 watch(activeTab, async (tab) => {
   if (tab === 'holders' && !holdersLoaded.value) {
-    holdersLoading.value = true
-    try {
-      const { ownership, ownerTokens } = await fetchOwnership()
-      ownershipMap.value = ownership
-
-      // Build holder list immediately (sorted by count)
-      holders.value = [...ownerTokens.entries()]
-        .map(([address, tokens]) => ({
-          address,
-          count: tokens.length,
-          machines: 0,
-          vaults: 0,
-          capsules: 0,
-          typesLoaded: false,
-        }))
-        .sort((a, b) => b.count - a.count)
-
-      holdersLoaded.value = true
-      holdersLoading.value = false
-
-      // Background: progressively enrich types per holder
-      for (let hi = 0; hi < holders.value.length; hi++) {
-        const h = holders.value[hi]
-        const tokens = ownerTokens.get(h.address) || []
-        let machines = 0, vaults = 0, capsules = 0
-
-        for (const tokenId of tokens) {
-          try {
-            const typeStr = await readContract(wagmiConfig, {
-              address: VESSEL_ADDRESS,
-              abi: VESSEL_ABI,
-              functionName: 'craftToType',
-              args: [BigInt(tokenId)],
-            }) as string
-
-            const t = typeStr.toLowerCase()
-            if (t === 'machine') machines++
-            else if (t === 'vault') vaults++
-            else capsules++
-          } catch {
-            // skip
-          }
-        }
-
-        holders.value[hi] = { ...h, machines, vaults, capsules, typesLoaded: true }
-      }
-    } catch {
-      holdersLoading.value = false
-    }
+    await loadHolders()
   }
 })
 

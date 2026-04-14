@@ -5,7 +5,7 @@
     <div class="detail-content">
       <div class="nav-bar">
         <a href="#" class="back-link" @click.prevent="$router.back()">[back]</a>
-        <button class="text-btn" @click="randomVessel">[random]</button>
+        <button type="button" class="text-btn" :disabled="randomLoading" @click="randomVessel">[random]</button>
       </div>
 
       <div v-if="loading" class="status">loading vessel #{{ id }}...</div>
@@ -30,20 +30,28 @@
               <span class="meta-label">delegate</span>
               <span class="meta-value"><AddressDisplay :address="vessel.delegate" /></span>
             </div>
-            <div v-if="vessel.type === 'machine' && vessel.machineAddress" class="meta-row">
+            <div v-if="vessel.isMachine && vessel.machineAddress" class="meta-row">
               <span class="meta-label">machine</span>
               <span class="meta-value">
                 <AddressDisplay :address="vessel.machineAddress" external />
                 <template v-if="vessel.machineName"> ({{ vessel.machineName }})</template>
               </span>
             </div>
+            <div v-if="vessel.chosenMachine" class="meta-row">
+              <span class="meta-label">chosen machine</span>
+              <span class="meta-value"><AddressDisplay :address="vessel.chosenMachine" external /></span>
+            </div>
             <div class="meta-row">
               <span class="meta-label">type</span>
               <span class="meta-value">{{ vessel.type }}</span>
             </div>
-            <div v-if="vessel.type === 'vault'" class="meta-row">
+            <div v-if="vessel.isVault" class="meta-row">
               <span class="meta-label">entries</span>
               <span class="meta-value">{{ vessel.entryCount }}</span>
+            </div>
+            <div v-if="vessel.isVault" class="meta-row">
+              <span class="meta-label">chosen entry</span>
+              <span class="meta-value">{{ vessel.chosenEntry }}</span>
             </div>
             <div class="meta-row">
               <span class="meta-label">color mode</span>
@@ -60,11 +68,11 @@
           </div>
         </div>
 
-        <div v-if="vessel.type === 'machine' && vessel.machineAddress" class="machine-note">
+        <div v-if="vessel.isMachine && vessel.machineAddress" class="machine-note">
           sourced from <AddressDisplay :address="vessel.machineAddress" external />
         </div>
 
-        <div v-if="vessel.type === 'vault' && vessel.entries.length > 1" class="entry-selector">
+        <div v-if="vessel.isVault && vessel.entries.length > 1" class="entry-selector">
           <button
             v-for="(_, idx) in vessel.entries"
             :key="idx"
@@ -111,25 +119,41 @@
 <script setup lang="ts">
 import { detectContent } from '~/utils/content'
 import { colorModeName } from '~/utils/vessel'
-import { fetchVesselActivity } from '~/utils/etherscan'
 
 const router = useRouter()
 const route = useRoute()
 
-// Random vessel navigation (same logic as index — only vessels with writes)
-const activeVesselIds = ref<string[]>([])
+const randomVesselIds = ref<number[] | null>(null)
+const randomLoading = ref(false)
+
+function positiveIds(values: unknown): number[] {
+  if (!Array.isArray(values)) return []
+  const ids = new Set<number>()
+  for (const value of values) {
+    const id = Number(value)
+    if (Number.isInteger(id) && id > 0) ids.add(id)
+  }
+  return [...ids]
+}
+
+async function loadRandomVesselIds() {
+  if (randomVesselIds.value?.length) return randomVesselIds.value
+
+  randomLoading.value = true
+  try {
+    const { ownership } = await fetchOwnership()
+    const ids = positiveIds([...ownership.keys()])
+    randomVesselIds.value = ids
+    return ids
+  } finally {
+    randomLoading.value = false
+  }
+}
 
 async function randomVessel() {
-  if (!activeVesselIds.value.length) {
-    const all = await fetchVesselActivity()
-    const ids = new Set<string>()
-    for (const tx of all) {
-      if (tx.vesselId && tx.action === 'write') ids.add(tx.vesselId)
-    }
-    activeVesselIds.value = [...ids]
-  }
-  if (!activeVesselIds.value.length) return
-  const pick = activeVesselIds.value[Math.floor(Math.random() * activeVesselIds.value.length)]
+  const candidates = (await loadRandomVesselIds()).filter((candidate) => candidate !== id.value)
+  if (!candidates.length) return
+  const pick = candidates[Math.floor(Math.random() * candidates.length)]
   router.push(`/${pick}`)
 }
 
@@ -144,18 +168,25 @@ const { vessel, loading, error } = useVesselReader(id)
 const showBytes = ref(false)
 const copied = ref(false)
 
-// Default to latest entry for vaults
 const activeEntry = ref(0)
-watch(vessel, (v) => {
-  if (v && v.type === 'vault' && v.entries.length > 0) {
-    activeEntry.value = v.entries.length - 1
+watch(() => vessel.value?.id, () => {
+  if (vessel.value?.isVault && vessel.value.entries.length > 0) {
+    const chosen = Number(vessel.value.chosenEntry)
+    if (Number.isInteger(chosen) && chosen >= 0 && chosen < vessel.value.entries.length) {
+      activeEntry.value = chosen
+    } else {
+      activeEntry.value = vessel.value.entries.length - 1
+    }
+  } else {
+    activeEntry.value = 0
   }
-})
+}, { immediate: true })
 
 const activePayload = computed(() => {
   if (!vessel.value) return null
-  if (vessel.value.type === 'vault' && vessel.value.entries.length > 0) {
-    return vessel.value.entries[activeEntry.value] || null
+  if (vessel.value.isVault && vessel.value.entries.length > 0) {
+    const idx = Math.min(Math.max(activeEntry.value, 0), vessel.value.entries.length - 1)
+    return vessel.value.entries[idx] || null
   }
   return vessel.value.payload
 })

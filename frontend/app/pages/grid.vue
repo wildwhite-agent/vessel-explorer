@@ -51,7 +51,7 @@
           >
             <canvas
               v-if="payloadCache.has(id)"
-              :ref="(el) => { if (el) renderCell(el as HTMLCanvasElement, id) }"
+              :ref="cellCanvasRef(id)"
               class="cell-canvas pixelated"
             />
             <span v-else-if="showCellLabels" class="cell-id" :style="{ fontSize: Math.max(6, cellSize * 0.15) + 'px' }">{{ id }}</span>
@@ -65,6 +65,7 @@
 <script setup lang="ts">
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
+import type { ComponentPublicInstance } from 'vue'
 import { VESSEL_ADDRESS, VESSEL_ABI, byteToRGB, getGridDimensions, hexToBytes, renderToCanvas, type ColorMode } from '~/utils/vessel'
 import { fetchOwnership } from '~/composables/useOwnership'
 
@@ -211,7 +212,6 @@ const claimedSet = ref(new Set<number>())
 const payloadCache = reactive(new Map<number, Uint8Array>())
 const typeCache = reactive(new Map<number, string>())
 const colorModeCache = reactive(new Map<number, ColorMode>())
-const loadingSet = new Set<number>()
 const allClaimedPayloadsLoading = ref(false)
 const allClaimedPayloadsLoaded = ref(false)
 const overviewTileCache = new Map<string, ImageData>()
@@ -229,20 +229,26 @@ function renderCell(canvas: HTMLCanvasElement, id: number) {
   renderToCanvas(canvas, data, id, cellSize.value, colorModeCache.get(id) ?? 0)
 }
 
+function cellCanvasRef(id: number) {
+  return (el: Element | ComponentPublicInstance | null) => {
+    if (el instanceof HTMLCanvasElement) renderCell(el, id)
+  }
+}
+
 // Loading with cancellation via token
 let currentToken = 0
 
 async function loadVisible() {
   const token = ++currentToken
-  loadingSet.clear()
 
   const ids = prioritizedIds.value
   if (!shouldLoadDetailedCells.value) return
 
-  // Load types in batches of 30
-  for (let i = 0; i < ids.length && token === currentToken; i += 30) {
-    const batch = ids.slice(i, i + 30).filter(id => !typeCache.has(id))
-    if (!batch.length) continue
+  const claimedIds = ids.filter(id => claimedSet.value.has(id) && !payloadCache.has(id))
+
+  const missingTypes = ids.filter(id => !typeCache.has(id))
+  for (let i = 0; i < missingTypes.length && token === currentToken; i += 30) {
+    const batch = missingTypes.slice(i, i + 30)
     const results = await Promise.all(
       batch.map(id =>
         readContract(wagmiConfig, {
@@ -260,9 +266,9 @@ async function loadVisible() {
   }
 
   // Load payloads + colorModes — each renders individually as it arrives
-  const claimedIds = ids.filter(id => claimedSet.value.has(id) && !payloadCache.has(id))
-  for (let i = 0; i < claimedIds.length && token === currentToken; i += 10) {
-    const batch = claimedIds.slice(i, i + 10)
+  const missingPayloadIds = claimedIds.filter(id => !payloadCache.has(id))
+  for (let i = 0; i < missingPayloadIds.length && token === currentToken; i += 10) {
+    const batch = missingPayloadIds.slice(i, i + 10)
     await Promise.all(
       batch.map(async (id) => {
         if (token !== currentToken) return
@@ -332,29 +338,10 @@ async function loadAllClaimedPayloads() {
   allClaimedPayloadsLoading.value = true
 
   try {
-    // Prioritize IDs currently visible in the viewport
-    const vpRowStart = Math.max(0, Math.floor(scrollTop.value / cellSize.value))
-    const vpRowEnd = Math.min(gridSide, Math.ceil((scrollTop.value + viewportHeight.value) / cellSize.value))
-    const vpColStart = Math.max(0, Math.floor(scrollLeft.value / cellSize.value))
-    const vpColEnd = Math.min(gridSide, Math.ceil((scrollLeft.value + viewportWidth.value) / cellSize.value))
-
-    const visibleSet = new Set<number>()
-    for (let row = vpRowStart; row < vpRowEnd; row++) {
-      for (let col = vpColStart; col < vpColEnd; col++) {
-        const id = row * gridSide + col + 1
-        if (id <= totalVessels) visibleSet.add(id)
-      }
+    const missingPayloadIds = claimedIds.filter(id => !payloadCache.has(id))
+    if (missingPayloadIds.length) {
+      await loadClaimedBatch(missingPayloadIds, token)
     }
-
-    const visibleClaimed = claimedIds.filter(id => visibleSet.has(id))
-    const restClaimed = claimedIds.filter(id => !visibleSet.has(id))
-
-    // Load visible viewport IDs first
-    await loadClaimedBatch(visibleClaimed, token)
-    if (token !== allClaimedToken) return
-
-    // Then load the rest in background
-    await loadClaimedBatch(restClaimed, token)
 
     if (token === allClaimedToken) {
       allClaimedPayloadsLoaded.value = [...claimedSet.value].every(id => payloadCache.has(id))

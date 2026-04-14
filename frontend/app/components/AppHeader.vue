@@ -1,13 +1,23 @@
 <template>
   <header class="app-header">
     <NuxtLink to="/" class="app-title">vessel explorer</NuxtLink>
-    <Tooltip v-if="claimed != null" side="bottom" align="center" :side-offset="8" :delay-duration="100" :arrow="false">
+    <Tooltip v-if="statsLoading || claimed != null || statsError" side="bottom" align="center" :side-offset="8" :delay-duration="100" :arrow="false">
       <template #trigger>
         <span class="header-stats" @mouseenter="loadFilledBytes">
-          {{ claimed }} claimed<template v-if="blocksSinceDeploy != null"> since {{ blocksSinceDeploy.toLocaleString() }} blocks</template>
+          <template v-if="statsLoading">loading stats...</template>
+          <template v-else-if="statsError">{{ statsError }}</template>
+          <template v-else>{{ claimed }} claimed<template v-if="blocksSinceDeploy != null"> since {{ blocksSinceDeploy.toLocaleString() }} blocks</template></template>
         </span>
       </template>
       <div class="stats-popover">
+        <div class="stats-row" v-if="statsLoading">
+          <span class="stats-label">stats</span>
+          <span class="stats-value">loading...</span>
+        </div>
+        <div class="stats-row" v-else-if="statsError">
+          <span class="stats-label">stats</span>
+          <span class="stats-value">{{ statsError }}</span>
+        </div>
         <div class="stats-row">
           <span class="stats-label">capacity claimed</span>
           <span class="stats-value">{{ formatBytes(claimedCapacity) }} <span class="stat-sep">/ {{ formatBytes(TOTAL_CAPACITY) }}</span></span>
@@ -40,6 +50,7 @@
     </Tooltip>
     <div class="header-actions">
       <NuxtLink to="/grid" class="text-btn">[grid]</NuxtLink>
+      <NuxtLink to="/all" class="text-btn">[all]</NuxtLink>
       <button class="text-btn" @click="toggleDark">
         {{ isDark ? '[light]' : '[dark]' }}
       </button>
@@ -57,13 +68,15 @@ const wagmiConfig = useConfig()
 const COLOR_MODE_KEY = 'vessel-color-mode'
 const isDark = ref(true)
 const claimed = ref<number | null>(null)
-const maxSupply = ref(10000)
 const claimedIds = ref<string[]>([])
 const holderCount = ref(0)
 const largestHolder = ref<{ address: string; count: number } | null>(null)
 const filledBytes = ref<number | null>(null)
 const filledLoading = ref(false)
 const blocksSinceDeploy = ref<number | null>(null)
+const statsLoading = ref(true)
+const statsError = ref<string | null>(null)
+let blocksTimer: ReturnType<typeof setInterval> | null = null
 
 const TOTAL_CAPACITY = 50_005_000
 
@@ -87,32 +100,16 @@ onMounted(async () => {
   isDark.value = shouldBeDark
 
   try {
-    const [claimedCount, supply] = await Promise.all([
-      readContract(wagmiConfig, {
-        address: VESSEL_ADDRESS,
-        abi: VESSEL_ABI,
-        functionName: 'claimedCount',
-      }) as Promise<bigint>,
-      readContract(wagmiConfig, {
-        address: VESSEL_ADDRESS,
-        abi: VESSEL_ABI,
-        functionName: 'MAX_SUPPLY',
-      }) as Promise<bigint>,
-    ])
-    claimed.value = Number(claimedCount)
-    maxSupply.value = Number(supply)
-  } catch { /* silently fail */ }
-
-  // Blocks since deployment (increment locally every ~12s)
-  try {
-    const DEPLOY_BLOCK = 24624612n
-    const currentBlock = await getBlockNumber(wagmiConfig)
-    blocksSinceDeploy.value = Number(currentBlock - DEPLOY_BLOCK)
-    setInterval(() => { blocksSinceDeploy.value!++ }, 12_000)
-  } catch { /* silently fail */ }
-
-  // Background: fetch ownership to compute claimed capacity + holder stats
-  try {
+    if (claimed.value == null) {
+      const [claimedCount] = await Promise.all([
+        readContract(wagmiConfig, {
+          address: VESSEL_ADDRESS,
+          abi: VESSEL_ABI,
+          functionName: 'claimedCount',
+        }) as Promise<bigint>,
+      ])
+      claimed.value = Number(claimedCount)
+    }
     const { ownership, ownerTokens } = await fetchOwnership()
     claimedIds.value = [...ownership.keys()]
     holderCount.value = ownerTokens.size
@@ -126,7 +123,25 @@ onMounted(async () => {
       }
     }
     if (maxAddr) largestHolder.value = { address: maxAddr, count: maxCount }
-  } catch { /* silently fail */ }
+
+    if (blocksSinceDeploy.value == null) {
+      const DEPLOY_BLOCK = 24624612n
+      const currentBlock = await getBlockNumber(wagmiConfig)
+      blocksSinceDeploy.value = Number(currentBlock - DEPLOY_BLOCK)
+    }
+  } catch {
+    if (claimed.value == null) statsError.value = 'stats unavailable'
+  } finally {
+    statsLoading.value = false
+  }
+
+  if (blocksSinceDeploy.value != null) {
+    blocksTimer = setInterval(() => { blocksSinceDeploy.value!++ }, 12_000)
+  }
+})
+
+onUnmounted(() => {
+  if (blocksTimer != null) clearInterval(blocksTimer)
 })
 
 // Lazy load filled bytes on first hover
@@ -134,26 +149,29 @@ async function loadFilledBytes() {
   if (filledLoading.value || filledBytes.value != null || claimedIds.value.length === 0) return
   filledLoading.value = true
 
-  let total = 0
-  const BATCH = 20
-  for (let i = 0; i < claimedIds.value.length; i += BATCH) {
-    const batch = claimedIds.value.slice(i, i + BATCH)
-    const results = await Promise.all(
-      batch.map(id =>
-        readContract(wagmiConfig, {
-          address: VESSEL_ADDRESS,
-          abi: VESSEL_ABI,
-          functionName: 'craftToPayload',
-          args: [BigInt(id)],
-        }).catch(() => '0x') as Promise<string>
+  try {
+    let total = 0
+    const BATCH = 20
+    for (let i = 0; i < claimedIds.value.length; i += BATCH) {
+      const batch = claimedIds.value.slice(i, i + BATCH)
+      const results = await Promise.all(
+        batch.map(id =>
+          readContract(wagmiConfig, {
+            address: VESSEL_ADDRESS,
+            abi: VESSEL_ABI,
+            functionName: 'craftToPayload',
+            args: [BigInt(id)],
+          }).catch(() => '0x') as Promise<string>
+        )
       )
-    )
-    for (const raw of results) {
-      total += hexToBytes(raw).length
+      for (const raw of results) {
+        total += hexToBytes(raw).length
+      }
+      filledBytes.value = total
     }
-    filledBytes.value = total
+  } finally {
+    filledLoading.value = false
   }
-  filledLoading.value = false
 }
 
 function toggleDark() {

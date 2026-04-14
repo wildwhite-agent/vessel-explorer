@@ -41,7 +41,7 @@
                 <ClientOnly>
                   <canvas
                     v-if="v.payload?.length"
-                    :ref="(el) => { if (el) renderCanvas(el as HTMLCanvasElement, v) }"
+                    :ref="vesselCanvasRef(v)"
                     class="card-thumb"
                   />
                   <div v-else-if="v.loaded" class="card-empty">empty</div>
@@ -67,7 +67,7 @@
                 <ClientOnly>
                   <canvas
                     v-if="v.payload?.length"
-                    :ref="(el) => { if (el) renderCanvas(el as HTMLCanvasElement, v) }"
+                    :ref="vesselCanvasRef(v)"
                     class="card-thumb"
                   />
                   <div v-else-if="v.loaded" class="card-empty">empty</div>
@@ -87,6 +87,7 @@
 import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import { isAddress } from 'viem'
+import type { ComponentPublicInstance } from 'vue'
 import { VESSEL_ADDRESS, VESSEL_ABI, hexToBytes, shortenAddress, renderToCanvas, type ColorMode } from '~/utils/vessel'
 
 async function copyAddress() {
@@ -141,6 +142,12 @@ function renderCanvas(canvas: HTMLCanvasElement, vessel: OwnedVessel) {
   renderToCanvas(canvas, vessel.payload, Number(vessel.id), 100, vessel.colorMode)
 }
 
+function vesselCanvasRef(vessel: OwnedVessel) {
+  return (el: Element | ComponentPublicInstance | null) => {
+    if (el instanceof HTMLCanvasElement) renderCanvas(el, vessel)
+  }
+}
+
 async function resolveAddr(identifier: string) {
   resolving.value = true
   resolveError.value = null
@@ -185,42 +192,42 @@ async function loadVessels(address: string) {
 
     // Add all vessels immediately with loading state
     ownedVessels.value = owned.map(id => ({ id, payload: null, loaded: false, type: null, colorMode: 0 as ColorMode }))
-
-    // Load payload + type + colorMode one by one (progressive)
-    for (const id of owned) {
-      try {
-        const [payload, vesselType, cm] = await Promise.all([
-          readContract(config, {
-            address: VESSEL_ADDRESS,
-            abi: VESSEL_ABI,
-            functionName: 'craftToPayload',
-            args: [BigInt(id)],
-          }) as Promise<string>,
-          readContract(config, {
-            address: VESSEL_ADDRESS,
-            abi: VESSEL_ABI,
-            functionName: 'craftToType',
-            args: [BigInt(id)],
-          }) as Promise<string>,
-          readContract(config, {
-            address: VESSEL_ADDRESS,
-            abi: VESSEL_ABI,
-            functionName: 'craftToColorMode',
-            args: [BigInt(id)],
-          }).catch(() => 0) as Promise<number>,
-        ])
-        const bytes = hexToBytes(payload)
-        const idx = ownedVessels.value.findIndex(v => v.id === id)
-        if (idx !== -1) {
-          ownedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType, colorMode: cm as ColorMode }
+    await Promise.all(
+      owned.map(async (id) => {
+        try {
+          const [payload, vesselType, cm] = await Promise.all([
+            readContract(config, {
+              address: VESSEL_ADDRESS,
+              abi: VESSEL_ABI,
+              functionName: 'craftToPayload',
+              args: [BigInt(id)],
+            }) as Promise<string>,
+            readContract(config, {
+              address: VESSEL_ADDRESS,
+              abi: VESSEL_ABI,
+              functionName: 'craftToType',
+              args: [BigInt(id)],
+            }) as Promise<string>,
+            readContract(config, {
+              address: VESSEL_ADDRESS,
+              abi: VESSEL_ABI,
+              functionName: 'craftToColorMode',
+              args: [BigInt(id)],
+            }).catch(() => 0) as Promise<number>,
+          ])
+          const bytes = hexToBytes(payload)
+          const idx = ownedVessels.value.findIndex(v => v.id === id)
+          if (idx !== -1) {
+            ownedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType, colorMode: cm as ColorMode }
+          }
+        } catch {
+          const idx = ownedVessels.value.findIndex(v => v.id === id)
+          if (idx !== -1) {
+            ownedVessels.value[idx] = { id, payload: null, loaded: true, type: null, colorMode: 0 }
+          }
         }
-      } catch {
-        const idx = ownedVessels.value.findIndex(v => v.id === id)
-        if (idx !== -1) {
-          ownedVessels.value[idx] = { id, payload: null, loaded: true, type: null, colorMode: 0 }
-        }
-      }
-    }
+      })
+    )
   } catch {
     // silently fail
   } finally {
@@ -257,8 +264,10 @@ async function loadDelegatedVessels(address: string) {
 
       const matched: string[] = []
       for (let j = 0; j < batch.length; j++) {
-        if (delegates[j].toLowerCase() === address.toLowerCase()) {
-          matched.push(batch[j])
+        const delegate = delegates[j] || ZERO_ADDRESS
+        const id = batch[j]
+        if (id && delegate.toLowerCase() === address.toLowerCase()) {
+          matched.push(id)
         }
       }
 
@@ -268,42 +277,42 @@ async function loadDelegatedVessels(address: string) {
           ...delegatedVessels.value,
           ...matched.map(id => ({ id, payload: null, loaded: false, type: null, colorMode: 0 as ColorMode })),
         ]
-
-        // Load payload + type + colorMode for matched vessels
-        for (const id of matched) {
-          try {
-            const [payload, vesselType, cm] = await Promise.all([
-              readContract(config, {
-                address: VESSEL_ADDRESS,
-                abi: VESSEL_ABI,
-                functionName: 'craftToPayload',
-                args: [BigInt(id)],
-              }) as Promise<string>,
-              readContract(config, {
-                address: VESSEL_ADDRESS,
-                abi: VESSEL_ABI,
-                functionName: 'craftToType',
-                args: [BigInt(id)],
-              }) as Promise<string>,
-              readContract(config, {
-                address: VESSEL_ADDRESS,
-                abi: VESSEL_ABI,
-                functionName: 'craftToColorMode',
-                args: [BigInt(id)],
-              }).catch(() => 0) as Promise<number>,
-            ])
-            const bytes = hexToBytes(payload)
-            const idx = delegatedVessels.value.findIndex(v => v.id === id)
-            if (idx !== -1) {
-              delegatedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType, colorMode: cm as ColorMode }
+        await Promise.all(
+          matched.map(async (id) => {
+            try {
+              const [payload, vesselType, cm] = await Promise.all([
+                readContract(config, {
+                  address: VESSEL_ADDRESS,
+                  abi: VESSEL_ABI,
+                  functionName: 'craftToPayload',
+                  args: [BigInt(id)],
+                }) as Promise<string>,
+                readContract(config, {
+                  address: VESSEL_ADDRESS,
+                  abi: VESSEL_ABI,
+                  functionName: 'craftToType',
+                  args: [BigInt(id)],
+                }) as Promise<string>,
+                readContract(config, {
+                  address: VESSEL_ADDRESS,
+                  abi: VESSEL_ABI,
+                  functionName: 'craftToColorMode',
+                  args: [BigInt(id)],
+                }).catch(() => 0) as Promise<number>,
+              ])
+              const bytes = hexToBytes(payload)
+              const idx = delegatedVessels.value.findIndex(v => v.id === id)
+              if (idx !== -1) {
+                delegatedVessels.value[idx] = { id, payload: bytes.length > 0 ? bytes : null, loaded: true, type: vesselType, colorMode: cm as ColorMode }
+              }
+            } catch {
+              const idx = delegatedVessels.value.findIndex(v => v.id === id)
+              if (idx !== -1) {
+                delegatedVessels.value[idx] = { id, payload: null, loaded: true, type: null, colorMode: 0 }
+              }
             }
-          } catch {
-            const idx = delegatedVessels.value.findIndex(v => v.id === id)
-            if (idx !== -1) {
-              delegatedVessels.value[idx] = { id, payload: null, loaded: true, type: null, colorMode: 0 }
-            }
-          }
-        }
+          })
+        )
       }
     }
   } catch {
