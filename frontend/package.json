@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db:schema": "node scripts/db-schema.mjs",
+    "db:backfill": "node scripts/index-vessels.mjs --all",
+    "db:sync": "node scripts/index-vessels.mjs --missing",
     "dev": "nuxt dev",
     "build": "nuxt build",
     "generate": "nuxt generate",
@@ -15,6 +18,7 @@
     "@wagmi/core": "^3.4.0",
     "@wagmi/vue": "^0.5.0",
     "nuxt": "^4.3.1",
+    "postgres": "^3.4.7",
     "postcss-nesting": "^14.0.0",
     "viem": "^2.47.0"
   }
