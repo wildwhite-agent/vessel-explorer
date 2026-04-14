@@ -21,15 +21,41 @@ Run the frontend at `http://127.0.0.1:3001`.
 git clone <repo-url>
 cd vessel-explorer/frontend
 cp .env.example .env
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Edit `.env` before starting the frontend if needed:
 
 - `NUXT_ETHERSCAN_KEY` is required for the activity feed, holder data, and
   `/all` ownership.
+- `DATABASE_URL` enables the Postgres read model for fast `/all` filtering.
 - `NUXT_PUBLIC_EVM_CHAINS_MAINNET_RPC1/2/3` are the browser RPC fallbacks.
+
+### Database Read Model
+
+The app can run without Postgres. When `DATABASE_URL` is missing, `/all` falls
+back to browser/RPC hydration. For production, configure a Postgres database
+such as Neon or Supabase and build the read model:
+
+```bash
+cd vessel-explorer/frontend
+pnpm db:schema
+pnpm db:backfill
+```
+
+`pnpm db:backfill` reads all 10,000 token rows from Ethereum RPC and upserts
+their owner, type, payload size, color mode, role, delegate, machine, and entry
+metadata into Postgres. Use `ETH_RPC_URL` to point the indexer at a specific
+server-side RPC endpoint; otherwise it uses `NUXT_PUBLIC_EVM_CHAINS_MAINNET_RPC1`
+or the public fallback.
+
+After the first backfill, `pnpm db:sync` indexes only missing token rows. For
+targeted refreshes, run:
+
+```bash
+node scripts/index-vessels.mjs --tokens=1,2,3
+```
 
 ## Project Structure
 
@@ -38,6 +64,7 @@ frontend/
   app/
     pages/
       index.vue              # activity feed, holders leaderboard, search
+      all.vue                # database-backed all-vessels table with RPC fallback
       [id].vue               # vessel detail (pixel grid, metadata, content view)
       address/[addr].vue     # address profile (owned vessels grid)
     components/
@@ -56,14 +83,20 @@ frontend/
       content.ts              # content type detection (SVG, HTML, text, bytecode, binary)
   server/api/
     activity.get.ts           # etherscan activity proxy (keeps API key server-side)
+    tokens.get.ts             # Postgres token table query API for /all
     transfers.get.ts          # etherscan transfers proxy
     og/[id].get.ts            # dynamic OG image: grayscale BMP from on-chain payload
+  db/
+    001_init.sql              # Postgres read-model schema
+  scripts/
+    db-schema.mjs             # applies schema
+    index-vessels.mjs         # RPC -> Postgres token indexer
 ```
 
 ## Pages
 
 - **`/`** — live activity feed (claims, writes, transfers, delegates, machines), holders leaderboard with progressive type enrichment, search by vessel ID or address/ENS
-- **`/all`** — table of all vessel token IDs, ownership from transfer replay, and sortable/filterable traits hydrated through RPC
+- **`/all`** — table of all vessel token IDs with database-backed filtering/sorting when `DATABASE_URL` is configured, plus RPC fallback
 - **`/[id]`** — vessel detail with pixel grid, metadata (type, capacity, color mode, claim block), entry navigation for vaults, content detection (renders SVG/HTML, shows bytecode hex dumps), [bytes] toggle, [copy] button
 - **`/address/[addr]`** — profile page with owned vessels grid, type stats (machines/vaults/capsules/empty), progressive payload loading
 
