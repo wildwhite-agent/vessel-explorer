@@ -34,6 +34,12 @@ export default defineNitroPlugin((nitroApp) => {
       description = 'browse all 10,000 vessels on THE_VESSEL'
     }
 
+    // All table page
+    if (path === '/all') {
+      title = 'all vessel traits'
+      description = 'filter and sort every vessel token on THE_VESSEL'
+    }
+
     const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 
     const tags = [
