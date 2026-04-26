@@ -67,10 +67,11 @@ import { readContract } from '@wagmi/core'
 import { useConfig } from '@wagmi/vue'
 import type { ComponentPublicInstance } from 'vue'
 import { VESSEL_ADDRESS, VESSEL_ABI, byteToRGB, getGridDimensions, hexToBytes, renderToCanvas, type ColorMode } from '~/utils/vessel'
-import { fetchOwnership } from '~/composables/useOwnership'
+import { useGridCache } from '~/composables/useGridCache'
 
 const wagmiConfig = useConfig()
 const router = useRouter()
+const { claimedSet, payloadCache, typeCache, colorModeCache, loadFromServer, loaded: gridCacheLoaded } = useGridCache()
 
 const totalVessels = 10000
 const scrollContainer = ref<HTMLElement | null>(null)
@@ -205,13 +206,6 @@ const prioritizedIds = computed(() => {
   return [...inView, ...inOverscan]
 })
 
-// Claimed vessels
-const claimedSet = ref(new Set<number>())
-
-// Payload + type + colorMode cache
-const payloadCache = reactive(new Map<number, Uint8Array>())
-const typeCache = reactive(new Map<number, string>())
-const colorModeCache = reactive(new Map<number, ColorMode>())
 const allClaimedPayloadsLoading = ref(false)
 const allClaimedPayloadsLoaded = ref(false)
 const overviewTileCache = new Map<string, ImageData>()
@@ -244,7 +238,7 @@ async function loadVisible() {
   const ids = prioritizedIds.value
   if (!shouldLoadDetailedCells.value) return
 
-  const claimedIds = ids.filter(id => claimedSet.value.has(id) && !payloadCache.has(id))
+  const claimedIds = ids.filter(id => claimedSet.has(id) && !payloadCache.has(id))
 
   const missingTypes = ids.filter(id => !typeCache.has(id))
   for (let i = 0; i < missingTypes.length && token === currentToken; i += 30) {
@@ -331,10 +325,10 @@ async function loadClaimedBatch(ids: number[], token: number) {
 }
 
 async function loadAllClaimedPayloads() {
-  if (allClaimedPayloadsLoading.value || allClaimedPayloadsLoaded.value || claimedSet.value.size === 0) return
+  if (allClaimedPayloadsLoading.value || allClaimedPayloadsLoaded.value || claimedSet.size === 0) return
 
   const token = ++allClaimedToken
-  const claimedIds = [...claimedSet.value].sort((a, b) => a - b)
+  const claimedIds = [...claimedSet].sort((a, b) => a - b)
   allClaimedPayloadsLoading.value = true
 
   try {
@@ -344,7 +338,7 @@ async function loadAllClaimedPayloads() {
     }
 
     if (token === allClaimedToken) {
-      allClaimedPayloadsLoaded.value = [...claimedSet.value].every(id => payloadCache.has(id))
+      allClaimedPayloadsLoaded.value = [...claimedSet].every(id => payloadCache.has(id))
     }
   } finally {
     if (token === allClaimedToken) {
@@ -418,7 +412,7 @@ function renderOverviewCanvas() {
       const x = col * size
       const y = row * size
 
-      ctx.fillStyle = claimedSet.value.has(id) ? claimedBackground : background
+      ctx.fillStyle = claimedSet.has(id) ? claimedBackground : background
       ctx.fillRect(x, y, size, size)
 
       const tile = buildOverviewTile(id, size)
@@ -553,7 +547,7 @@ watch(() => payloadCache.size, () => {
   scheduleOverviewRender()
 })
 
-watch(() => claimedSet.value.size, () => {
+watch(() => claimedSet.size, () => {
   scheduleOverviewRender()
 })
 
@@ -696,17 +690,12 @@ onMounted(async () => {
     scrollLeft.value = scrollContainer.value.scrollLeft
   }
 
-  // Load claimed set then start loading
-  try {
-    const { ownership } = await fetchOwnership()
-    const set = new Set<number>()
-    for (const id of ownership.keys()) set.add(Number(id))
-    claimedSet.value = set
-    allClaimedPayloadsLoaded.value = false
-    if (viewAllMode.value) {
-      void loadAllClaimedPayloads()
-    }
-  } catch { /* silently fail */ }
+  await loadFromServer()
+
+  allClaimedPayloadsLoaded.value = [...claimedSet].every(id => payloadCache.has(id))
+  if (viewAllMode.value && !allClaimedPayloadsLoaded.value) {
+    void loadAllClaimedPayloads()
+  }
 
   hasMounted = true
   loadVisible()

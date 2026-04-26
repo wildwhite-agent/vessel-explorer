@@ -14,12 +14,13 @@ if (!databaseUrl) {
   process.exit(1)
 }
 
-const schemaPath = join(rootDir, 'db', '001_init.sql')
-const schema = await readFile(schemaPath, 'utf8')
 const sql = postgres(databaseUrl, { max: 1, prepare: false })
 
 try {
-  await sql.unsafe(schema)
+  const init = await readFile(join(rootDir, 'db', '001_init.sql'), 'utf8')
+  await sql.unsafe(init)
+  const addPayload = await readFile(join(rootDir, 'db', '002_add_payload.sql'), 'utf8')
+  await sql.unsafe(addPayload)
   console.log('database schema is ready')
 } catch (e) {
   console.error(explainDatabaseError(e))

@@ -57,12 +57,11 @@ if (!databaseUrl) {
   process.exit(1)
 }
 
-if (!args.has('--all') && !args.has('--missing') && !tokenArg) {
-  console.error('usage: pnpm db:backfill | pnpm db:sync | node scripts/index-vessels.mjs --tokens=1,2,3')
+if (!args.has('--all') && !args.has('--missing') && !args.has('--needs-payload') && !tokenArg) {
+  console.error('usage: pnpm db:backfill | pnpm db:sync | node scripts/index-vessels.mjs --needs-payload | --tokens=1,2,3')
   process.exit(1)
 }
 
-const schema = await readFile(join(rootDir, 'db', '001_init.sql'), 'utf8')
 const sql = postgres(databaseUrl, { max: 1, prepare: false })
 const publicClient = createPublicClient({
   chain: mainnet,
@@ -70,15 +69,23 @@ const publicClient = createPublicClient({
 })
 
 try {
+  const schema = await readFile(join(rootDir, 'db', '001_init.sql'), 'utf8')
   await sql.unsafe(schema)
+  const migration = await readFile(join(rootDir, 'db', '002_add_payload.sql'), 'utf8')
+  await sql.unsafe(migration)
 
+  const payloadOnly = args.has('--needs-payload')
   const ids = await resolveTokenIds()
-  console.log(`indexing ${ids.length} vessel token${ids.length === 1 ? '' : 's'} using ${rpcUrl}`)
+  console.log(`indexing ${ids.length} vessel token${ids.length === 1 ? '' : 's'} using ${rpcUrl}${payloadOnly ? ' (payload only)' : ''}`)
 
   for (let i = 0; i < ids.length; i += BATCH_SIZE) {
     const batch = ids.slice(i, i + BATCH_SIZE)
-    const rows = await readTokenBatch(batch)
-    await upsertTokenRows(rows)
+    if (payloadOnly) {
+      await backfillPayloadOnly(batch)
+    } else {
+      const rows = await readTokenBatch(batch)
+      await upsertTokenRows(rows)
+    }
     console.log(`indexed ${Math.min(i + batch.length, ids.length)}/${ids.length}`)
   }
 
@@ -114,7 +121,35 @@ async function resolveTokenIds() {
     return rows.map(row => row.id)
   }
 
+  if (args.has('--needs-payload')) {
+    const rows = await sql`
+      select id from tokens
+      where payload_bytes > 0 and payload_hex is null
+      order by id
+    `
+    return rows.map(row => row.id)
+  }
+
   return Array.from({ length: TOTAL_VESSELS }, (_, index) => index + 1)
+}
+
+async function backfillPayloadOnly(ids) {
+  const contracts = ids.flatMap(id => ([{
+    address: VESSEL_ADDRESS,
+    abi: VESSEL_ABI,
+    functionName: 'craftToPayload',
+    args: [BigInt(id)],
+  }]))
+
+  const results = await publicClient.multicall({ contracts, allowFailure: true })
+
+  for (let i = 0; i < ids.length; i++) {
+    const raw = results[i]?.status === 'success' ? results[i].result : null
+    const hex = raw && payloadByteLength(raw) > 0 ? normalizeHex(raw) : null
+    if (hex) {
+      await sql`update tokens set payload_hex = ${hex} where id = ${ids[i]}`
+    }
+  }
 }
 
 async function readTokenBatch(ids) {
@@ -136,7 +171,9 @@ async function readTokenBatch(ids) {
     const owner = addressValue(resultAt(results, rowIndex, 0))
     const claimed = boolValue(resultAt(results, rowIndex, 1)) ?? Boolean(owner)
     const vesselType = stringValue(resultAt(results, rowIndex, 2))?.toLowerCase() ?? null
-    const payloadBytes = payloadByteLength(resultAt(results, rowIndex, 3))
+    const rawPayload = resultAt(results, rowIndex, 3)
+    const payloadBytes = payloadByteLength(rawPayload)
+    const payloadHex = payloadBytes > 0 ? normalizeHex(rawPayload) : null
 
     return {
       id,
@@ -145,6 +182,7 @@ async function readTokenBatch(ids) {
       vessel_type: vesselType,
       filled: payloadBytes > 0,
       payload_bytes: payloadBytes,
+      payload_hex: payloadHex,
       capacity_bytes: id,
       color_mode: numberValue(resultAt(results, rowIndex, 4)),
       role: numberValue(resultAt(results, rowIndex, 5)),
@@ -169,6 +207,7 @@ async function upsertTokenRows(rows) {
       'vessel_type',
       'filled',
       'payload_bytes',
+      'payload_hex',
       'capacity_bytes',
       'color_mode',
       'role',
@@ -185,6 +224,7 @@ async function upsertTokenRows(rows) {
       vessel_type = excluded.vessel_type,
       filled = excluded.filled,
       payload_bytes = excluded.payload_bytes,
+      payload_hex = excluded.payload_hex,
       capacity_bytes = excluded.capacity_bytes,
       color_mode = excluded.color_mode,
       role = excluded.role,
@@ -226,4 +266,9 @@ function payloadByteLength(value) {
   if (typeof value !== 'string') return 0
   const clean = value.startsWith('0x') ? value.slice(2) : value
   return clean.length / 2
+}
+
+function normalizeHex(value) {
+  if (typeof value !== 'string') return null
+  return value.startsWith('0x') ? value : `0x${value}`
 }
