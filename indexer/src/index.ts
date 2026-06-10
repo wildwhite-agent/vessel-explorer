@@ -7,6 +7,10 @@ import {
   operatorApproval,
   payloadWrite,
   protocol,
+  sequenceBalance,
+  sequenceProtocol,
+  sequenceToken,
+  sequenceTransfer,
   seaportSale,
   token,
   transfer,
@@ -25,10 +29,13 @@ import {
   type Hex,
 } from 'viem'
 
+import { SequenceAbi } from '../abis/SequenceAbi'
 import { ShipyardWorkUnitAbi } from '../abis/ShipyardWorkUnitAbi'
 import { VesselAbi } from '../abis/VesselAbi'
 import {
   INDEXER_START_BLOCK,
+  SEQUENCE_ADDRESS,
+  SEQUENCE_START_BLOCK,
   VESSEL_ADDRESS,
   VESSEL_START_BLOCK,
   WORK_UNIT_ADDRESS,
@@ -603,6 +610,53 @@ ponder.on('ShipyardWorkUnit:Transfer', async ({ event, context }) => {
   }
 })
 
+ponder.on('Sequence:setup', async ({ context }) => {
+  const blockNumber = BigInt(SEQUENCE_START_BLOCK)
+  const vessel = await safeReadSequence(context, 'vessel', [], VESSEL_ADDRESS, blockNumber)
+  const state = {
+    id: 'main',
+    contract_address: SEQUENCE_ADDRESS,
+    vessel_address: normalizeAddress(vessel as Address),
+    updated_at: 0n,
+    block_number: blockNumber,
+  }
+
+  await context.db
+    .insert(sequenceProtocol)
+    .values(state)
+    .onConflictDoUpdate(state)
+})
+
+ponder.on('Sequence:TransferSingle', async ({ event, context }) => {
+  const tokenId = event.args.id as bigint
+  const value = event.args.value as bigint
+  const meta = eventMeta(event)
+
+  await handleSequenceTransfer(context, event, tokenId, value, 0)
+  await refreshSequenceToken(context, tokenId, meta.block_number, meta.timestamp)
+})
+
+ponder.on('Sequence:TransferBatch', async ({ event, context }) => {
+  const ids = event.args.ids as bigint[]
+  const values = event.args.values as bigint[]
+  const meta = eventMeta(event)
+
+  for (let index = 0; index < ids.length; index++) {
+    const tokenId = ids[index]
+    const value = values[index] ?? 0n
+    await handleSequenceTransfer(context, event, tokenId, value, index)
+    await refreshSequenceToken(context, tokenId, meta.block_number, meta.timestamp)
+  }
+})
+
+ponder.on('Sequence:URI', async ({ event, context }) => {
+  const tokenId = event.args.id as bigint
+  const meta = eventMeta(event)
+  await refreshSequenceToken(context, tokenId, meta.block_number, meta.timestamp, {
+    uri: String(event.args.value ?? ''),
+  })
+})
+
 async function readProtocolState(context: Context) {
   const seedBlock = BigInt(Math.max(INDEXER_START_BLOCK - 1, VESSEL_START_BLOCK))
   const [claimedCount, lockStart, blockEvent0, blockEvent1, defaultMachine, relics, creatorSupplyClaimed] =
@@ -1053,6 +1107,189 @@ async function refreshWorkUnitTotalSupply(
     })
 }
 
+async function handleSequenceTransfer(
+  context: Context,
+  event: PonderEvent,
+  tokenId: bigint,
+  value: bigint,
+  batchIndex: number,
+) {
+  const operator = normalizeAddress(event.args.operator as Address)
+  const from = normalizeAddress(event.args.from as Address)
+  const to = normalizeAddress(event.args.to as Address)
+  const meta = eventMeta(event)
+
+  await ensureAccounts(context, [operator, from, to], event.block.timestamp)
+
+  await context.db
+    .insert(sequenceTransfer)
+    .values({
+      tx_hash: meta.tx_hash,
+      log_index: meta.log_index,
+      batch_index: batchIndex,
+      block_number: meta.block_number,
+      operator,
+      from,
+      to,
+      token_id: tokenId,
+      value,
+      timestamp: meta.timestamp,
+    })
+    .onConflictDoNothing()
+
+  if (from !== ZERO_ADDRESS) {
+    await adjustSequenceBalance(context, from, tokenId, -value, meta)
+  }
+  if (to !== ZERO_ADDRESS) {
+    await adjustSequenceBalance(context, to, tokenId, value, meta)
+  }
+}
+
+async function adjustSequenceBalance(
+  context: Context,
+  address: Address,
+  tokenId: bigint,
+  delta: bigint,
+  meta: ReturnType<typeof eventMeta>,
+) {
+  const current = await context.db.find(sequenceBalance, { address, token_id: tokenId })
+  if (current) {
+    await context.db
+      .update(sequenceBalance, { address, token_id: tokenId })
+      .set((row) => ({
+        balance: row.balance + delta,
+        updated_at: meta.timestamp,
+        block_number: meta.block_number,
+      }))
+    return
+  }
+
+  await context.db
+    .insert(sequenceBalance)
+    .values({
+      address,
+      token_id: tokenId,
+      balance: delta > 0n ? delta : 0n,
+      updated_at: meta.timestamp,
+      block_number: meta.block_number,
+    })
+    .onConflictDoUpdate((row) => ({
+      balance: row.balance + delta,
+      updated_at: meta.timestamp,
+      block_number: meta.block_number,
+    }))
+}
+
+async function refreshSequenceToken(
+  context: Context,
+  tokenId: bigint,
+  blockNumber: bigint,
+  timestamp: bigint,
+  overrides: Partial<Pick<typeof sequenceToken.$inferInsert, 'uri'>> = {},
+) {
+  const [tokenData, uriData] = await Promise.all([
+    safeReadSequence(context, 'tokens', [tokenId], null, blockNumber),
+    safeReadSequence(context, 'uriData', [tokenId], null, blockNumber),
+  ])
+
+  const parsedToken = parseSequenceTokenData(tokenData)
+  const parsedUri = parseSequenceUriData(uriData)
+  const uri = overrides.uri ?? parsedUri.uri
+
+  await context.db
+    .insert(sequenceToken)
+    .values({
+      token_id: tokenId,
+      artist: parsedToken.artist,
+      artist_address: normalizeNullable(parsedToken.artistAddress),
+      max_supply: parsedToken.maxSupply,
+      price: parsedToken.price,
+      minted: parsedToken.minted,
+      locked: parsedToken.locked,
+      event_num_start: parsedToken.eventNumStart,
+      event_num_end: parsedToken.eventNumEnd,
+      uri,
+      uses_renderer: parsedUri.usesRenderer,
+      renderer: normalizeNullable(parsedUri.renderer),
+      updated_at: timestamp,
+      block_number: blockNumber,
+    })
+    .onConflictDoUpdate({
+      artist: parsedToken.artist,
+      artist_address: normalizeNullable(parsedToken.artistAddress),
+      max_supply: parsedToken.maxSupply,
+      price: parsedToken.price,
+      minted: parsedToken.minted,
+      locked: parsedToken.locked,
+      event_num_start: parsedToken.eventNumStart,
+      event_num_end: parsedToken.eventNumEnd,
+      uri,
+      uses_renderer: parsedUri.usesRenderer,
+      renderer: normalizeNullable(parsedUri.renderer),
+      updated_at: timestamp,
+      block_number: blockNumber,
+    })
+}
+
+function parseSequenceTokenData(value: unknown) {
+  const values = sequenceValues(value)
+  return {
+    artist: stringAt(value, values, 'artist'),
+    artistAddress: addressAt(value, values, 'artistAddress', 1),
+    maxSupply: bigintAt(value, values, 'maxSupply', 2),
+    price: bigintAt(value, values, 'price', 3),
+    minted: bigintAt(value, values, 'minted', 4),
+    locked: booleanAt(value, values, 'locked', 5),
+    eventNumStart: bigintAt(value, values, 'eventNumStart', 6),
+    eventNumEnd: bigintAt(value, values, 'eventNumEnd', 7),
+  }
+}
+
+function parseSequenceUriData(value: unknown) {
+  const values = sequenceValues(value)
+  return {
+    usesRenderer: booleanAt(value, values, 'usesRenderer', 0),
+    uri: stringAt(value, values, 'uri', 1),
+    renderer: addressAt(value, values, 'renderer', 2),
+  }
+}
+
+function sequenceValues(value: unknown) {
+  return Array.isArray(value) ? value : []
+}
+
+function stringAt(value: unknown, values: unknown[], key: string, index = 0) {
+  const keyed = keyedValue(value, key)
+  const result = typeof keyed === 'string' ? keyed : values[index]
+  return typeof result === 'string' ? result : ''
+}
+
+function addressAt(value: unknown, values: unknown[], key: string, index = 0): Address {
+  const keyed = keyedValue(value, key)
+  const result = typeof keyed === 'string' ? keyed : values[index]
+  return typeof result === 'string' && result.startsWith('0x')
+    ? normalizeAddress(result as Address)
+    : ZERO_ADDRESS
+}
+
+function bigintAt(value: unknown, values: unknown[], key: string, index = 0) {
+  const keyed = keyedValue(value, key)
+  const result = typeof keyed === 'bigint' ? keyed : values[index]
+  return typeof result === 'bigint' ? result : 0n
+}
+
+function booleanAt(value: unknown, values: unknown[], key: string, index = 0) {
+  const keyed = keyedValue(value, key)
+  const result = typeof keyed === 'boolean' ? keyed : values[index]
+  return typeof result === 'boolean' ? result : false
+}
+
+function keyedValue(value: unknown, key: string) {
+  return value && typeof value === 'object' && key in value
+    ? (value as Record<string, unknown>)[key]
+    : undefined
+}
+
 async function safeReadWorkUnit<T>(
   context: Context,
   functionName: string,
@@ -1064,6 +1301,27 @@ async function safeReadWorkUnit<T>(
     const request = {
       address: WORK_UNIT_ADDRESS,
       abi: ShipyardWorkUnitAbi,
+      functionName: functionName as never,
+      args: args as never,
+      ...(blockNumber === undefined ? {} : { blockNumber }),
+    }
+    return (await context.client.readContract(request as never)) as T
+  } catch {
+    return fallback
+  }
+}
+
+async function safeReadSequence<T>(
+  context: Context,
+  functionName: string,
+  args: unknown[],
+  fallback: T,
+  blockNumber?: bigint,
+): Promise<T> {
+  try {
+    const request = {
+      address: SEQUENCE_ADDRESS,
+      abi: SequenceAbi,
       functionName: functionName as never,
       args: args as never,
       ...(blockNumber === undefined ? {} : { blockNumber }),

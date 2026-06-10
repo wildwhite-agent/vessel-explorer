@@ -23,6 +23,8 @@ capsules and vault entries can still be inspected.
 - Transfers, approvals, operator approvals, holders, and normalized activity
 - Shipyard Work Unit ERC-20 balances and transfer history for
   `0x476072a4e9648c1a115f47f268353586b0012c97`
+- Sequence ERC-1155 token metadata, balances, and transfer history for
+  `0x9423548a957284eD17E55c37c4B6D96e5E63065f`
 - Protocol-level state such as claimed count, lock start, default machine, and
   creator supply status
 
@@ -246,6 +248,38 @@ Shipyard Work Unit transfer history. Supports:
 - `limit` or `offset`
 - `address`: matches either transfer side
 
+### `GET /sequences/tokens`
+
+Paginated Sequence token list derived from ERC-1155 transfer and URI events,
+with current contract metadata read from `tokens(id)` and `uriData(id)`.
+
+Query params:
+
+- `page`, `pageSize` or `limit`
+
+### `GET /sequences/tokens/:id`
+
+Single Sequence token metadata row.
+
+### `GET /sequences/balances`
+
+Paginated Sequence holder balances.
+
+Query params:
+
+- `page`, `pageSize` or `limit`
+- `address`: exact wallet address
+- `tokenId`: exact Sequence token id
+
+### `GET /sequences/transfers`
+
+Sequence ERC-1155 transfer history. Supports:
+
+- `page`
+- `limit` or `offset`
+- `address`: matches operator, from, or to
+- `tokenId`: exact Sequence token id
+
 ### `GET /stats`
 
 Indexer summary counts and activity type counts. Token stats include total,
@@ -333,6 +367,8 @@ Optional:
 - `VESSEL_INDEXER_END_BLOCK`
 - `WORK_UNIT_INDEXER_START_BLOCK`
 - `WORK_UNIT_INDEXER_END_BLOCK`
+- `SEQUENCE_INDEXER_START_BLOCK`
+- `SEQUENCE_INDEXER_END_BLOCK`
 
 ## Verification
 
@@ -345,6 +381,9 @@ curl -s 'http://127.0.0.1:42069/tokens?pageSize=3' | jq .
 curl -s 'http://127.0.0.1:42069/tokens/1/writes' | jq .
 curl -s 'http://127.0.0.1:42069/work-units/balances?pageSize=5' | jq .
 curl -s 'http://127.0.0.1:42069/work-units/transfers?limit=5' | jq .
+curl -s 'http://127.0.0.1:42069/sequences/tokens?pageSize=5' | jq .
+curl -s 'http://127.0.0.1:42069/sequences/balances?tokenId=1&pageSize=5' | jq .
+curl -s 'http://127.0.0.1:42069/sequences/transfers?tokenId=1&limit=5' | jq .
 ```
 
 For the deployed indexer:
@@ -355,6 +394,7 @@ curl -s https://indexer.vessel.worldcomputer.art/stats | jq .
 curl -s 'https://indexer.vessel.worldcomputer.art/tokens?pageSize=3' | jq .
 curl -s 'https://indexer.vessel.worldcomputer.art/tokens/1/writes' | jq .
 curl -s 'https://indexer.vessel.worldcomputer.art/work-units/balances?pageSize=5' | jq .
+curl -s 'https://indexer.vessel.worldcomputer.art/sequences/tokens?pageSize=5' | jq .
 ```
 
 ## Operational Notes
