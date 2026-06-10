@@ -285,10 +285,27 @@ app.get('/activity', async (c) => {
       ${seaportSale}.payment_symbol AS sale_payment_symbol,
       ${seaportSale}.payment_decimals AS sale_payment_decimals,
       ${seaportSale}.payment_amount_raw AS sale_payment_amount_raw,
-      ${token}.vessel_type AS craft_type
+      ${token}.vessel_type AS craft_type,
+      ${sequenceToken}.token_id AS sequence_token_id,
+      ${sequenceToken}.artist AS sequence_artist,
+      ${sequenceToken}.artist_address AS sequence_artist_address,
+      ${sequenceToken}.max_supply AS sequence_max_supply,
+      ${sequenceToken}.price AS sequence_price,
+      ${sequenceToken}.minted AS sequence_minted,
+      ${sequenceToken}.locked AS sequence_locked,
+      ${sequenceToken}.event_num_start AS sequence_event_num_start,
+      ${sequenceToken}.event_num_end AS sequence_event_num_end,
+      ${sequenceToken}.uri AS sequence_uri,
+      ${sequenceToken}.uses_renderer AS sequence_uses_renderer,
+      ${sequenceToken}.renderer AS sequence_renderer,
+      ${sequenceToken}.updated_at AS sequence_updated_at,
+      ${sequenceToken}.block_number AS sequence_block_number
     FROM ${activityEvent}
     LEFT JOIN ${token}
       ON ${token}.token_id = ${activityEvent}.token_id
+    LEFT JOIN ${sequenceToken}
+      ON ${activityEvent}.source = 'sequence'
+      AND ${sequenceToken}.token_id = ${activityEvent}.subject_id
     LEFT JOIN ${seaportSale}
       ON ${seaportSale}.activity_id = ${activityEvent}.id
     LEFT JOIN ${payloadWrite}
@@ -616,6 +633,7 @@ app.get('/sequences/balances', async (c) => {
   const offset = (page - 1) * pageSize
   const address = (c.req.query('address') || '').trim()
   const tokenId = (c.req.query('tokenId') || '').trim()
+  const includeToken = isTruthy(c.req.query('includeToken'))
   const conds = [sql`balance > 0`]
 
   if (ADDRESS_PATTERN.test(address)) {
@@ -627,13 +645,36 @@ app.get('/sequences/balances', async (c) => {
 
   const whereClause = andClause(conds)
 
-  const [countResult, rowsResult] = await Promise.all([
-    db.execute(sql`
-      SELECT COUNT(*)::integer AS total
+  const rowsQuery = includeToken
+    ? sql`
+      SELECT
+        ${sequenceBalance}.address,
+        ${sequenceBalance}.token_id AS "tokenId",
+        ${sequenceBalance}.balance,
+        ${sequenceBalance}.updated_at AS "updatedAt",
+        ${sequenceBalance}.block_number AS "blockNumber",
+        ${sequenceToken}.token_id AS sequence_token_id,
+        ${sequenceToken}.artist AS sequence_artist,
+        ${sequenceToken}.artist_address AS sequence_artist_address,
+        ${sequenceToken}.max_supply AS sequence_max_supply,
+        ${sequenceToken}.price AS sequence_price,
+        ${sequenceToken}.minted AS sequence_minted,
+        ${sequenceToken}.locked AS sequence_locked,
+        ${sequenceToken}.event_num_start AS sequence_event_num_start,
+        ${sequenceToken}.event_num_end AS sequence_event_num_end,
+        ${sequenceToken}.uri AS sequence_uri,
+        ${sequenceToken}.uses_renderer AS sequence_uses_renderer,
+        ${sequenceToken}.renderer AS sequence_renderer,
+        ${sequenceToken}.updated_at AS sequence_updated_at,
+        ${sequenceToken}.block_number AS sequence_block_number
       FROM ${sequenceBalance}
+      LEFT JOIN ${sequenceToken}
+        ON ${sequenceToken}.token_id = ${sequenceBalance}.token_id
       WHERE ${whereClause}
-    `),
-    db.execute(sql`
+      ORDER BY ${sequenceBalance}.token_id ASC, ${sequenceBalance}.balance DESC, ${sequenceBalance}.address ASC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `
+    : sql`
       SELECT
         address,
         token_id AS "tokenId",
@@ -644,7 +685,15 @@ app.get('/sequences/balances', async (c) => {
       WHERE ${whereClause}
       ORDER BY token_id ASC, balance DESC, address ASC
       LIMIT ${pageSize} OFFSET ${offset}
+    `
+
+  const [countResult, rowsResult] = await Promise.all([
+    db.execute(sql`
+      SELECT COUNT(*)::integer AS total
+      FROM ${sequenceBalance}
+      WHERE ${whereClause}
     `),
+    db.execute(rowsQuery),
   ])
 
   return c.json({
@@ -849,6 +898,8 @@ function activityFilters(c: { req: { query: (key: string) => string | undefined 
   const tokenId = c.req.query('tokenId') || c.req.query('id')
   const address = (c.req.query('address') || '').trim()
   const type = c.req.query('type')
+  const source = c.req.query('source')
+  const subjectId = c.req.query('subjectId')
   const startTime = c.req.query('startTime')
   const endTime = c.req.query('endTime')
 
@@ -865,6 +916,10 @@ function activityFilters(c: { req: { query: (key: string) => string | undefined 
     )`)
   }
   if (type) conds.push(sql`${activityEvent}.type = ${type}`)
+  if (source) conds.push(sql`${activityEvent}.source = ${source}`)
+  if (subjectId && /^\d+$/.test(subjectId)) {
+    conds.push(sql`${activityEvent}.subject_id = ${BigInt(subjectId)}`)
+  }
   if (startTime && /^\d+$/.test(startTime)) {
     conds.push(sql`${activityEvent}.timestamp >= ${BigInt(startTime)}`)
   }
@@ -955,13 +1010,15 @@ function normalizeSequenceTokenRow(row: Row) {
 }
 
 function normalizeSequenceBalanceRow(row: Row) {
-  return {
+  const normalized = {
     address: row.address,
     tokenId: stringify(row.tokenId),
     balance: stringify(row.balance),
     updatedAt: row.updatedAt == null ? null : stringify(row.updatedAt),
     blockNumber: row.blockNumber == null ? null : stringify(row.blockNumber),
   }
+  const token = sequenceTokenFromJoinedRow(row)
+  return token ? { ...normalized, token } : normalized
 }
 
 function normalizeSequenceTransferRow(row: Row) {
@@ -993,10 +1050,14 @@ function normalizeSequenceStatsRow(row: Row | null) {
 function activityToExplorerTx(row: Row) {
   const tokenId = row.token_id == null ? null : stringify(row.token_id)
   const action = String(row.type)
+  const source = String(row.source || 'vessel')
+  const subjectId = row.subject_id == null ? null : stringify(row.subject_id)
   const from = row.actor ?? row.from ?? row.to ?? ZERO_ADDRESS
   const salePrice = salePriceForActivity(row)
+  const detail = detailForActivity(action, tokenId, row)
+  const sequence = sequenceTokenFromJoinedRow(row)
 
-  return {
+  const tx = {
     hash: row.tx_hash,
     actor: row.actor ?? null,
     from,
@@ -1007,18 +1068,25 @@ function activityToExplorerTx(row: Row) {
     isError: '0',
     functionName: functionNameForActivity(action),
     action,
+    source,
+    subjectType: row.subject_type == null ? (tokenId ? 'craft' : null) : String(row.subject_type),
+    subjectId: subjectId ?? tokenId,
+    amount: row.amount == null ? null : stringify(row.amount),
     vesselId: tokenId,
     craftType: row.craft_type == null ? null : String(row.craft_type),
     entry: row.entry == null && row.write_entry_index != null ? Number(row.write_entry_index) : row.entry == null ? null : Number(row.entry),
     buyer: row.sale_buyer ?? null,
     seller: row.sale_seller ?? null,
     ...(salePrice ? { salePrice } : {}),
-    detail: detailForActivity(action, tokenId, row),
+    ...(sequence ? { sequence } : {}),
+    detail,
     _action: action,
     _vesselId: tokenId,
     _craftType: row.craft_type == null ? null : String(row.craft_type),
-    _detail: detailForActivity(action, tokenId, row),
+    _detail: detail,
   }
+
+  return tx
 }
 
 function functionNameForActivity(action: string) {
@@ -1041,6 +1109,10 @@ function functionNameForActivity(action: string) {
       return 'refreshMetadata(uint256)'
     case 'sale':
       return 'Seaport.OrderFulfilled'
+    case 'vwuclaim':
+      return 'WorkUnitClaimed(address,uint256,bytes32,bytes32,uint256,uint256)'
+    case 'sequencemint':
+      return 'TransferSingle/TransferBatch(address,address,address,uint256,uint256)'
     default:
       return action
   }
@@ -1048,6 +1120,8 @@ function functionNameForActivity(action: string) {
 
 function detailForActivity(action: string, tokenId: string | null, row: Row) {
   const suffix = tokenId ? ` #${tokenId}` : ''
+  const amount = row.amount == null ? null : Number(row.amount).toLocaleString()
+  const subjectId = row.subject_id == null ? null : stringify(row.subject_id)
   switch (action) {
     case 'claim':
       return `claimed${suffix}`
@@ -1063,6 +1137,10 @@ function detailForActivity(action: string, tokenId: string | null, row: Row) {
       return `transferred${suffix}`
     case 'sale':
       return `bought${suffix} from ${shortAddress(String(row.sale_seller ?? ''))} for ${salePriceText(row)}`
+    case 'vwuclaim':
+      return `claimed ${amount ?? '0'} VWU from${suffix}`
+    case 'sequencemint':
+      return `minted ${amount ?? '0'}x Sequence${subjectId ? ` #${subjectId}` : ''}`
     case 'role':
       return `set role ${Number(row.role ?? 0)}`
     case 'metadata':
@@ -1074,6 +1152,26 @@ function detailForActivity(action: string, tokenId: string | null, row: Row) {
   }
 }
 
+function sequenceTokenFromJoinedRow(row: Row) {
+  if (row.sequence_token_id == null) return null
+  return normalizeSequenceTokenRow({
+    tokenId: row.sequence_token_id,
+    artist: row.sequence_artist,
+    artistAddress: row.sequence_artist_address,
+    maxSupply: row.sequence_max_supply,
+    price: row.sequence_price,
+    minted: row.sequence_minted,
+    locked: row.sequence_locked,
+    eventNumStart: row.sequence_event_num_start,
+    eventNumEnd: row.sequence_event_num_end,
+    uri: row.sequence_uri,
+    usesRenderer: row.sequence_uses_renderer,
+    renderer: row.sequence_renderer,
+    updatedAt: row.sequence_updated_at,
+    blockNumber: row.sequence_block_number,
+  })
+}
+
 function writeDetail(row: Row, suffix: string) {
   const bytes = Number(row.payload_bytes ?? 0).toLocaleString()
   const entry = row.entry == null && row.write_entry_index != null ? row.write_entry_index : row.entry
@@ -1083,6 +1181,10 @@ function writeDetail(row: Row, suffix: string) {
 
 function stringify(value: unknown) {
   return value == null ? '' : value.toString()
+}
+
+function isTruthy(value: unknown) {
+  return value === '1' || value === 'true' || value === 'yes'
 }
 
 function salePriceForActivity(row: Row) {

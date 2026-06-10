@@ -164,8 +164,12 @@ export const activityEvent = onchainTable(
   (t) => ({
     id: t.text().primaryKey(),
     type: t.text().notNull(),
+    source: t.text().notNull().default('vessel'),
     source_event: t.text().notNull(),
     token_id: t.bigint(),
+    subject_type: t.text(),
+    subject_id: t.bigint(),
+    amount: t.bigint(),
     actor: t.hex(),
     from: t.hex(),
     to: t.hex(),
@@ -185,8 +189,18 @@ export const activityEvent = onchainTable(
       table.type,
       table.timestamp,
     ),
+    sourceTimestampIdx: index('activity_source_timestamp_idx').on(
+      table.source,
+      table.timestamp,
+    ),
     tokenTimestampIdx: index('activity_token_timestamp_idx').on(
       table.token_id,
+      table.timestamp,
+    ),
+    subjectTimestampIdx: index('activity_subject_timestamp_idx').on(
+      table.source,
+      table.subject_type,
+      table.subject_id,
       table.timestamp,
     ),
     actorTimestampIdx: index('activity_actor_timestamp_idx').on(

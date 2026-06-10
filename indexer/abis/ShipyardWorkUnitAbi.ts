@@ -50,4 +50,16 @@ export const ShipyardWorkUnitAbi = [
       { name: 'value', type: 'uint256', indexed: false },
     ],
   },
+  {
+    type: 'event',
+    name: 'WorkUnitClaimed',
+    inputs: [
+      { name: 'claimant', type: 'address', indexed: true },
+      { name: 'craftTokenId', type: 'uint256', indexed: true },
+      { name: 'previousHash', type: 'bytes32', indexed: false },
+      { name: 'newHash', type: 'bytes32', indexed: false },
+      { name: 'amount', type: 'uint256', indexed: false },
+      { name: 'timestamp', type: 'uint256', indexed: false },
+    ],
+  },
 ] as const

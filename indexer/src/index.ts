@@ -621,6 +621,29 @@ ponder.on('ShipyardWorkUnit:Transfer', async ({ event, context }) => {
   }
 })
 
+ponder.on('ShipyardWorkUnit:WorkUnitClaimed', async ({ event, context }) => {
+  const claimant = normalizeAddress(event.args.claimant as Address)
+  const craftTokenId = event.args.craftTokenId as bigint
+  const amount = event.args.amount as bigint
+
+  await ensureAccounts(context, [claimant], event.block.timestamp)
+
+  await insertActivity(context, {
+    id: eventId(event),
+    type: 'vwuclaim',
+    source: 'workunit',
+    source_event: 'WorkUnitClaimed',
+    token_id: craftTokenId,
+    subject_type: 'craft',
+    subject_id: craftTokenId,
+    amount,
+    actor: claimant,
+    from: ZERO_ADDRESS,
+    to: claimant,
+    ...eventMeta(event),
+  })
+})
+
 ponder.on('Sequence:setup', async ({ context }) => {
   const blockNumber = BigInt(Math.max(SEQUENCE_INDEXER_START_BLOCK, SEQUENCE_START_BLOCK))
   const vessel = await safeReadSequence(context, 'vessel', [], VESSEL_ADDRESS, blockNumber)
@@ -645,7 +668,7 @@ ponder.on('Sequence:TransferSingle', async ({ event, context }) => {
   const value = event.args.value as bigint
   const meta = eventMeta(event)
 
-  await handleSequenceTransfer(context, event, tokenId, value, 0)
+  await handleSequenceTransfer(context, event, tokenId, value, 0, 'TransferSingle')
   await refreshSequenceTokensForTransfer(context, [tokenId], meta)
 })
 
@@ -655,7 +678,7 @@ ponder.on('Sequence:TransferBatch', async ({ event, context }) => {
   const meta = eventMeta(event)
 
   for (let index = 0; index < ids.length; index++) {
-    await handleSequenceTransfer(context, event, ids[index], values[index] ?? 0n, index)
+    await handleSequenceTransfer(context, event, ids[index], values[index] ?? 0n, index, 'TransferBatch')
   }
   await refreshSequenceTokensForTransfer(context, ids, meta)
 })
@@ -1124,6 +1147,7 @@ async function handleSequenceTransfer(
   tokenId: bigint,
   value: bigint,
   batchIndex: number,
+  sourceEvent: 'TransferSingle' | 'TransferBatch',
 ) {
   const operator = normalizeAddress(event.args.operator as Address)
   const from = normalizeAddress(event.args.from as Address)
@@ -1153,6 +1177,22 @@ async function handleSequenceTransfer(
   }
   if (to !== ZERO_ADDRESS) {
     await adjustSequenceBalance(context, to, tokenId, value, meta)
+  }
+
+  if (from === ZERO_ADDRESS && to !== ZERO_ADDRESS && value > 0n) {
+    await insertActivity(context, {
+      id: eventItemId(event, batchIndex),
+      type: 'sequencemint',
+      source: 'sequence',
+      source_event: sourceEvent,
+      subject_type: 'sequence',
+      subject_id: tokenId,
+      amount: value,
+      actor: to,
+      from,
+      to,
+      ...meta,
+    })
   }
 }
 
@@ -1611,6 +1651,10 @@ function permute(tokenId: bigint, blockEvent0: bigint): bigint {
 
 function eventId(event: PonderEvent) {
   return `${event.block.number}-${event.log.logIndex}`
+}
+
+function eventItemId(event: PonderEvent, index: number) {
+  return `${eventId(event)}-${index}`
 }
 
 function eventMeta(event: PonderEvent) {
