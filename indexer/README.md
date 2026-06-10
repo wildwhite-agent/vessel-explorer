@@ -24,7 +24,9 @@ capsules and vault entries can still be inspected.
 - Shipyard Work Unit ERC-20 balances and transfer history for
   `0x476072a4e9648c1a115f47f268353586b0012c97`
 - Sequence ERC-1155 token metadata, balances, and transfer history for
-  `0x9423548a957284eD17E55c37c4B6D96e5E63065f`
+  `0x9423548a957284eD17E55c37c4B6D96e5E63065f`. Sequence metadata is refreshed
+  from transfer/URI activity plus a bounded latest-state scan so configured
+  but unminted tokens and metadata edits without events are still discoverable.
 - Protocol-level state such as claimed count, lock start, default machine, and
   creator supply status
 
@@ -250,8 +252,10 @@ Shipyard Work Unit transfer history. Supports:
 
 ### `GET /sequences/tokens`
 
-Paginated Sequence token list derived from ERC-1155 transfer and URI events,
-with current contract metadata read from `tokens(id)` and `uriData(id)`.
+Paginated Sequence token list with current contract metadata read from
+`tokens(id)` and `uriData(id)`. Rows are refreshed from ERC-1155 transfers,
+URI events, setup sync, and the periodic `SequenceMetadata:block` latest-state
+scan.
 
 Query params:
 
@@ -284,7 +288,9 @@ Sequence ERC-1155 transfer history. Supports:
 
 Indexer summary counts and activity type counts. Token stats include total,
 claimed, filled, machines, vaults, capsules, claimed capacity bytes, filled
-bytes, and unique holders.
+bytes, and unique holders. Work Unit stats include supply, decimals, contract
+addresses, and holder count. Sequence stats include token count, minted count,
+contract address, vessel address, and holder count.
 
 ## Built-In Endpoints
 
@@ -404,6 +410,9 @@ curl -s 'https://indexer.vessel.worldcomputer.art/sequences/tokens?pageSize=5' |
 
 - Do not set bounded replay env vars in production.
 - Keep RPC rate limits conservative when backfilling on a shared provider.
+- Sequence metadata refresh uses bounded latest-state reads controlled by
+  `SEQUENCE_METADATA_REFRESH_INTERVAL_BLOCKS`, `SEQUENCE_TOKEN_SCAN_MAX_ID`,
+  and `SEQUENCE_TOKEN_SCAN_EMPTY_GAP`.
 - `PayloadSet` history is intentionally append-only in `payload_writes`.
 - Current token state can change, but historical write rows should not be
   rewritten except by a full schema rebuild.
