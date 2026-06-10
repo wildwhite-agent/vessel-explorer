@@ -1318,50 +1318,10 @@ function keyedValue(value: unknown, key: string) {
     : undefined
 }
 
-async function safeReadWorkUnit<T>(
+async function safeReadContract<T>(
   context: Context,
-  functionName: string,
-  args: unknown[],
-  fallback: T,
-  blockNumber?: bigint,
-): Promise<T> {
-  try {
-    const request = {
-      address: WORK_UNIT_ADDRESS,
-      abi: ShipyardWorkUnitAbi,
-      functionName: functionName as never,
-      args: args as never,
-      ...(blockNumber === undefined ? {} : { blockNumber }),
-    }
-    return (await context.client.readContract(request as never)) as T
-  } catch {
-    return fallback
-  }
-}
-
-async function safeReadSequence<T>(
-  context: Context,
-  functionName: string,
-  args: unknown[],
-  fallback: T,
-  blockNumber?: bigint,
-): Promise<T> {
-  try {
-    const request = {
-      address: SEQUENCE_ADDRESS,
-      abi: SequenceAbi,
-      functionName: functionName as never,
-      args: args as never,
-      ...(blockNumber === undefined ? {} : { blockNumber }),
-    }
-    return (await context.client.readContract(request as never)) as T
-  } catch {
-    return fallback
-  }
-}
-
-async function safeRead<T>(
-  context: Context,
+  address: Address,
+  abi: unknown,
   functionName: string,
   args: unknown[],
   fallback: T,
@@ -1370,8 +1330,8 @@ async function safeRead<T>(
 ): Promise<T> {
   try {
     const request = {
-      address: VESSEL_ADDRESS,
-      abi: VesselAbi,
+      address,
+      abi,
       functionName: functionName as never,
       args: args as never,
       ...(blockNumber === undefined ? {} : { blockNumber }),
@@ -1381,6 +1341,43 @@ async function safeRead<T>(
   } catch {
     return fallback
   }
+}
+
+function safeReadWorkUnit<T>(
+  context: Context,
+  functionName: string,
+  args: unknown[],
+  fallback: T,
+  blockNumber?: bigint,
+) {
+  return safeReadContract(
+    context, WORK_UNIT_ADDRESS, ShipyardWorkUnitAbi, functionName, args, fallback, blockNumber,
+  )
+}
+
+function safeReadSequence<T>(
+  context: Context,
+  functionName: string,
+  args: unknown[],
+  fallback: T,
+  blockNumber?: bigint,
+) {
+  return safeReadContract(
+    context, SEQUENCE_ADDRESS, SequenceAbi, functionName, args, fallback, blockNumber,
+  )
+}
+
+function safeRead<T>(
+  context: Context,
+  functionName: string,
+  args: unknown[],
+  fallback: T,
+  blockNumber?: bigint,
+  cacheLatest = false,
+) {
+  return safeReadContract(
+    context, VESSEL_ADDRESS, VesselAbi, functionName, args, fallback, blockNumber, cacheLatest,
+  )
 }
 
 function safeReadLatest<T>(
