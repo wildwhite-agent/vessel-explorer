@@ -240,3 +240,47 @@ export const operatorApproval = onchainTable(
     operatorIdx: index('operator_approval_operator_idx').on(table.operator),
   }),
 )
+
+export const workUnitProtocol = onchainTable('work_unit_protocol', (t) => ({
+  id: t.text().primaryKey(),
+  token_address: t.hex().notNull(),
+  name: t.text().notNull(),
+  symbol: t.text().notNull(),
+  decimals: t.integer().notNull(),
+  total_supply: t.bigint().notNull(),
+  vessel_collection: t.hex().notNull(),
+  updated_at: t.bigint().notNull(),
+  block_number: t.bigint().notNull(),
+}))
+
+export const workUnitBalance = onchainTable(
+  'work_unit_balances',
+  (t) => ({
+    address: t.hex().primaryKey(),
+    balance: t.bigint().notNull(),
+    updated_at: t.bigint().notNull(),
+    block_number: t.bigint().notNull(),
+  }),
+  (table) => ({
+    balanceIdx: index('work_unit_balance_idx').on(table.balance),
+  }),
+)
+
+export const workUnitTransfer = onchainTable(
+  'work_unit_transfers',
+  (t) => ({
+    tx_hash: t.hex().notNull(),
+    log_index: t.integer().notNull(),
+    block_number: t.bigint().notNull(),
+    from: t.hex().notNull(),
+    to: t.hex().notNull(),
+    value: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.tx_hash, table.log_index] }),
+    fromIdx: index('work_unit_transfer_from_idx').on(table.from),
+    toIdx: index('work_unit_transfer_to_idx').on(table.to),
+    blockIdx: index('work_unit_transfer_block_idx').on(table.block_number),
+  }),
+)

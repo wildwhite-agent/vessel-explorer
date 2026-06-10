@@ -8,10 +8,13 @@ import {
   type TransportConfig,
 } from 'viem'
 
+import { ShipyardWorkUnitAbi } from './abis/ShipyardWorkUnitAbi'
 import { VesselAbi } from './abis/VesselAbi'
 
 export const VESSEL_ADDRESS = '0xECb92Cc7112b80A2234936315BbB493fb48d1463' as const
 export const VESSEL_START_BLOCK = 24_524_524
+export const WORK_UNIT_ADDRESS = '0x476072a4e9648c1a115f47f268353586b0012c97' as const
+export const WORK_UNIT_START_BLOCK = 24_918_488
 
 function splitUrls(value: string | undefined) {
   return (value ?? '').split(/\s+/).filter(Boolean)
@@ -28,6 +31,10 @@ const startBlock = Math.floor(
   positiveNumberFromEnv('VESSEL_INDEXER_START_BLOCK', VESSEL_START_BLOCK),
 )
 const endBlock = optionalEndBlockFromEnv('VESSEL_INDEXER_END_BLOCK')
+const workUnitStartBlock = Math.floor(
+  positiveNumberFromEnv('WORK_UNIT_INDEXER_START_BLOCK', WORK_UNIT_START_BLOCK),
+)
+const workUnitEndBlock = optionalEndBlockFromEnv('WORK_UNIT_INDEXER_END_BLOCK')
 
 export const INDEXER_START_BLOCK = startBlock
 
@@ -111,6 +118,13 @@ export default createConfig({
       address: VESSEL_ADDRESS,
       startBlock,
       ...(endBlock === undefined ? {} : { endBlock }),
+    },
+    ShipyardWorkUnit: {
+      chain: 'mainnet',
+      abi: ShipyardWorkUnitAbi,
+      address: WORK_UNIT_ADDRESS,
+      startBlock: workUnitStartBlock,
+      ...(workUnitEndBlock === undefined ? {} : { endBlock: workUnitEndBlock }),
     },
   },
 })

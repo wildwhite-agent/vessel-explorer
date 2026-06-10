@@ -21,6 +21,8 @@ capsules and vault entries can still be inspected.
   block, log index, transaction hash, and timestamp
 - Vault/capsule entry snapshots in `vessel_entries`
 - Transfers, approvals, operator approvals, holders, and normalized activity
+- Shipyard Work Unit ERC-20 balances and transfer history for
+  `0x476072a4e9648c1a115f47f268353586b0012c97`
 - Protocol-level state such as claimed count, lock start, default machine, and
   creator supply status
 
@@ -208,6 +210,42 @@ Query params:
 
 - `limit`: capped at `5000`
 
+### `GET /work-units/balances`
+
+Paginated Shipyard Work Unit balance leaderboard derived from indexed ERC-20
+`Transfer` events.
+
+Query params:
+
+- `page`, `pageSize` or `limit`
+- `dir`: `asc` or `desc`, default `desc`
+- `address`: exact wallet address
+
+Response shape:
+
+```json
+{
+  "rows": [{ "address": "0x...", "balance": "12", "updatedAt": "1710000000", "blockNumber": "24920000" }],
+  "total": 20,
+  "page": 1,
+  "pageSize": 50,
+  "source": "ponder"
+}
+```
+
+### `GET /work-units/balances/:address`
+
+Single wallet Work Unit balance. Returns `balance: "0"` when the wallet has no
+indexed balance row.
+
+### `GET /work-units/transfers`
+
+Shipyard Work Unit transfer history. Supports:
+
+- `page`
+- `limit` or `offset`
+- `address`: matches either transfer side
+
 ### `GET /stats`
 
 Indexer summary counts and activity type counts. Token stats include total,
@@ -293,6 +331,8 @@ Optional:
 - `PONDER_ETH_GET_LOGS_BLOCK_RANGE_1`
 - `VESSEL_INDEXER_START_BLOCK`
 - `VESSEL_INDEXER_END_BLOCK`
+- `WORK_UNIT_INDEXER_START_BLOCK`
+- `WORK_UNIT_INDEXER_END_BLOCK`
 
 ## Verification
 
@@ -303,6 +343,8 @@ curl -f http://127.0.0.1:42069/ready
 curl -s http://127.0.0.1:42069/stats | jq .
 curl -s 'http://127.0.0.1:42069/tokens?pageSize=3' | jq .
 curl -s 'http://127.0.0.1:42069/tokens/1/writes' | jq .
+curl -s 'http://127.0.0.1:42069/work-units/balances?pageSize=5' | jq .
+curl -s 'http://127.0.0.1:42069/work-units/transfers?limit=5' | jq .
 ```
 
 For the deployed indexer:
@@ -312,6 +354,7 @@ curl -f https://indexer.vessel.worldcomputer.art/ready
 curl -s https://indexer.vessel.worldcomputer.art/stats | jq .
 curl -s 'https://indexer.vessel.worldcomputer.art/tokens?pageSize=3' | jq .
 curl -s 'https://indexer.vessel.worldcomputer.art/tokens/1/writes' | jq .
+curl -s 'https://indexer.vessel.worldcomputer.art/work-units/balances?pageSize=5' | jq .
 ```
 
 ## Operational Notes

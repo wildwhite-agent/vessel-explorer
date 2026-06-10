@@ -11,6 +11,9 @@ import {
   token,
   transfer,
   vesselEntry,
+  workUnitBalance,
+  workUnitProtocol,
+  workUnitTransfer,
 } from 'ponder:schema'
 import {
   decodeEventLog,
@@ -22,8 +25,15 @@ import {
   type Hex,
 } from 'viem'
 
+import { ShipyardWorkUnitAbi } from '../abis/ShipyardWorkUnitAbi'
 import { VesselAbi } from '../abis/VesselAbi'
-import { INDEXER_START_BLOCK, VESSEL_ADDRESS, VESSEL_START_BLOCK } from '../ponder.config'
+import {
+  INDEXER_START_BLOCK,
+  VESSEL_ADDRESS,
+  VESSEL_START_BLOCK,
+  WORK_UNIT_ADDRESS,
+  WORK_UNIT_START_BLOCK,
+} from '../ponder.config'
 import { findSeaportSaleForTransfer, type SeaportSaleMatch } from './seaport'
 
 type Address = `0x${string}`
@@ -532,6 +542,67 @@ ponder.on('Vessel:ApprovalForAll', async ({ event, context }) => {
   })
 })
 
+ponder.on('ShipyardWorkUnit:setup', async ({ context }) => {
+  const blockNumber = BigInt(WORK_UNIT_START_BLOCK)
+  const [name, symbol, decimals, totalSupply, vesselCollection] = await Promise.all([
+    safeReadWorkUnit(context, 'name', [], 'The Vessel Shipyard Work Unit', blockNumber),
+    safeReadWorkUnit(context, 'symbol', [], 'VWU', blockNumber),
+    safeReadWorkUnit(context, 'decimals', [], 0, blockNumber),
+    safeReadWorkUnit(context, 'totalSupply', [], 0n, blockNumber),
+    safeReadWorkUnit(context, 'vesselCollection', [], VESSEL_ADDRESS, blockNumber),
+  ])
+
+  const state = {
+    id: 'main',
+    token_address: WORK_UNIT_ADDRESS,
+    name: String(name),
+    symbol: String(symbol),
+    decimals: Number(decimals),
+    total_supply: totalSupply as bigint,
+    vessel_collection: normalizeAddress(vesselCollection as Address),
+    updated_at: 0n,
+    block_number: blockNumber,
+  }
+
+  await context.db
+    .insert(workUnitProtocol)
+    .values(state)
+    .onConflictDoUpdate(state)
+})
+
+ponder.on('ShipyardWorkUnit:Transfer', async ({ event, context }) => {
+  const from = normalizeAddress(event.args.from as Address)
+  const to = normalizeAddress(event.args.to as Address)
+  const value = event.args.value as bigint
+  const meta = eventMeta(event)
+
+  await ensureAccounts(context, [from, to], event.block.timestamp)
+
+  await context.db
+    .insert(workUnitTransfer)
+    .values({
+      tx_hash: meta.tx_hash,
+      log_index: meta.log_index,
+      block_number: meta.block_number,
+      from,
+      to,
+      value,
+      timestamp: meta.timestamp,
+    })
+    .onConflictDoNothing()
+
+  if (from !== ZERO_ADDRESS) {
+    await adjustWorkUnitBalance(context, from, -value, meta)
+  }
+  if (to !== ZERO_ADDRESS) {
+    await adjustWorkUnitBalance(context, to, value, meta)
+  }
+
+  if (from === ZERO_ADDRESS || to === ZERO_ADDRESS) {
+    await refreshWorkUnitTotalSupply(context, meta.block_number, meta.timestamp)
+  }
+})
+
 async function readProtocolState(context: Context) {
   const seedBlock = BigInt(Math.max(INDEXER_START_BLOCK - 1, VESSEL_START_BLOCK))
   const [claimedCount, lockStart, blockEvent0, blockEvent1, defaultMachine, relics, creatorSupplyClaimed] =
@@ -922,6 +993,85 @@ async function insertActivity(
   values: typeof activityEvent.$inferInsert,
 ) {
   await context.db.insert(activityEvent).values(values).onConflictDoNothing()
+}
+
+async function adjustWorkUnitBalance(
+  context: Context,
+  address: Address,
+  delta: bigint,
+  meta: ReturnType<typeof eventMeta>,
+) {
+  const current = await context.db.find(workUnitBalance, { address })
+  if (current) {
+    await context.db
+      .update(workUnitBalance, { address })
+      .set((row) => ({
+        balance: row.balance + delta,
+        updated_at: meta.timestamp,
+        block_number: meta.block_number,
+      }))
+    return
+  }
+
+  if (delta <= 0n) {
+    await context.db.insert(workUnitBalance).values({
+      address,
+      balance: 0n,
+      updated_at: meta.timestamp,
+      block_number: meta.block_number,
+    })
+    return
+  }
+
+  await context.db
+    .insert(workUnitBalance)
+    .values({
+      address,
+      balance: delta,
+      updated_at: meta.timestamp,
+      block_number: meta.block_number,
+    })
+    .onConflictDoUpdate((row) => ({
+      balance: row.balance + delta,
+      updated_at: meta.timestamp,
+      block_number: meta.block_number,
+    }))
+}
+
+async function refreshWorkUnitTotalSupply(
+  context: Context,
+  blockNumber: bigint,
+  timestamp: bigint,
+) {
+  const totalSupply = await safeReadWorkUnit(context, 'totalSupply', [], 0n, blockNumber)
+  await context.db
+    .update(workUnitProtocol, { id: 'main' })
+    .set({
+      total_supply: totalSupply as bigint,
+      updated_at: timestamp,
+      block_number: blockNumber,
+    })
+}
+
+async function safeReadWorkUnit<T>(
+  context: Context,
+  functionName: string,
+  args: unknown[],
+  fallback: T,
+  blockNumber?: bigint,
+): Promise<T> {
+  try {
+    const request = {
+      address: WORK_UNIT_ADDRESS,
+      abi: ShipyardWorkUnitAbi,
+      functionName: functionName as never,
+      args: args as never,
+      ...(blockNumber === undefined ? {} : { blockNumber }),
+    }
+    return (await context.client.readContract(request as never)) as T
+  } catch {
+    return fallback
+  }
 }
 
 async function safeRead<T>(

@@ -9,6 +9,9 @@ import schema, {
   token,
   transfer,
   vesselEntry,
+  workUnitBalance,
+  workUnitProtocol,
+  workUnitTransfer,
 } from 'ponder:schema'
 
 const app = new Hono()
@@ -408,8 +411,131 @@ app.get('/holders', async (c) => {
   return c.json({ rows: normalizeRows(result) })
 })
 
+app.get('/work-units/balances', async (c) => {
+  const page = Math.max(1, Number(c.req.query('page')) || 1)
+  const pageSize = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, Number(c.req.query('pageSize') || c.req.query('limit')) || 50),
+  )
+  const offset = (page - 1) * pageSize
+  const address = (c.req.query('address') || '').trim()
+  const sortDir = c.req.query('dir')?.toLowerCase() === 'asc' ? 'ASC' : 'DESC'
+  const conds = [sql`balance > 0`]
+
+  if (ADDRESS_PATTERN.test(address)) {
+    conds.push(sql`lower(${workUnitBalance}.address) = lower(${address})`)
+  }
+
+  const whereClause = andClause(conds)
+  const orderDirection = sql.raw(sortDir)
+
+  const [countResult, rowsResult] = await Promise.all([
+    db.execute(sql`
+      SELECT COUNT(*)::integer AS total
+      FROM ${workUnitBalance}
+      WHERE ${whereClause}
+    `),
+    db.execute(sql`
+      SELECT
+        address,
+        balance,
+        updated_at AS "updatedAt",
+        block_number AS "blockNumber"
+      FROM ${workUnitBalance}
+      WHERE ${whereClause}
+      ORDER BY balance ${orderDirection}, address ASC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `),
+  ])
+
+  return c.json({
+    rows: normalizeRows(rowsResult).map(normalizeWorkUnitBalanceRow),
+    total: Number(normalizeRows(countResult)[0]?.total ?? 0),
+    page,
+    pageSize,
+    source: 'ponder',
+  })
+})
+
+app.get('/work-units/balances/:address', async (c) => {
+  const address = c.req.param('address').trim()
+  if (!ADDRESS_PATTERN.test(address)) {
+    return c.json({ error: 'invalid address' }, 400)
+  }
+
+  const result = await db.execute(sql`
+    SELECT
+      address,
+      balance,
+      updated_at AS "updatedAt",
+      block_number AS "blockNumber"
+    FROM ${workUnitBalance}
+    WHERE lower(address) = lower(${address})
+    LIMIT 1
+  `)
+
+  const row = normalizeRows(result)[0]
+  if (!row) {
+    return c.json({
+      address,
+      balance: '0',
+      updatedAt: null,
+      blockNumber: null,
+      source: 'ponder',
+    })
+  }
+
+  return c.json({
+    ...normalizeWorkUnitBalanceRow(row),
+    source: 'ponder',
+  })
+})
+
+app.get('/work-units/transfers', async (c) => {
+  const page = Math.max(1, Number(c.req.query('page')) || 1)
+  const limit = Math.min(
+    10_000,
+    Math.max(1, Number(c.req.query('limit')) || 1000),
+  )
+  const requestedOffset = c.req.query('offset')
+  const offset = requestedOffset == null
+    ? (page - 1) * limit
+    : Math.max(0, Number(requestedOffset) || 0)
+  const address = (c.req.query('address') || '').trim()
+  const conds = []
+  if (ADDRESS_PATTERN.test(address)) {
+    conds.push(sql`(lower("from") = lower(${address}) OR lower("to") = lower(${address}))`)
+  }
+  const whereClause = andClause(conds)
+
+  const result = await db.execute(sql`
+    SELECT
+      tx_hash AS hash,
+      "from",
+      "to",
+      value,
+      block_number AS "blockNumber",
+      timestamp AS "timeStamp"
+    FROM ${workUnitTransfer}
+    WHERE ${whereClause}
+    ORDER BY block_number DESC, log_index DESC
+    LIMIT ${limit} OFFSET ${offset}
+  `)
+
+  return c.json(
+    normalizeRows(result).map((row) => ({
+      hash: row.hash,
+      from: row.from,
+      to: row.to,
+      value: stringify(row.value),
+      blockNumber: stringify(row.blockNumber),
+      timeStamp: stringify(row.timeStamp),
+    })),
+  )
+})
+
 app.get('/stats', async (c) => {
-  const [protocolResult, tokenResult, activityResult] = await Promise.all([
+  const [protocolResult, tokenResult, activityResult, workUnitResult] = await Promise.all([
     db.execute(sql`SELECT * FROM ${protocol} WHERE id = 'main' LIMIT 1`),
     db.execute(sql`
       SELECT
@@ -430,12 +556,30 @@ app.get('/stats', async (c) => {
       GROUP BY type
       ORDER BY count DESC
     `),
+    db.execute(sql`
+      SELECT
+        p.token_address AS "tokenAddress",
+        p.name,
+        p.symbol,
+        p.decimals,
+        p.total_supply AS "totalSupply",
+        p.vessel_collection AS "vesselCollection",
+        (
+          SELECT COUNT(*)::integer
+          FROM ${workUnitBalance}
+          WHERE balance > 0
+        ) AS "uniqueHolders"
+      FROM ${workUnitProtocol} p
+      WHERE p.id = 'main'
+      LIMIT 1
+    `),
   ])
 
   return c.json({
     protocol: normalizeRows(protocolResult)[0] ?? null,
     tokens: normalizeRows(tokenResult)[0] ?? null,
     activity: normalizeRows(activityResult),
+    workUnits: normalizeWorkUnitStatsRow(normalizeRows(workUnitResult)[0] ?? null),
   })
 })
 
@@ -584,6 +728,28 @@ function normalizeTokenRow(row: Row) {
     isVault: Boolean(row.isVault),
     isMachine: Boolean(row.isMachine),
     ...(row.payloadHex == null ? {} : { payloadHex: row.payloadHex }),
+  }
+}
+
+function normalizeWorkUnitBalanceRow(row: Row) {
+  return {
+    address: row.address,
+    balance: stringify(row.balance),
+    updatedAt: row.updatedAt == null ? null : stringify(row.updatedAt),
+    blockNumber: row.blockNumber == null ? null : stringify(row.blockNumber),
+  }
+}
+
+function normalizeWorkUnitStatsRow(row: Row | null) {
+  if (!row) return null
+  return {
+    tokenAddress: row.tokenAddress ?? null,
+    name: row.name ?? null,
+    symbol: row.symbol ?? null,
+    decimals: row.decimals == null ? null : Number(row.decimals),
+    totalSupply: row.totalSupply == null ? null : stringify(row.totalSupply),
+    vesselCollection: row.vesselCollection ?? null,
+    uniqueHolders: row.uniqueHolders == null ? 0 : Number(row.uniqueHolders),
   }
 }
 
