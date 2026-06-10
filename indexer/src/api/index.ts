@@ -5,6 +5,10 @@ import schema, {
   activityEvent,
   payloadWrite,
   protocol,
+  sequenceBalance,
+  sequenceProtocol,
+  sequenceToken,
+  sequenceTransfer,
   seaportSale,
   token,
   transfer,
@@ -534,8 +538,170 @@ app.get('/work-units/transfers', async (c) => {
   )
 })
 
+app.get('/sequences/tokens', async (c) => {
+  const page = Math.max(1, Number(c.req.query('page')) || 1)
+  const pageSize = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, Number(c.req.query('pageSize') || c.req.query('limit')) || 50),
+  )
+  const offset = (page - 1) * pageSize
+
+  const [countResult, rowsResult] = await Promise.all([
+    db.execute(sql`SELECT COUNT(*)::integer AS total FROM ${sequenceToken}`),
+    db.execute(sql`
+      SELECT
+        token_id AS "tokenId",
+        artist,
+        artist_address AS "artistAddress",
+        max_supply AS "maxSupply",
+        price,
+        minted,
+        locked,
+        event_num_start AS "eventNumStart",
+        event_num_end AS "eventNumEnd",
+        uri,
+        uses_renderer AS "usesRenderer",
+        renderer,
+        updated_at AS "updatedAt",
+        block_number AS "blockNumber"
+      FROM ${sequenceToken}
+      ORDER BY token_id ASC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `),
+  ])
+
+  return c.json({
+    rows: normalizeRows(rowsResult).map(normalizeSequenceTokenRow),
+    total: Number(normalizeRows(countResult)[0]?.total ?? 0),
+    page,
+    pageSize,
+    source: 'ponder',
+  })
+})
+
+app.get('/sequences/tokens/:id{[0-9]+}', async (c) => {
+  const id = BigInt(c.req.param('id'))
+  const result = await db.execute(sql`
+    SELECT
+      token_id AS "tokenId",
+      artist,
+      artist_address AS "artistAddress",
+      max_supply AS "maxSupply",
+      price,
+      minted,
+      locked,
+      event_num_start AS "eventNumStart",
+      event_num_end AS "eventNumEnd",
+      uri,
+      uses_renderer AS "usesRenderer",
+      renderer,
+      updated_at AS "updatedAt",
+      block_number AS "blockNumber"
+    FROM ${sequenceToken}
+    WHERE token_id = ${id}
+    LIMIT 1
+  `)
+
+  const row = normalizeRows(result)[0]
+  if (!row) return c.json({ error: 'sequence token not found' }, 404)
+  return c.json({ ...normalizeSequenceTokenRow(row), source: 'ponder' })
+})
+
+app.get('/sequences/balances', async (c) => {
+  const page = Math.max(1, Number(c.req.query('page')) || 1)
+  const pageSize = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, Number(c.req.query('pageSize') || c.req.query('limit')) || 50),
+  )
+  const offset = (page - 1) * pageSize
+  const address = (c.req.query('address') || '').trim()
+  const tokenId = (c.req.query('tokenId') || '').trim()
+  const conds = [sql`balance > 0`]
+
+  if (ADDRESS_PATTERN.test(address)) {
+    conds.push(sql`lower(${sequenceBalance}.address) = lower(${address})`)
+  }
+  if (/^\d+$/.test(tokenId)) {
+    conds.push(sql`${sequenceBalance}.token_id = ${BigInt(tokenId)}`)
+  }
+
+  const whereClause = andClause(conds)
+
+  const [countResult, rowsResult] = await Promise.all([
+    db.execute(sql`
+      SELECT COUNT(*)::integer AS total
+      FROM ${sequenceBalance}
+      WHERE ${whereClause}
+    `),
+    db.execute(sql`
+      SELECT
+        address,
+        token_id AS "tokenId",
+        balance,
+        updated_at AS "updatedAt",
+        block_number AS "blockNumber"
+      FROM ${sequenceBalance}
+      WHERE ${whereClause}
+      ORDER BY token_id ASC, balance DESC, address ASC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `),
+  ])
+
+  return c.json({
+    rows: normalizeRows(rowsResult).map(normalizeSequenceBalanceRow),
+    total: Number(normalizeRows(countResult)[0]?.total ?? 0),
+    page,
+    pageSize,
+    source: 'ponder',
+  })
+})
+
+app.get('/sequences/transfers', async (c) => {
+  const page = Math.max(1, Number(c.req.query('page')) || 1)
+  const limit = Math.min(
+    10_000,
+    Math.max(1, Number(c.req.query('limit')) || 1000),
+  )
+  const requestedOffset = c.req.query('offset')
+  const offset = requestedOffset == null
+    ? (page - 1) * limit
+    : Math.max(0, Number(requestedOffset) || 0)
+  const address = (c.req.query('address') || '').trim()
+  const tokenId = (c.req.query('tokenId') || '').trim()
+  const conds = []
+
+  if (ADDRESS_PATTERN.test(address)) {
+    conds.push(sql`(lower("from") = lower(${address}) OR lower("to") = lower(${address}) OR lower(operator) = lower(${address}))`)
+  }
+  if (/^\d+$/.test(tokenId)) {
+    conds.push(sql`token_id = ${BigInt(tokenId)}`)
+  }
+
+  const whereClause = andClause(conds)
+
+  const result = await db.execute(sql`
+    SELECT
+      tx_hash AS hash,
+      log_index AS "logIndex",
+      batch_index AS "batchIndex",
+      operator,
+      "from",
+      "to",
+      token_id AS "tokenId",
+      value,
+      block_number AS "blockNumber",
+      timestamp AS "timeStamp"
+    FROM ${sequenceTransfer}
+    WHERE ${whereClause}
+    ORDER BY block_number DESC, log_index DESC, batch_index DESC
+    LIMIT ${limit} OFFSET ${offset}
+  `)
+
+  return c.json(normalizeRows(result).map(normalizeSequenceTransferRow))
+})
+
 app.get('/stats', async (c) => {
-  const [protocolResult, tokenResult, activityResult, workUnitResult] = await Promise.all([
+  const [protocolResult, tokenResult, activityResult, workUnitResult, sequenceResult] = await Promise.all([
     db.execute(sql`SELECT * FROM ${protocol} WHERE id = 'main' LIMIT 1`),
     db.execute(sql`
       SELECT
@@ -573,6 +739,21 @@ app.get('/stats', async (c) => {
       WHERE p.id = 'main'
       LIMIT 1
     `),
+    db.execute(sql`
+      SELECT
+        p.contract_address AS "contractAddress",
+        p.vessel_address AS "vesselAddress",
+        (SELECT COUNT(*)::integer FROM ${sequenceToken}) AS "tokenCount",
+        (SELECT COALESCE(SUM(minted), 0) FROM ${sequenceToken}) AS minted,
+        (
+          SELECT COUNT(DISTINCT address)::integer
+          FROM ${sequenceBalance}
+          WHERE balance > 0
+        ) AS "uniqueHolders"
+      FROM ${sequenceProtocol} p
+      WHERE p.id = 'main'
+      LIMIT 1
+    `),
   ])
 
   return c.json({
@@ -580,6 +761,7 @@ app.get('/stats', async (c) => {
     tokens: normalizeRows(tokenResult)[0] ?? null,
     activity: normalizeRows(activityResult),
     workUnits: normalizeWorkUnitStatsRow(normalizeRows(workUnitResult)[0] ?? null),
+    sequences: normalizeSequenceStatsRow(normalizeRows(sequenceResult)[0] ?? null),
   })
 })
 
@@ -749,6 +931,61 @@ function normalizeWorkUnitStatsRow(row: Row | null) {
     decimals: row.decimals == null ? null : Number(row.decimals),
     totalSupply: row.totalSupply == null ? null : stringify(row.totalSupply),
     vesselCollection: row.vesselCollection ?? null,
+    uniqueHolders: row.uniqueHolders == null ? 0 : Number(row.uniqueHolders),
+  }
+}
+
+function normalizeSequenceTokenRow(row: Row) {
+  return {
+    tokenId: stringify(row.tokenId),
+    artist: row.artist ?? '',
+    artistAddress: row.artistAddress ?? null,
+    maxSupply: stringify(row.maxSupply),
+    price: stringify(row.price),
+    minted: stringify(row.minted),
+    locked: Boolean(row.locked),
+    eventNumStart: stringify(row.eventNumStart),
+    eventNumEnd: stringify(row.eventNumEnd),
+    uri: row.uri ?? '',
+    usesRenderer: Boolean(row.usesRenderer),
+    renderer: row.renderer ?? null,
+    updatedAt: row.updatedAt == null ? null : stringify(row.updatedAt),
+    blockNumber: row.blockNumber == null ? null : stringify(row.blockNumber),
+  }
+}
+
+function normalizeSequenceBalanceRow(row: Row) {
+  return {
+    address: row.address,
+    tokenId: stringify(row.tokenId),
+    balance: stringify(row.balance),
+    updatedAt: row.updatedAt == null ? null : stringify(row.updatedAt),
+    blockNumber: row.blockNumber == null ? null : stringify(row.blockNumber),
+  }
+}
+
+function normalizeSequenceTransferRow(row: Row) {
+  return {
+    hash: row.hash,
+    logIndex: row.logIndex == null ? null : Number(row.logIndex),
+    batchIndex: row.batchIndex == null ? null : Number(row.batchIndex),
+    operator: row.operator,
+    from: row.from,
+    to: row.to,
+    tokenId: stringify(row.tokenId),
+    value: stringify(row.value),
+    blockNumber: stringify(row.blockNumber),
+    timeStamp: stringify(row.timeStamp),
+  }
+}
+
+function normalizeSequenceStatsRow(row: Row | null) {
+  if (!row) return null
+  return {
+    contractAddress: row.contractAddress ?? null,
+    vesselAddress: row.vesselAddress ?? null,
+    tokenCount: row.tokenCount == null ? 0 : Number(row.tokenCount),
+    minted: stringify(row.minted ?? 0),
     uniqueHolders: row.uniqueHolders == null ? 0 : Number(row.uniqueHolders),
   }
 }

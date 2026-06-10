@@ -8,6 +8,7 @@ import {
   type TransportConfig,
 } from 'viem'
 
+import { SequenceAbi } from './abis/SequenceAbi'
 import { ShipyardWorkUnitAbi } from './abis/ShipyardWorkUnitAbi'
 import { VesselAbi } from './abis/VesselAbi'
 
@@ -15,6 +16,8 @@ export const VESSEL_ADDRESS = '0xECb92Cc7112b80A2234936315BbB493fb48d1463' as co
 export const VESSEL_START_BLOCK = 24_524_524
 export const WORK_UNIT_ADDRESS = '0x476072a4e9648c1a115f47f268353586b0012c97' as const
 export const WORK_UNIT_START_BLOCK = 24_918_488
+export const SEQUENCE_ADDRESS = '0x9423548a957284eD17E55c37c4B6D96e5E63065f' as const
+export const SEQUENCE_START_BLOCK = 24_524_612
 
 function splitUrls(value: string | undefined) {
   return (value ?? '').split(/\s+/).filter(Boolean)
@@ -35,6 +38,10 @@ const workUnitStartBlock = Math.floor(
   positiveNumberFromEnv('WORK_UNIT_INDEXER_START_BLOCK', WORK_UNIT_START_BLOCK),
 )
 const workUnitEndBlock = optionalEndBlockFromEnv('WORK_UNIT_INDEXER_END_BLOCK')
+const sequenceStartBlock = Math.floor(
+  positiveNumberFromEnv('SEQUENCE_INDEXER_START_BLOCK', SEQUENCE_START_BLOCK),
+)
+const sequenceEndBlock = optionalEndBlockFromEnv('SEQUENCE_INDEXER_END_BLOCK')
 
 export const INDEXER_START_BLOCK = startBlock
 
@@ -125,6 +132,13 @@ export default createConfig({
       address: WORK_UNIT_ADDRESS,
       startBlock: workUnitStartBlock,
       ...(workUnitEndBlock === undefined ? {} : { endBlock: workUnitEndBlock }),
+    },
+    Sequence: {
+      chain: 'mainnet',
+      abi: SequenceAbi,
+      address: SEQUENCE_ADDRESS,
+      startBlock: sequenceStartBlock,
+      ...(sequenceEndBlock === undefined ? {} : { endBlock: sequenceEndBlock }),
     },
   },
 })

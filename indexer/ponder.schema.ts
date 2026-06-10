@@ -284,3 +284,75 @@ export const workUnitTransfer = onchainTable(
     blockIdx: index('work_unit_transfer_block_idx').on(table.block_number),
   }),
 )
+
+export const sequenceProtocol = onchainTable('sequence_protocol', (t) => ({
+  id: t.text().primaryKey(),
+  contract_address: t.hex().notNull(),
+  vessel_address: t.hex().notNull(),
+  updated_at: t.bigint().notNull(),
+  block_number: t.bigint().notNull(),
+}))
+
+export const sequenceToken = onchainTable(
+  'sequence_tokens',
+  (t) => ({
+    token_id: t.bigint().primaryKey(),
+    artist: t.text().notNull(),
+    artist_address: t.hex(),
+    max_supply: t.bigint().notNull(),
+    price: t.bigint().notNull(),
+    minted: t.bigint().notNull(),
+    locked: t.boolean().notNull(),
+    event_num_start: t.bigint().notNull(),
+    event_num_end: t.bigint().notNull(),
+    uri: t.text().notNull(),
+    uses_renderer: t.boolean().notNull(),
+    renderer: t.hex(),
+    updated_at: t.bigint().notNull(),
+    block_number: t.bigint().notNull(),
+  }),
+  (table) => ({
+    artistIdx: index('sequence_token_artist_idx').on(table.artist_address),
+    mintedIdx: index('sequence_token_minted_idx').on(table.minted),
+  }),
+)
+
+export const sequenceBalance = onchainTable(
+  'sequence_balances',
+  (t) => ({
+    address: t.hex().notNull(),
+    token_id: t.bigint().notNull(),
+    balance: t.bigint().notNull(),
+    updated_at: t.bigint().notNull(),
+    block_number: t.bigint().notNull(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.address, table.token_id] }),
+    addressIdx: index('sequence_balance_address_idx').on(table.address),
+    tokenIdx: index('sequence_balance_token_idx').on(table.token_id),
+    balanceIdx: index('sequence_balance_idx').on(table.balance),
+  }),
+)
+
+export const sequenceTransfer = onchainTable(
+  'sequence_transfers',
+  (t) => ({
+    tx_hash: t.hex().notNull(),
+    log_index: t.integer().notNull(),
+    batch_index: t.integer().notNull(),
+    block_number: t.bigint().notNull(),
+    operator: t.hex().notNull(),
+    from: t.hex().notNull(),
+    to: t.hex().notNull(),
+    token_id: t.bigint().notNull(),
+    value: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.tx_hash, table.log_index, table.batch_index] }),
+    tokenIdx: index('sequence_transfer_token_idx').on(table.token_id),
+    fromIdx: index('sequence_transfer_from_idx').on(table.from),
+    toIdx: index('sequence_transfer_to_idx').on(table.to),
+    blockIdx: index('sequence_transfer_block_idx').on(table.block_number),
+  }),
+)
