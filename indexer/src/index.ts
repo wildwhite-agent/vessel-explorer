@@ -633,7 +633,7 @@ ponder.on('Sequence:TransferSingle', async ({ event, context }) => {
   const meta = eventMeta(event)
 
   await handleSequenceTransfer(context, event, tokenId, value, 0)
-  await refreshSequenceToken(context, tokenId, meta.block_number, meta.timestamp)
+  await refreshSequenceTokensForTransfer(context, event, [tokenId], meta)
 })
 
 ponder.on('Sequence:TransferBatch', async ({ event, context }) => {
@@ -642,11 +642,9 @@ ponder.on('Sequence:TransferBatch', async ({ event, context }) => {
   const meta = eventMeta(event)
 
   for (let index = 0; index < ids.length; index++) {
-    const tokenId = ids[index]
-    const value = values[index] ?? 0n
-    await handleSequenceTransfer(context, event, tokenId, value, index)
-    await refreshSequenceToken(context, tokenId, meta.block_number, meta.timestamp)
+    await handleSequenceTransfer(context, event, ids[index], values[index] ?? 0n, index)
   }
+  await refreshSequenceTokensForTransfer(context, event, ids, meta)
 })
 
 ponder.on('Sequence:URI', async ({ event, context }) => {
@@ -1178,6 +1176,25 @@ async function adjustSequenceBalance(
       updated_at: meta.timestamp,
       block_number: meta.block_number,
     }))
+}
+
+async function refreshSequenceTokensForTransfer(
+  context: Context,
+  event: PonderEvent,
+  tokenIds: bigint[],
+  meta: ReturnType<typeof eventMeta>,
+) {
+  // Among the events we index, tokens(id)/uriData(id) only change on mints
+  // (URI updates have their own handler), so skip the contract reads for
+  // already-indexed tokens on regular transfers.
+  const isMint = normalizeAddress(event.args.from as Address) === ZERO_ADDRESS
+  for (const tokenId of new Set(tokenIds)) {
+    if (!isMint) {
+      const existing = await context.db.find(sequenceToken, { token_id: tokenId })
+      if (existing) continue
+    }
+    await refreshSequenceToken(context, tokenId, meta.block_number, meta.timestamp)
+  }
 }
 
 async function refreshSequenceToken(
