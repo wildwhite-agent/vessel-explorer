@@ -1192,43 +1192,56 @@ async function refreshSequenceToken(
     safeReadSequence(context, 'uriData', [tokenId], null, blockNumber),
   ])
 
-  const parsedToken = parseSequenceTokenData(tokenData)
-  const parsedUri = parseSequenceUriData(uriData)
-  const uri = overrides.uri ?? parsedUri.uri
+  // Failed reads stay out of the update so transient RPC errors cannot
+  // overwrite previously indexed values with parser fallbacks.
+  if (tokenData == null && uriData == null && overrides.uri === undefined) return
+
+  const parsedToken = tokenData == null ? null : parseSequenceTokenData(tokenData)
+  const parsedUri = uriData == null ? null : parseSequenceUriData(uriData)
+  const uri = overrides.uri ?? parsedUri?.uri
+
+  const update = {
+    ...(parsedToken == null
+      ? {}
+      : {
+          artist: parsedToken.artist,
+          artist_address: normalizeNullable(parsedToken.artistAddress),
+          max_supply: parsedToken.maxSupply,
+          price: parsedToken.price,
+          minted: parsedToken.minted,
+          locked: parsedToken.locked,
+          event_num_start: parsedToken.eventNumStart,
+          event_num_end: parsedToken.eventNumEnd,
+        }),
+    ...(parsedUri == null
+      ? {}
+      : {
+          uses_renderer: parsedUri.usesRenderer,
+          renderer: normalizeNullable(parsedUri.renderer),
+        }),
+    ...(uri === undefined ? {} : { uri }),
+    updated_at: timestamp,
+    block_number: blockNumber,
+  }
 
   await context.db
     .insert(sequenceToken)
     .values({
       token_id: tokenId,
-      artist: parsedToken.artist,
-      artist_address: normalizeNullable(parsedToken.artistAddress),
-      max_supply: parsedToken.maxSupply,
-      price: parsedToken.price,
-      minted: parsedToken.minted,
-      locked: parsedToken.locked,
-      event_num_start: parsedToken.eventNumStart,
-      event_num_end: parsedToken.eventNumEnd,
-      uri,
-      uses_renderer: parsedUri.usesRenderer,
-      renderer: normalizeNullable(parsedUri.renderer),
-      updated_at: timestamp,
-      block_number: blockNumber,
+      artist: '',
+      artist_address: null,
+      max_supply: 0n,
+      price: 0n,
+      minted: 0n,
+      locked: false,
+      event_num_start: 0n,
+      event_num_end: 0n,
+      uri: '',
+      uses_renderer: false,
+      renderer: null,
+      ...update,
     })
-    .onConflictDoUpdate({
-      artist: parsedToken.artist,
-      artist_address: normalizeNullable(parsedToken.artistAddress),
-      max_supply: parsedToken.maxSupply,
-      price: parsedToken.price,
-      minted: parsedToken.minted,
-      locked: parsedToken.locked,
-      event_num_start: parsedToken.eventNumStart,
-      event_num_end: parsedToken.eventNumEnd,
-      uri,
-      uses_renderer: parsedUri.usesRenderer,
-      renderer: normalizeNullable(parsedUri.renderer),
-      updated_at: timestamp,
-      block_number: blockNumber,
-    })
+    .onConflictDoUpdate(update)
 }
 
 function parseSequenceTokenData(value: unknown) {
