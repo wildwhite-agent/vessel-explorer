@@ -23,6 +23,7 @@ import {
   decodeEventLog,
   encodePacked,
   getAddress,
+  hexToBigInt,
   hexToBytes,
   keccak256,
   toEventSelector,
@@ -83,6 +84,14 @@ const BLOCKS_PER_DAY = 7_200n
 const LOCK_DIVISOR = 10n
 const MAX_UINT256 = (1n << 256n) - 1n
 const PAYLOAD_SET_TOPIC = toEventSelector('PayloadSet(uint256,uint256)')
+const SEQUENCE_TOKEN_SCAN_MAX_ID = positiveIntegerFromEnv(
+  'SEQUENCE_TOKEN_SCAN_MAX_ID',
+  512,
+)
+const SEQUENCE_TOKEN_SCAN_EMPTY_GAP = positiveIntegerFromEnv(
+  'SEQUENCE_TOKEN_SCAN_EMPTY_GAP',
+  16,
+)
 
 const DETAIL_CALLS = [
   'craftToClaimed',
@@ -627,6 +636,8 @@ ponder.on('Sequence:setup', async ({ context }) => {
     .insert(sequenceProtocol)
     .values(state)
     .onConflictDoUpdate(state)
+
+  await syncConfiguredSequenceTokensAtLatest(context)
 })
 
 ponder.on('Sequence:TransferSingle', async ({ event, context }) => {
@@ -635,7 +646,7 @@ ponder.on('Sequence:TransferSingle', async ({ event, context }) => {
   const meta = eventMeta(event)
 
   await handleSequenceTransfer(context, event, tokenId, value, 0)
-  await refreshSequenceTokensForTransfer(context, event, [tokenId], meta)
+  await refreshSequenceTokensForTransfer(context, [tokenId], meta)
 })
 
 ponder.on('Sequence:TransferBatch', async ({ event, context }) => {
@@ -646,7 +657,7 @@ ponder.on('Sequence:TransferBatch', async ({ event, context }) => {
   for (let index = 0; index < ids.length; index++) {
     await handleSequenceTransfer(context, event, ids[index], values[index] ?? 0n, index)
   }
-  await refreshSequenceTokensForTransfer(context, event, ids, meta)
+  await refreshSequenceTokensForTransfer(context, ids, meta)
 })
 
 ponder.on('Sequence:URI', async ({ event, context }) => {
@@ -655,6 +666,10 @@ ponder.on('Sequence:URI', async ({ event, context }) => {
   await refreshSequenceToken(context, tokenId, meta.block_number, meta.timestamp, {
     uri: String(event.args.value ?? ''),
   })
+})
+
+ponder.on('SequenceMetadata:block', async ({ event, context }) => {
+  await syncConfiguredSequenceTokens(context, event.block.number, event.block.timestamp)
 })
 
 async function readProtocolState(context: Context) {
@@ -1178,20 +1193,67 @@ async function adjustSequenceBalance(
 
 async function refreshSequenceTokensForTransfer(
   context: Context,
-  event: PonderEvent,
   tokenIds: bigint[],
   meta: ReturnType<typeof eventMeta>,
 ) {
-  // Among the events we index, tokens(id)/uriData(id) only change on mints
-  // (URI updates have their own handler), so skip the contract reads for
-  // already-indexed tokens on regular transfers.
-  const isMint = normalizeAddress(event.args.from as Address) === ZERO_ADDRESS
   for (const tokenId of new Set(tokenIds)) {
-    if (!isMint) {
-      const existing = await context.db.find(sequenceToken, { token_id: tokenId })
-      if (existing) continue
-    }
     await refreshSequenceToken(context, tokenId, meta.block_number, meta.timestamp)
+  }
+}
+
+async function syncConfiguredSequenceTokensAtLatest(context: Context) {
+  try {
+    const block = await getLatestBlockHeader(context)
+    await syncConfiguredSequenceTokens(context, block.number, block.timestamp)
+  } catch (error) {
+    console.warn('Sequence metadata setup sync failed', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+  }
+}
+
+async function getLatestBlockHeader(context: Context) {
+  const block = await context.client.request({
+    method: 'eth_getBlockByNumber',
+    params: ['latest', false],
+  }) as { number?: Hex; timestamp?: Hex } | null
+
+  if (!block?.number || !block.timestamp) {
+    throw new Error('latest block response missing number or timestamp')
+  }
+
+  return {
+    number: hexToBigInt(block.number),
+    timestamp: hexToBigInt(block.timestamp),
+  }
+}
+
+async function syncConfiguredSequenceTokens(
+  context: Context,
+  blockNumber: bigint,
+  timestamp: bigint,
+) {
+  const maxId = BigInt(SEQUENCE_TOKEN_SCAN_MAX_ID)
+  const emptyGapLimit = Math.min(SEQUENCE_TOKEN_SCAN_EMPTY_GAP, SEQUENCE_TOKEN_SCAN_MAX_ID)
+  let emptyRun = 0
+
+  for (let tokenId = 1n; tokenId <= maxId; tokenId++) {
+    const refreshed = await refreshSequenceToken(
+      context,
+      tokenId,
+      blockNumber,
+      timestamp,
+      {},
+      { skipEmpty: true },
+    )
+
+    if (refreshed) {
+      emptyRun = 0
+      continue
+    }
+
+    emptyRun += 1
+    if (emptyRun >= emptyGapLimit) break
   }
 }
 
@@ -1201,6 +1263,7 @@ async function refreshSequenceToken(
   blockNumber: bigint,
   timestamp: bigint,
   overrides: Partial<Pick<typeof sequenceToken.$inferInsert, 'uri'>> = {},
+  options: { skipEmpty?: boolean } = {},
 ) {
   const [tokenData, uriData] = await Promise.all([
     safeReadSequence(context, 'tokens', [tokenId], null, blockNumber),
@@ -1209,11 +1272,18 @@ async function refreshSequenceToken(
 
   // Failed reads stay out of the update so transient RPC errors cannot
   // overwrite previously indexed values with parser fallbacks.
-  if (tokenData == null && uriData == null && overrides.uri === undefined) return
+  if (tokenData == null && uriData == null && overrides.uri === undefined) return false
 
   const parsedToken = tokenData == null ? null : parseSequenceTokenData(tokenData)
   const parsedUri = uriData == null ? null : parseSequenceUriData(uriData)
   const uri = overrides.uri ?? parsedUri?.uri
+
+  if (options.skipEmpty && !isConfiguredSequenceToken(parsedToken, parsedUri, uri)) {
+    return false
+  }
+
+  const existing = await context.db.find(sequenceToken, { token_id: tokenId })
+  if (existing && existing.block_number > blockNumber) return true
 
   const update = {
     ...(parsedToken == null
@@ -1257,6 +1327,33 @@ async function refreshSequenceToken(
       ...update,
     })
     .onConflictDoUpdate(update)
+
+  return true
+}
+
+function isConfiguredSequenceToken(
+  tokenData: ReturnType<typeof parseSequenceTokenData> | null,
+  uriData: ReturnType<typeof parseSequenceUriData> | null,
+  uri: string | undefined,
+) {
+  return Boolean(
+    (tokenData && (
+      tokenData.artist !== '' ||
+      tokenData.artistAddress !== ZERO_ADDRESS ||
+      tokenData.maxSupply !== 0n ||
+      tokenData.price !== 0n ||
+      tokenData.minted !== 0n ||
+      tokenData.locked ||
+      tokenData.eventNumStart !== 0n ||
+      tokenData.eventNumEnd !== 0n
+    )) ||
+    (uriData && (
+      uriData.usesRenderer ||
+      uriData.uri !== '' ||
+      uriData.renderer !== ZERO_ADDRESS
+    )) ||
+    (uri !== undefined && uri !== ''),
+  )
 }
 
 function parseSequenceTokenData(value: unknown) {
@@ -1316,6 +1413,11 @@ function keyedValue(value: unknown, key: string) {
   return value && typeof value === 'object' && key in value
     ? (value as Record<string, unknown>)[key]
     : undefined
+}
+
+function positiveIntegerFromEnv(name: string, fallbackValue: number) {
+  const parsed = Number(process.env[name])
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallbackValue
 }
 
 async function safeReadContract<T>(

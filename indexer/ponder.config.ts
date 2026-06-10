@@ -42,10 +42,14 @@ const sequenceStartBlock = Math.floor(
   positiveNumberFromEnv('SEQUENCE_INDEXER_START_BLOCK', SEQUENCE_START_BLOCK),
 )
 const sequenceEndBlock = optionalEndBlockFromEnv('SEQUENCE_INDEXER_END_BLOCK')
+const sequenceMetadataRefreshIntervalBlocks = Math.floor(
+  positiveNumberFromEnv('SEQUENCE_METADATA_REFRESH_INTERVAL_BLOCKS', 300),
+)
 
 export const INDEXER_START_BLOCK = startBlock
 export const WORK_UNIT_INDEXER_START_BLOCK = workUnitStartBlock
 export const SEQUENCE_INDEXER_START_BLOCK = sequenceStartBlock
+export const SEQUENCE_METADATA_REFRESH_INTERVAL_BLOCKS = sequenceMetadataRefreshIntervalBlocks
 
 function positiveNumberFromEnv(name: string, fallbackValue: number) {
   const parsed = Number(process.env[name])
@@ -141,6 +145,13 @@ export default createConfig({
       address: SEQUENCE_ADDRESS,
       startBlock: sequenceStartBlock,
       ...(sequenceEndBlock === undefined ? {} : { endBlock: sequenceEndBlock }),
+    },
+  },
+  blocks: {
+    SequenceMetadata: {
+      chain: 'mainnet',
+      startBlock: 'latest',
+      interval: sequenceMetadataRefreshIntervalBlocks,
     },
   },
 })
