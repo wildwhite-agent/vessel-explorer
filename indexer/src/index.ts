@@ -1058,20 +1058,10 @@ async function adjustWorkUnitBalance(
     await context.db
       .update(workUnitBalance, { address })
       .set((row) => ({
-        balance: row.balance + delta,
+        balance: clampNonNegative(row.balance + delta),
         updated_at: meta.timestamp,
         block_number: meta.block_number,
       }))
-    return
-  }
-
-  if (delta <= 0n) {
-    await context.db.insert(workUnitBalance).values({
-      address,
-      balance: 0n,
-      updated_at: meta.timestamp,
-      block_number: meta.block_number,
-    })
     return
   }
 
@@ -1079,15 +1069,21 @@ async function adjustWorkUnitBalance(
     .insert(workUnitBalance)
     .values({
       address,
-      balance: delta,
+      balance: clampNonNegative(delta),
       updated_at: meta.timestamp,
       block_number: meta.block_number,
     })
     .onConflictDoUpdate((row) => ({
-      balance: row.balance + delta,
+      balance: clampNonNegative(row.balance + delta),
       updated_at: meta.timestamp,
       block_number: meta.block_number,
     }))
+}
+
+// Balances derived from a partial event history (custom start block) can
+// drift below zero; the on-chain value never does, so floor at zero.
+function clampNonNegative(value: bigint) {
+  return value < 0n ? 0n : value
 }
 
 async function refreshWorkUnitTotalSupply(
@@ -1155,7 +1151,7 @@ async function adjustSequenceBalance(
     await context.db
       .update(sequenceBalance, { address, token_id: tokenId })
       .set((row) => ({
-        balance: row.balance + delta,
+        balance: clampNonNegative(row.balance + delta),
         updated_at: meta.timestamp,
         block_number: meta.block_number,
       }))
@@ -1167,12 +1163,12 @@ async function adjustSequenceBalance(
     .values({
       address,
       token_id: tokenId,
-      balance: delta > 0n ? delta : 0n,
+      balance: clampNonNegative(delta),
       updated_at: meta.timestamp,
       block_number: meta.block_number,
     })
     .onConflictDoUpdate((row) => ({
-      balance: row.balance + delta,
+      balance: clampNonNegative(row.balance + delta),
       updated_at: meta.timestamp,
       block_number: meta.block_number,
     }))
