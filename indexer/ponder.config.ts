@@ -44,6 +44,8 @@ const sequenceStartBlock = Math.floor(
 const sequenceEndBlock = optionalEndBlockFromEnv('SEQUENCE_INDEXER_END_BLOCK')
 
 export const INDEXER_START_BLOCK = startBlock
+export const WORK_UNIT_INDEXER_START_BLOCK = workUnitStartBlock
+export const SEQUENCE_INDEXER_START_BLOCK = sequenceStartBlock
 
 function positiveNumberFromEnv(name: string, fallbackValue: number) {
   const parsed = Number(process.env[name])

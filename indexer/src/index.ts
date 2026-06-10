@@ -35,10 +35,12 @@ import { VesselAbi } from '../abis/VesselAbi'
 import {
   INDEXER_START_BLOCK,
   SEQUENCE_ADDRESS,
+  SEQUENCE_INDEXER_START_BLOCK,
   SEQUENCE_START_BLOCK,
   VESSEL_ADDRESS,
   VESSEL_START_BLOCK,
   WORK_UNIT_ADDRESS,
+  WORK_UNIT_INDEXER_START_BLOCK,
   WORK_UNIT_START_BLOCK,
 } from '../ponder.config'
 import { findSeaportSaleForTransfer, type SeaportSaleMatch } from './seaport'
@@ -550,7 +552,7 @@ ponder.on('Vessel:ApprovalForAll', async ({ event, context }) => {
 })
 
 ponder.on('ShipyardWorkUnit:setup', async ({ context }) => {
-  const blockNumber = BigInt(WORK_UNIT_START_BLOCK)
+  const blockNumber = BigInt(Math.max(WORK_UNIT_INDEXER_START_BLOCK, WORK_UNIT_START_BLOCK))
   const [name, symbol, decimals, totalSupply, vesselCollection] = await Promise.all([
     safeReadWorkUnit(context, 'name', [], 'The Vessel Shipyard Work Unit', blockNumber),
     safeReadWorkUnit(context, 'symbol', [], 'VWU', blockNumber),
@@ -611,7 +613,7 @@ ponder.on('ShipyardWorkUnit:Transfer', async ({ event, context }) => {
 })
 
 ponder.on('Sequence:setup', async ({ context }) => {
-  const blockNumber = BigInt(SEQUENCE_START_BLOCK)
+  const blockNumber = BigInt(Math.max(SEQUENCE_INDEXER_START_BLOCK, SEQUENCE_START_BLOCK))
   const vessel = await safeReadSequence(context, 'vessel', [], VESSEL_ADDRESS, blockNumber)
   const state = {
     id: 'main',
