@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url'
 import { loadConfig } from './config.js'
-import { processActivities } from './bot.js'
+import { processActivities, type ActivityNotification } from './bot.js'
 import { buildDiscordPayload, sendWithRetry } from './discord.js'
 import { createEnsResolver, type EnsResolver } from './ens.js'
 import { fetchActivity, fetchAllActivity, fetchStats } from './indexer.js'
@@ -100,9 +100,10 @@ export async function summarizeOnce(state: BotState): Promise<BotState> {
   return nextState
 }
 
-async function sendActivity(activity: VesselActivity) {
+async function sendActivity(activities: ActivityNotification) {
   const activeConfig = getConfig()
   const resolver = getEnsResolver()
+  const activity = activities[0]!
   const actorAddress = activity.action.toLowerCase() === 'sale'
     ? activity.buyer || activity.from
     : activity.from
@@ -112,9 +113,11 @@ async function sendActivity(activity: VesselActivity) {
       ? resolver.displayName(activity.seller)
       : Promise.resolve(undefined),
   ])
-  const payload = buildDiscordPayload(activity, activeConfig.vesselBaseUrl, { actor, seller })
+  const payload = buildDiscordPayload(activities, activeConfig.vesselBaseUrl, { actor, seller })
   await sendWithRetry(activeConfig.discordWebhookUrl, payload)
-  console.log(`sent ${activity.action} #${activity.vesselId} ${activity.hash}`)
+  const subject = activity.vesselId ?? activity.subjectId ?? ''
+  const count = activities.length > 1 ? ` (${activities.length} rows)` : ''
+  console.log(`sent ${activity.action} #${subject} ${activity.hash}${count}`)
 }
 
 function getConfig() {

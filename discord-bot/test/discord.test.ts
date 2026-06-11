@@ -43,6 +43,61 @@ test('builds human action titles', () => {
   assert.equal(buildDiscordPayload(activity({ action: 'delegate' }), 'https://vessel.worldcomputer.art').embeds[0]?.title, 'Delegate set')
 })
 
+test('builds VWU claim embed with vessel image', () => {
+  const payload = buildDiscordPayload(activity({
+    action: 'vwuclaim',
+    amount: '12',
+    detail: 'claimed 12 VWU from #2623',
+  }), 'https://vessel.worldcomputer.art', 'agent.eth')
+
+  assert.equal(payload.embeds[0]?.title, 'VWU Claim')
+  assert.equal(payload.embeds[0]?.description, '**agent.eth** claimed **12 VWU** from **vault #2623**\n\nhttps://vessel.worldcomputer.art/2623')
+  assert.equal(payload.embeds[0]?.image?.url, 'https://vessel.worldcomputer.art/api/og/2623?v=25274501-vwuclaim-2623-1780943435')
+})
+
+test('builds Sequence mint embed with sequence image', () => {
+  const payload = buildDiscordPayload(activity({
+    action: 'sequencemint',
+    source: 'sequence',
+    subjectType: 'sequence',
+    subjectId: '8',
+    amount: '1',
+    vesselId: null,
+    craftType: null,
+    to: '0xabc100000000000000000000000000000000def2',
+  }), 'https://vessel.worldcomputer.art', 'collector.eth')
+
+  assert.equal(payload.embeds[0]?.title, 'Sequence Mint')
+  assert.equal(payload.embeds[0]?.description, '**collector.eth** minted **1x Sequence #8**\n\nhttps://vessel.worldcomputer.art/address/0xabc100000000000000000000000000000000def2')
+  assert.equal(payload.embeds[0]?.image?.url, 'https://vessel.worldcomputer.art/api/sequence-og/8?v=25274501-0xhash-8%3A1')
+})
+
+test('collapses Sequence batch mint copy', () => {
+  const payload = buildDiscordPayload([
+    activity({
+      action: 'sequencemint',
+      source: 'sequence',
+      subjectType: 'sequence',
+      subjectId: '1',
+      amount: '4',
+      vesselId: null,
+      craftType: null,
+    }),
+    activity({
+      action: 'sequencemint',
+      source: 'sequence',
+      subjectType: 'sequence',
+      subjectId: '2',
+      amount: '2',
+      vesselId: null,
+      craftType: null,
+    }),
+  ], 'https://vessel.worldcomputer.art', 'collector.eth')
+
+  assert.equal(payload.embeds[0]?.description, '**collector.eth** minted **6 Sequence editions** (#1, #2)\n\nhttps://vessel.worldcomputer.art/address/0xabc100000000000000000000000000000000def2')
+  assert.equal(payload.embeds[0]?.image?.url, 'https://vessel.worldcomputer.art/api/sequence-og/1?v=25274501-0xhash-1%3A4%2C2%3A2')
+})
+
 function activity(overrides: Partial<VesselActivity> = {}): VesselActivity {
   return {
     hash: '0xhash',
@@ -54,6 +109,10 @@ function activity(overrides: Partial<VesselActivity> = {}): VesselActivity {
     isError: '0',
     functionName: '',
     action: 'write',
+    source: 'vessel',
+    subjectType: 'craft',
+    subjectId: '2623',
+    amount: null,
     vesselId: '2623',
     craftType: 'vault',
     entry: null,

@@ -16,10 +16,37 @@ export interface DiscordEmbedPayload {
 }
 
 export function buildDiscordPayload(
-  activity: VesselActivity,
+  activityOrActivities: VesselActivity | VesselActivity[],
   vesselBaseUrl: string,
-  displayNames: string | ActivityDisplayNames = shortenAddress(activity.from),
+  displayNames?: string | ActivityDisplayNames,
 ): DiscordEmbedPayload {
+  const activities = Array.isArray(activityOrActivities) ? activityOrActivities : [activityOrActivities]
+  const activity = activities[0]
+  if (!activity) {
+    throw new Error('cannot build Discord payload without activity')
+  }
+  const names = displayNames ?? shortenAddress(activity.from)
+
+  if (activity.action.toLowerCase() === 'sequencemint') {
+    const sequenceId = activity.subjectId || activity.sequence?.tokenId
+    if (!sequenceId) {
+      throw new Error('cannot build Sequence payload without subjectId')
+    }
+    const profileUrl = `${vesselBaseUrl}/address/${profileAddress(activity)}`
+    return {
+      embeds: [
+        {
+          title: actionTitle(activity),
+          description: `${sequenceSentence(activities, names)}\n\n${profileUrl}`,
+          url: evmNowTxUrl(activity.hash),
+          image: {
+            url: `${vesselBaseUrl}/api/sequence-og/${sequenceId}?v=${sequenceImageVersion(activities)}`,
+          },
+        },
+      ],
+    }
+  }
+
   if (!activity.vesselId) {
     throw new Error('cannot build Discord payload for activity without vesselId')
   }
@@ -31,7 +58,7 @@ export function buildDiscordPayload(
     embeds: [
       {
         title: actionTitle(activity),
-        description: `${sentenceForActivity(activity, displayNames)}\n\n${vesselUrl}`,
+        description: `${sentenceForActivity(activity, names)}\n\n${vesselUrl}`,
         url: evmNowTxUrl(activity.hash),
         image: { url: imageUrl },
       },
@@ -88,6 +115,11 @@ export function sentenceForActivity(
     const buyer = names.actor || shortenAddress(activity.buyer || activity.from)
     const seller = names.seller || shortenAddress(activity.seller || activity.to)
     return `**${escapeDiscordMarkdown(buyer)}** bought **${craftLabel(activity)} #${escapeDiscordMarkdown(activity.vesselId)}** from **${escapeDiscordMarkdown(seller)}** for **${escapeDiscordMarkdown(salePriceText(activity))}**`
+  }
+
+  if (activity.action.toLowerCase() === 'vwuclaim') {
+    const actor = names.actor || shortenAddress(activity.from)
+    return `**${escapeDiscordMarkdown(actor)}** claimed **${escapeDiscordMarkdown(amountText(activity.amount))} VWU** from **${craftLabel(activity)} #${escapeDiscordMarkdown(activity.vesselId)}**`
   }
 
   const action = activitySentenceFragment(activity)
@@ -160,9 +192,35 @@ function actionTitle(activity: VesselActivity) {
       return 'Lock clock started'
     case 'sale':
       return 'Sale'
+    case 'vwuclaim':
+      return 'VWU Claim'
+    case 'sequencemint':
+      return 'Sequence Mint'
     default:
       return titleCase(action.replace(/[_-]+/g, ' '))
   }
+}
+
+function sequenceSentence(
+  activities: VesselActivity[],
+  displayNames: string | ActivityDisplayNames,
+) {
+  const names = normalizeDisplayNames(displayNames)
+  const activity = activities[0]!
+  const actor = names.actor || shortenAddress(activity.from)
+
+  if (activities.length === 1) {
+    const sequenceId = activity.subjectId || activity.sequence?.tokenId || ''
+    return `**${escapeDiscordMarkdown(actor)}** minted **${escapeDiscordMarkdown(amountText(activity.amount))}x Sequence #${escapeDiscordMarkdown(sequenceId)}**`
+  }
+
+  const totalAmount = activities.reduce((sum, row) => sum + amountBigInt(row.amount), 0n)
+  const ids = activities
+    .map((row) => row.subjectId || row.sequence?.tokenId)
+    .filter(Boolean)
+  const preview = ids.slice(0, 5).map((id) => `#${id}`).join(', ')
+  const more = ids.length > 5 ? `, +${ids.length - 5} more` : ''
+  return `**${escapeDiscordMarkdown(actor)}** minted **${escapeDiscordMarkdown(totalAmount.toLocaleString('en-US'))} Sequence editions** (${escapeDiscordMarkdown(preview + more)})`
 }
 
 function normalizeDisplayNames(value: string | ActivityDisplayNames): ActivityDisplayNames {
@@ -171,6 +229,19 @@ function normalizeDisplayNames(value: string | ActivityDisplayNames): ActivityDi
 
 function salePriceText(activity: VesselActivity) {
   return activity.salePrice?.formatted || 'mixed payment'
+}
+
+function amountText(value: string | null | undefined) {
+  return amountBigInt(value).toLocaleString('en-US')
+}
+
+function amountBigInt(value: string | null | undefined) {
+  if (!value || !/^\d+$/.test(value)) return 0n
+  try {
+    return BigInt(value)
+  } catch {
+    return 0n
+  }
 }
 
 function craftLabel(activity: VesselActivity) {
@@ -206,6 +277,21 @@ function imageVersion(activity: VesselActivity) {
   ].join('-'))
 }
 
+function sequenceImageVersion(activities: VesselActivity[]) {
+  const activity = activities[0]!
+  return encodeURIComponent([
+    activity.sequence?.blockNumber || activity.blockNumber,
+    activity.hash,
+    activities.map((row) => `${row.subjectId || row.sequence?.tokenId || ''}:${row.amount || ''}`).join(','),
+  ].join('-'))
+}
+
 function evmNowTxUrl(hash: string) {
   return `https://evm.now/tx/${encodeURIComponent(hash)}`
+}
+
+function profileAddress(activity: VesselActivity) {
+  return [activity.to, activity.from, activity.actor]
+    .find((address) => address && address !== '0x0000000000000000000000000000000000000000')
+    || activity.from
 }

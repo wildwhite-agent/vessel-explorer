@@ -19,8 +19,15 @@ test('skips transfer and metadata events by default', () => {
   assert.equal(isIncludedActivity(activity({ action: 'sale' }), excluded), true)
 })
 
-test('skips rows without vesselId', () => {
+test('skips unsupported rows without vesselId', () => {
   assert.equal(isIncludedActivity(activity({ vesselId: null }), new Set()), false)
+  assert.equal(isIncludedActivity(activity({
+    action: 'sequencemint',
+    vesselId: null,
+    source: 'sequence',
+    subjectType: 'sequence',
+    subjectId: '8',
+  }), new Set()), true)
 })
 
 test('returns new activities oldest-to-newest', () => {
@@ -109,6 +116,10 @@ function activity(overrides: Partial<VesselActivity> = {}): VesselActivity {
     isError: '0',
     functionName: '',
     action: 'write',
+    source: 'vessel',
+    subjectType: 'craft',
+    subjectId: '2623',
+    amount: null,
     vesselId: '2623',
     craftType: 'vault',
     entry: null,

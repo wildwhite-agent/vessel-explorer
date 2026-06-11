@@ -6,10 +6,12 @@ export async function readState(path: string): Promise<BotState> {
   try {
     const raw = await readFile(path, 'utf8')
     const parsed = JSON.parse(raw) as Partial<BotState>
+    const sentActivityKeys = normalizeSentActivityKeys(parsed.sentActivityKeys)
     return {
       cursor: normalizeCursor(parsed.cursor),
       lastSummaryWindowEnd: normalizeSummaryWindowEnd(parsed.lastSummaryWindowEnd),
       lastForcedSummaryWindowEnd: normalizeSummaryWindowEnd(parsed.lastForcedSummaryWindowEnd),
+      ...(sentActivityKeys ? { sentActivityKeys } : {}),
     }
   } catch (error) {
     if (isNotFound(error)) {
@@ -40,6 +42,12 @@ function normalizeCursor(value: unknown): ActivityCursor | null {
 function normalizeSummaryWindowEnd(value: unknown) {
   const number = Number(value)
   return Number.isFinite(number) && number > 0 ? Math.floor(number) : null
+}
+
+function normalizeSentActivityKeys(value: unknown) {
+  if (!Array.isArray(value)) return undefined
+  const keys = value.map(stringField).filter(Boolean)
+  return keys.length ? [...new Set(keys)] : undefined
 }
 
 function stringField(value: unknown) {

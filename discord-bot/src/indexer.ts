@@ -55,22 +55,25 @@ export function isIncludedActivity(
   activity: VesselActivity,
   excludedEventTypes: Set<string>,
 ) {
-  if (!activity.vesselId) return false
   const action = activity.action.toLowerCase()
   if (excludedEventTypes.has(action)) return false
   if (activity.functionName.toLowerCase().startsWith('refreshmetadata')) return false
+  if (action === 'sequencemint') return Boolean(activity.subjectId)
+  if (action === 'vwuclaim') return Boolean(activity.vesselId)
+  if (!activity.vesselId) return false
   return true
 }
 
 export function cursorForActivity(activity: VesselActivity): ActivityCursor {
-  if (!activity.vesselId) {
-    throw new Error('cannot create cursor for activity without vesselId')
+  const subjectKey = activity.vesselId ?? activity.subjectId
+  if (!subjectKey) {
+    throw new Error('cannot create cursor for activity without vesselId or subjectId')
   }
   return {
     blockNumber: activity.blockNumber,
     hash: activity.hash,
     action: activity.action,
-    vesselId: activity.vesselId,
+    vesselId: subjectKey,
   }
 }
 
@@ -121,13 +124,39 @@ function normalizeActivity(value: unknown): VesselActivity | null {
     isError: stringField(row.isError) || '0',
     functionName: stringField(row.functionName),
     action,
+    source: stringField(row.source) || 'vessel',
+    subjectType: nullableString(row.subjectType),
+    subjectId: nullableString(row.subjectId),
+    amount: nullableString(row.amount),
     vesselId: nullableString(row.vesselId ?? row._vesselId),
     craftType: nullableString(row.craftType ?? row._craftType),
     entry: numberField(row.entry),
+    sequence: normalizeSequence(row.sequence),
     buyer: nullableString(row.buyer),
     seller: nullableString(row.seller),
     salePrice: normalizeSalePrice(row.salePrice),
     detail: stringField(row.detail ?? row._detail),
+  }
+}
+
+function normalizeSequence(value: unknown): VesselActivity['sequence'] {
+  if (!value || typeof value !== 'object') return null
+  const row = value as Record<string, unknown>
+  return {
+    tokenId: stringField(row.tokenId),
+    artist: stringField(row.artist),
+    artistAddress: nullableString(row.artistAddress),
+    maxSupply: stringField(row.maxSupply),
+    price: stringField(row.price),
+    minted: stringField(row.minted),
+    locked: Boolean(row.locked),
+    eventNumStart: stringField(row.eventNumStart),
+    eventNumEnd: stringField(row.eventNumEnd),
+    uri: stringField(row.uri),
+    usesRenderer: Boolean(row.usesRenderer),
+    renderer: nullableString(row.renderer),
+    updatedAt: nullableString(row.updatedAt),
+    blockNumber: nullableString(row.blockNumber),
   }
 }
 
