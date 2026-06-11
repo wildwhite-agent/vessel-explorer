@@ -9,7 +9,13 @@ export interface VesselTransaction {
   isError: string
   functionName: string
   action: string
+  source: string
+  subjectType: string | null
+  subjectId: string | null
+  amount: string | null
   vesselId: string | null
+  craftType?: string | null
+  sequence?: SequenceToken | null
   buyer?: string | null
   seller?: string | null
   salePrice?: {
@@ -20,6 +26,23 @@ export interface VesselTransaction {
     formatted: string
   }
   detail: string
+}
+
+export interface SequenceToken {
+  tokenId: string
+  artist: string
+  artistAddress: string | null
+  maxSupply: string
+  price: string
+  minted: string
+  locked: boolean
+  eventNumStart: string
+  eventNumEnd: string
+  uri: string
+  usesRenderer: boolean
+  renderer: string | null
+  updatedAt: string | null
+  blockNumber: string | null
 }
 
 export interface DailyActivityDay {
@@ -53,12 +76,38 @@ export async function fetchVesselActivity(page = 1, offset = 50): Promise<Vessel
     isError: tx.isError ?? '0',
     functionName: tx.functionName ?? '',
     action: tx.action ?? tx._action ?? 'unknown',
+    source: tx.source ?? 'vessel',
+    subjectType: tx.subjectType ?? null,
+    subjectId: tx.subjectId == null ? null : String(tx.subjectId),
+    amount: tx.amount == null ? null : String(tx.amount),
     vesselId: tx.vesselId ?? tx._vesselId ?? null,
+    craftType: tx.craftType ?? tx._craftType ?? null,
+    sequence: normalizeSequenceToken(tx.sequence),
     buyer: tx.buyer ?? null,
     seller: tx.seller ?? null,
     salePrice: normalizeSalePrice(tx.salePrice),
     detail: tx.detail ?? tx._detail ?? tx.action ?? 'unknown',
   }))
+}
+
+export function normalizeSequenceToken(value: any): SequenceToken | null {
+  if (!value || typeof value !== 'object') return null
+  return {
+    tokenId: String(value.tokenId ?? ''),
+    artist: String(value.artist ?? ''),
+    artistAddress: value.artistAddress == null ? null : String(value.artistAddress),
+    maxSupply: String(value.maxSupply ?? '0'),
+    price: String(value.price ?? '0'),
+    minted: String(value.minted ?? '0'),
+    locked: Boolean(value.locked),
+    eventNumStart: String(value.eventNumStart ?? '0'),
+    eventNumEnd: String(value.eventNumEnd ?? '0'),
+    uri: String(value.uri ?? ''),
+    usesRenderer: Boolean(value.usesRenderer),
+    renderer: value.renderer == null ? null : String(value.renderer),
+    updatedAt: value.updatedAt == null ? null : String(value.updatedAt),
+    blockNumber: value.blockNumber == null ? null : String(value.blockNumber),
+  }
 }
 
 function normalizeSalePrice(value: any): VesselTransaction['salePrice'] {

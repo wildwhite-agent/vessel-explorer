@@ -1,4 +1,5 @@
 import { hexToBytes, type ColorMode } from './vessel'
+import { normalizeSequenceToken, type SequenceToken } from './activity'
 
 export interface TokenRow {
   id: number
@@ -62,6 +63,15 @@ export interface GridSnapshot {
   rows: GridSnapshotRow[]
   total: number
   source: 'ponder'
+}
+
+export interface SequenceBalance {
+  address: string
+  tokenId: string
+  balance: string
+  updatedAt: string | null
+  blockNumber: string | null
+  token: SequenceToken | null
 }
 
 type QueryValue = string | number | boolean | null | undefined
@@ -139,4 +149,25 @@ export async function fetchGridSnapshot() {
     total: Number(data.total || 0),
     source: 'ponder' as const,
   }
+}
+
+export async function fetchSequenceBalancesForAddress(address: string) {
+  const data = await $fetch<{ rows: any[] }>('/api/sequences/balances', {
+    query: {
+      address,
+      includeToken: 'true',
+      limit: 250,
+    },
+  })
+
+  return Array.isArray(data.rows)
+    ? data.rows.map((row): SequenceBalance => ({
+        address: String(row.address ?? address),
+        tokenId: String(row.tokenId ?? ''),
+        balance: String(row.balance ?? '0'),
+        updatedAt: row.updatedAt == null ? null : String(row.updatedAt),
+        blockNumber: row.blockNumber == null ? null : String(row.blockNumber),
+        token: normalizeSequenceToken(row.token),
+      }))
+    : []
 }

@@ -17,7 +17,7 @@
 
     <div class="feed-section">
       <div class="tab-bar">
-        <span :class="['tab-link', { active: activeTab === 'activity' }]" @click="activeTab = 'activity'">recent vessel activity</span>
+        <span :class="['tab-link', { active: activeTab === 'activity' }]" @click="activeTab = 'activity'">recent activity</span>
         <span class="tab-divider">/</span>
         <span :class="['tab-link', { active: activeTab === 'holders' }]" @click="activeTab = 'holders'">holders</span>
         <span class="tab-divider">/</span>
@@ -74,7 +74,7 @@
             :class="['filter-btn', `action-${action}`, { inactive: !activeFilters.has(action) }]"
             @click="toggleFilter(action)"
           >
-            {{ action }}
+            {{ activityLabel(action) }}
           </button>
         </div>
 
@@ -103,11 +103,19 @@
                 v-if="tx.vesselId"
                 :to="`/${tx.vesselId}`"
                 class="vessel-link"
-                @mouseenter="showPreview(tx.vesselId, $event)"
+                @mouseenter="showVesselPreview(tx.vesselId, $event)"
                 @mouseleave="hidePreview"
               >
                 #{{ tx.vesselId }}
               </NuxtLink>
+              <span
+                v-else-if="tx.action === 'sequencemint' && tx.subjectId"
+                class="vessel-link subject-preview-trigger"
+                @mouseenter="showSequencePreview(tx, $event)"
+                @mouseleave="hidePreview"
+              >
+                seq #{{ tx.subjectId }}
+              </span>
               <span v-else class="text-faint">--</span>
             </span>
             <span class="col-from">
@@ -121,7 +129,7 @@
               <AddressDisplay v-else :address="tx.from" />
             </span>
             <span class="col-price">
-              {{ tx.action === 'sale' ? tx.salePrice?.formatted || 'mixed payment' : '' }}
+              {{ activityValue(tx) }}
             </span>
             <a
               :href="`${EXPLORER_BASE}/tx/${tx.hash}`"
@@ -145,7 +153,13 @@
       class="preview-tooltip"
       :style="{ top: preview.y + 'px', left: preview.x + 'px' }"
     >
-      <canvas ref="previewCanvas" class="preview-canvas pixelated" />
+      <img
+        v-if="preview.imageUrl"
+        :src="preview.imageUrl"
+        alt=""
+        class="preview-image"
+      />
+      <canvas v-else ref="previewCanvas" class="preview-canvas pixelated" />
       <div v-if="preview.loading" class="preview-loading">...</div>
     </div>
   </div>
@@ -169,7 +183,7 @@ const feedExhausted = ref(false)
 const sentinel = ref<HTMLElement | null>(null)
 const previewCanvas = ref<HTMLCanvasElement | null>(null)
 
-const actionTypes = ['claim', 'sale', 'write', 'transfer', 'machine', 'delegate', 'setvaultentry'] as const
+const actionTypes = ['claim', 'sale', 'write', 'transfer', 'machine', 'delegate', 'setvaultentry', 'vwuclaim', 'sequencemint'] as const
 const activeFilters = ref(new Set<string>(actionTypes))
 const ACTIVITY_REFRESH_MS = 15_000
 
@@ -295,7 +309,9 @@ const preview = reactive({
   loading: false,
   x: 0,
   y: 0,
+  key: null as string | null,
   vesselId: null as string | null,
+  imageUrl: null as string | null,
 })
 
 // Cache fetched payloads and color modes
@@ -328,11 +344,14 @@ function formatTime(ts: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-async function showPreview(vesselId: string, event: MouseEvent) {
+async function showVesselPreview(vesselId: string, event: MouseEvent) {
   const rect = (event.target as HTMLElement).getBoundingClientRect()
+  const key = `vessel:${vesselId}`
   preview.x = rect.left
   preview.y = rect.bottom + 8
+  preview.key = key
   preview.vesselId = vesselId
+  preview.imageUrl = null
   preview.visible = true
   preview.loading = true
 
@@ -352,7 +371,7 @@ async function showPreview(vesselId: string, event: MouseEvent) {
   }
 
   // Still hovering the same vessel?
-  if (preview.vesselId !== vesselId) return
+  if (preview.key !== key) return
   preview.loading = false
 
   if (payload?.length) {
@@ -361,9 +380,23 @@ async function showPreview(vesselId: string, event: MouseEvent) {
   }
 }
 
+function showSequencePreview(tx: VesselTransaction, event: MouseEvent) {
+  if (!tx.subjectId) return
+  const rect = (event.target as HTMLElement).getBoundingClientRect()
+  preview.x = rect.left
+  preview.y = rect.bottom + 8
+  preview.key = `sequence:${tx.subjectId}:${tx.hash}`
+  preview.vesselId = null
+  preview.imageUrl = sequenceImageUrl(tx)
+  preview.visible = true
+  preview.loading = false
+}
+
 function hidePreview() {
   preview.visible = false
+  preview.key = null
   preview.vesselId = null
+  preview.imageUrl = null
 }
 
 function renderPreview(data: Uint8Array, tokenId: number, colorMode: ColorMode = 0) {
@@ -372,10 +405,47 @@ function renderPreview(data: Uint8Array, tokenId: number, colorMode: ColorMode =
   renderToCanvas(canvas, data, tokenId, 80, colorMode)
 }
 
-const showActions = new Set(['claim', 'sale', 'transfer', 'write', 'machine', 'delegate', 'setvaultentry'])
+const showActions = new Set(['claim', 'sale', 'transfer', 'write', 'machine', 'delegate', 'setvaultentry', 'vwuclaim', 'sequencemint'])
 
 function activityKey(tx: VesselTransaction) {
-  return `${tx.hash}-${tx.action}-${tx.vesselId ?? ''}-${tx.blockNumber}`
+  return `${tx.hash}-${tx.action}-${tx.vesselId ?? tx.subjectId ?? ''}-${tx.amount ?? ''}-${tx.blockNumber}`
+}
+
+function activityLabel(action: string) {
+  switch (action) {
+    case 'vwuclaim':
+      return 'vwu claim'
+    case 'sequencemint':
+      return 'sequence mint'
+    default:
+      return action
+  }
+}
+
+function activityValue(tx: VesselTransaction) {
+  if (tx.action === 'sale') return tx.salePrice?.formatted || 'mixed payment'
+  if (tx.action === 'vwuclaim') return `${formatInteger(tx.amount)} VWU`
+  if (tx.action === 'sequencemint') return `x${formatInteger(tx.amount)}`
+  return ''
+}
+
+function formatInteger(value: string | null | undefined) {
+  if (!value || !/^\d+$/.test(value)) return '0'
+  try {
+    return BigInt(value).toLocaleString('en-US')
+  } catch {
+    return Number(value || 0).toLocaleString()
+  }
+}
+
+function sequenceImageUrl(tx: VesselTransaction) {
+  const id = tx.subjectId || tx.sequence?.tokenId
+  const version = encodeURIComponent([
+    tx.sequence?.blockNumber || tx.blockNumber,
+    tx.hash,
+    tx.amount || '0',
+  ].join('-'))
+  return `/api/sequence-og/${id}?v=${version}`
 }
 
 function toggleFilter(action: string) {
@@ -390,7 +460,7 @@ function toggleFilter(action: string) {
 
 async function loadPage(page: number) {
   const all = await fetchVesselActivity(page)
-  const filtered = all.filter(tx => tx.vesselId !== null && tx.isError !== '1' && showActions.has(tx.action))
+  const filtered = all.filter(tx => tx.isError !== '1' && showActions.has(tx.action))
   if (all.length === 0) feedExhausted.value = true
   return filtered
 }
@@ -616,7 +686,7 @@ onMounted(async () => {
 
 .feed-row {
   display: grid;
-  grid-template-columns: 5.5rem 4.5rem minmax(0, 1fr) 6.75rem 5rem;
+  grid-template-columns: 7rem 5.5rem minmax(0, 1fr) 6.75rem 5rem;
   gap: 0.5rem;
   padding: 0.35rem 0.25rem;
   border-bottom: 1px solid var(--border-color);
@@ -700,6 +770,8 @@ onMounted(async () => {
 .action-sale { color: #34d399; background: rgba(52, 211, 153, 0.18); }
 .action-role { color: #f472b6; background: rgba(244, 114, 182, 0.2); }
 .action-setvaultentry { color: var(--color-vault); background: rgba(74, 222, 128, 0.2); }
+.action-vwuclaim { color: #fbbf24; background: rgba(251, 191, 36, 0.2); }
+.action-sequencemint { color: #f472b6; background: rgba(244, 114, 182, 0.18); }
 
 .vessel-link {
   color: var(--accent);
@@ -720,6 +792,10 @@ onMounted(async () => {
   }
 }
 
+.subject-preview-trigger {
+  cursor: default;
+}
+
 .preview-tooltip {
   position: fixed;
   z-index: 50;
@@ -733,6 +809,14 @@ onMounted(async () => {
   display: block;
 }
 
+.preview-image {
+  display: block;
+  width: 120px;
+  max-width: 180px;
+  max-height: 180px;
+  object-fit: contain;
+}
+
 .preview-loading {
   color: var(--text-faint);
   font-size: 11px;
@@ -741,7 +825,7 @@ onMounted(async () => {
 
 @media (max-width: 640px) {
   .feed-row {
-    grid-template-columns: 4.5rem 3.25rem minmax(0, 1fr) 4.25rem;
+    grid-template-columns: 5.75rem 4.25rem minmax(0, 1fr) 4.25rem;
     font-size: 12px;
   }
 

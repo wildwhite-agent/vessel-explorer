@@ -15,16 +15,22 @@
         </h1>
         <div class="profile-address" @click="copyAddress" title="click to copy">{{ resolvedAddress }}</div>
 
-        <div v-if="ownedVessels.length > 0" class="profile-stats">
-          <span>{{ ownedVessels.length }} {{ ownedVessels.length === 1 ? 'vessel' : 'vessels' }}</span>
+        <div v-if="ownedVessels.length > 0 || sequences.length > 0" class="profile-stats">
+          <span v-if="ownedVessels.length > 0">{{ ownedVessels.length }} {{ ownedVessels.length === 1 ? 'vessel' : 'vessels' }}</span>
           <span v-if="stats.machine" class="stat-machine"> · {{ stats.machine }} {{ stats.machine === 1 ? 'machine' : 'machines' }}</span>
           <span v-if="stats.vault" class="stat-vault"> · {{ stats.vault }} {{ stats.vault === 1 ? 'vault' : 'vaults' }}</span>
           <span v-if="stats.capsule" class="stat-capsule"> · {{ stats.capsule }} {{ stats.capsule === 1 ? 'capsule' : 'capsules' }}</span>
           <span v-if="stats.empty" class="stat-empty"> · {{ stats.empty }} empty</span>
+          <span v-if="sequences.length > 0" class="stat-sequence">{{ ownedVessels.length > 0 ? ' · ' : '' }}{{ sequences.length }} {{ sequences.length === 1 ? 'sequence' : 'sequences' }}</span>
         </div>
 
         <div v-if="loading && ownedVessels.length === 0" class="status">loading vessels...</div>
-        <div v-else-if="!loading && ownedVessels.length === 0 && delegatedVessels.length === 0" class="status">no vessels found</div>
+        <div
+          v-else-if="!loading && !delegateLoading && !sequenceLoading && ownedVessels.length === 0 && delegatedVessels.length === 0 && sequences.length === 0"
+          class="status"
+        >
+          no vessels or sequences found
+        </div>
 
         <template v-if="ownedVessels.length > 0">
           <h2 class="section-title">owned</h2>
@@ -76,6 +82,30 @@
             </NuxtLink>
           </div>
         </template>
+
+        <template v-if="sequences.length > 0 || sequenceLoading">
+          <h2 class="section-title">sequences</h2>
+          <div v-if="sequenceLoading && sequences.length === 0" class="status">loading sequences...</div>
+          <div v-else class="vessel-grid">
+            <div
+              v-for="sequence in sequences"
+              :key="sequence.tokenId"
+              class="vessel-card sequence-card"
+            >
+              <div class="card-id">#{{ sequence.tokenId }}</div>
+              <div class="card-thumb-wrap sequence-thumb-wrap">
+                <img
+                  :src="sequence.imageUrl"
+                  alt=""
+                  class="sequence-thumb"
+                  loading="lazy"
+                />
+              </div>
+              <div v-if="sequence.artist" class="sequence-artist">{{ sequence.artist }}</div>
+              <div v-if="Number(sequence.balance) > 1" class="sequence-balance">x{{ sequence.balance }}</div>
+            </div>
+          </div>
+        </template>
       </div>
       </Transition>
     </div>
@@ -86,7 +116,7 @@
 import { isAddress } from 'viem'
 import type { ComponentPublicInstance } from 'vue'
 import { renderToCanvas, type ColorMode } from '~/utils/vessel'
-import { bytesFromHex, fetchAllTokenRows, type TokenRow } from '~/utils/indexer'
+import { bytesFromHex, fetchAllTokenRows, fetchSequenceBalancesForAddress, type SequenceBalance, type TokenRow } from '~/utils/indexer'
 
 async function copyAddress() {
   if (resolvedAddress.value) {
@@ -126,7 +156,16 @@ const stats = computed(() => {
 
 const ownedVessels = ref<OwnedVessel[]>([])
 const delegatedVessels = ref<OwnedVessel[]>([])
+const sequences = ref<OwnedSequence[]>([])
 const delegateLoading = ref(false)
+const sequenceLoading = ref(false)
+
+interface OwnedSequence {
+  tokenId: string
+  balance: string
+  artist: string
+  imageUrl: string
+}
 
 function renderCanvas(canvas: HTMLCanvasElement, vessel: OwnedVessel) {
   if (!vessel.payload?.length) return
@@ -208,12 +247,44 @@ async function loadDelegatedVessels(address: string) {
   }
 }
 
+function rowToSequence(row: SequenceBalance): OwnedSequence {
+  return {
+    tokenId: row.tokenId,
+    balance: row.balance,
+    artist: row.token?.artist || '',
+    imageUrl: sequenceImageUrl(row),
+  }
+}
+
+function sequenceImageUrl(row: SequenceBalance) {
+  const version = encodeURIComponent([
+    row.token?.blockNumber || row.blockNumber || '0',
+    row.token?.updatedAt || row.updatedAt || '0',
+    row.balance,
+  ].join('-'))
+  return `/api/sequence-og/${row.tokenId}?v=${version}`
+}
+
+async function loadSequences(address: string) {
+  sequenceLoading.value = true
+  sequences.value = []
+
+  try {
+    sequences.value = (await fetchSequenceBalancesForAddress(address)).map(rowToSequence)
+  } catch {
+    // silently fail
+  } finally {
+    sequenceLoading.value = false
+  }
+}
+
 watch(addr, async (newAddr) => {
   if (newAddr) {
     await resolveAddr(newAddr)
     if (resolvedAddress.value) {
       await loadVessels(resolvedAddress.value)
       loadDelegatedVessels(resolvedAddress.value)
+      loadSequences(resolvedAddress.value)
     }
   }
 }, { immediate: true })
@@ -262,6 +333,7 @@ watch(addr, async (newAddr) => {
 .stat-vault { color: var(--color-vault); }
 .stat-capsule { color: var(--color-capsule); }
 .stat-empty { color: var(--text-faint); }
+.stat-sequence { color: #f472b6; }
 
 .section-title {
   font-size: 13px;
@@ -305,6 +377,10 @@ watch(addr, async (newAddr) => {
   &.card-capsule:hover {
     border-color: var(--color-capsule);
   }
+
+  &.sequence-card:hover {
+    border-color: #f472b6;
+  }
 }
 
 .card-id {
@@ -340,6 +416,40 @@ watch(addr, async (newAddr) => {
 .card-loading {
   color: var(--text-faint);
   font-size: 11px;
+}
+
+.sequence-thumb {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.sequence-card {
+  position: relative;
+}
+
+.sequence-artist {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sequence-balance {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  color: var(--color);
+  background: var(--bg);
+  border: 1px solid var(--border-color);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 4px;
 }
 
 .vessel-in-enter-active {
