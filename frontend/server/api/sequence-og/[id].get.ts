@@ -66,14 +66,15 @@ export default defineEventHandler(async (event) => {
   }
 
   const image = await loadBytes(imageUri)
-  const rendered = image.mime.includes('svg') || looksLikeSvg(image.bytes)
+  const imageMime = sniffImageMime(image.bytes) || image.mime
+  const rendered = imageMime.includes('svg') || looksLikeSvg(image.bytes)
     ? {
         bytes: new Resvg(Buffer.from(image.bytes), {
           fitTo: { mode: 'width', value: 1200 },
         }).render().asPng(),
         mime: 'image/png',
       }
-    : image
+    : { ...image, mime: imageMime }
 
   setResponseHeaders(event, {
     'Content-Type': rendered.mime,
@@ -137,4 +138,38 @@ function stringValue(value: unknown) {
 function looksLikeSvg(bytes: Uint8Array) {
   const prefix = new TextDecoder().decode(bytes.slice(0, 256)).trimStart()
   return prefix.startsWith('<svg') || prefix.startsWith('<?xml')
+}
+
+function sniffImageMime(bytes: Uint8Array) {
+  if (
+    bytes[0] === 0x89
+    && bytes[1] === 0x50
+    && bytes[2] === 0x4E
+    && bytes[3] === 0x47
+  ) {
+    return 'image/png'
+  }
+  if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+    return 'image/jpeg'
+  }
+  if (
+    bytes[0] === 0x47
+    && bytes[1] === 0x49
+    && bytes[2] === 0x46
+  ) {
+    return 'image/gif'
+  }
+  if (
+    bytes[0] === 0x52
+    && bytes[1] === 0x49
+    && bytes[2] === 0x46
+    && bytes[3] === 0x46
+    && bytes[8] === 0x57
+    && bytes[9] === 0x45
+    && bytes[10] === 0x42
+    && bytes[11] === 0x50
+  ) {
+    return 'image/webp'
+  }
+  return ''
 }
