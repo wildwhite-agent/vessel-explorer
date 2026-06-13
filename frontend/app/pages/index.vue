@@ -7,7 +7,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="enter vessel id or address..."
+          placeholder="enter vessel id, address, or ens..."
           class="search-input"
         />
         <button type="submit" class="text-btn">[go]</button>
@@ -344,7 +344,13 @@ function goToVessel() {
     router.push(`/address/${q}`)
   } else if (/^\d+$/.test(q)) {
     router.push(`/${q}`)
+  } else if (isEnsName(q)) {
+    router.push(`/address/${encodeURIComponent(q)}`)
   }
+}
+
+function isEnsName(value: string) {
+  return value.includes('.') && !/[\s/]/.test(value)
 }
 
 function randomVessel() {
