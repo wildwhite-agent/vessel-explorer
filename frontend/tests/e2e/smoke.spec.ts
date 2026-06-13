@@ -33,6 +33,22 @@ test('homepage defers secondary tab data and reuses header stats', async ({ page
   expect(apiRequests.filter((path) => path === '/api/holders?limit=1').length).toBeLessThanOrEqual(1)
 })
 
+test('homepage activity filters can isolate one event', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.feed-row').first()).toBeVisible()
+
+  const activeFilterCount = page.locator('.feed-filters button[aria-pressed="true"]')
+  await expect(activeFilterCount).toHaveCount(9)
+
+  const sequenceFilter = page.getByRole('button', { name: 'sequence mint' })
+  await sequenceFilter.click()
+  await expect(activeFilterCount).toHaveCount(1)
+  await expect(sequenceFilter).toHaveAttribute('aria-pressed', 'true')
+
+  await sequenceFilter.click()
+  await expect(activeFilterCount).toHaveCount(9)
+})
+
 test('heatmap renders useful contrast without the old date range caption', async ({ page }) => {
   await page.goto('/')
   await page.getByText('heatmap', { exact: true }).click()

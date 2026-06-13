@@ -69,9 +69,18 @@
       <div v-else>
         <div class="feed-filters">
           <button
+            type="button"
+            :class="['filter-reset-btn', { inactive: allFiltersActive }]"
+            @click="resetFilters"
+          >
+            all
+          </button>
+          <button
             v-for="action in actionTypes"
             :key="action"
+            type="button"
             :class="['filter-btn', `action-${action}`, { inactive: !activeFilters.has(action) }]"
+            :aria-pressed="activeFilters.has(action)"
             @click="toggleFilter(action)"
           >
             {{ activityLabel(action) }}
@@ -187,6 +196,7 @@ const previewCanvas = ref<HTMLCanvasElement | null>(null)
 const actionTypes = ['claim', 'sale', 'write', 'transfer', 'machine', 'delegate', 'setvaultentry', 'vwuclaim', 'sequencemint'] as const
 const activeFilters = ref(new Set<string>(actionTypes))
 const ACTIVITY_REFRESH_MS = 15_000
+const allFiltersActive = computed(() => activeFilters.value.size === actionTypes.length)
 
 interface Holder {
   address: string
@@ -450,13 +460,26 @@ function sequenceImageUrl(tx: VesselTransaction) {
 }
 
 function toggleFilter(action: string) {
-  const f = activeFilters.value
+  const f = new Set(activeFilters.value)
+  if (f.size === actionTypes.length && f.has(action)) {
+    activeFilters.value = new Set([action])
+    return
+  }
+
   if (f.has(action)) {
-    if (f.size > 1) f.delete(action)
+    if (f.size === 1) {
+      resetFilters()
+      return
+    }
+    f.delete(action)
   } else {
     f.add(action)
   }
   activeFilters.value = new Set(f)
+}
+
+function resetFilters() {
+  activeFilters.value = new Set(actionTypes)
 }
 
 async function loadPage(page: number) {
@@ -647,7 +670,8 @@ onMounted(async () => {
   margin-bottom: 0.75rem;
 }
 
-.filter-btn {
+.filter-btn,
+.filter-reset-btn {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -670,6 +694,15 @@ onMounted(async () => {
 
   &.inactive {
     opacity: 0.3;
+  }
+}
+
+.filter-reset-btn {
+  color: var(--muted);
+  background: rgba(128, 128, 128, 0.12);
+
+  &:hover {
+    color: var(--color);
   }
 }
 
