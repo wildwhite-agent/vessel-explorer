@@ -9,6 +9,35 @@ function sameOriginApiPath(url: string) {
   }
 }
 
+function hasApiParams(path: string, pathname: string, params: Record<string, string>) {
+  const parsed = new URL(path, 'http://local.test')
+  if (parsed.pathname !== pathname) return false
+  return Object.entries(params).every(([key, value]) => parsed.searchParams.get(key) === value)
+}
+
+function mockActivityRows(action: string, pageNumber: number) {
+  return Array.from({ length: 50 }, (_, index) => {
+    const n = (pageNumber - 1) * 50 + index + 1
+    return {
+      hash: `0x${String(n).padStart(64, '0')}`,
+      from: '0x1111111111111111111111111111111111111111',
+      to: '0x2222222222222222222222222222222222222222',
+      timeStamp: String(1_800_000_000 - n),
+      blockNumber: String(30_000_000 - n),
+      input: '0x',
+      isError: '0',
+      functionName: '',
+      action,
+      source: action === 'sequencemint' ? 'sequence' : 'vessel',
+      subjectType: action === 'sequencemint' ? 'sequence' : 'craft',
+      subjectId: action === 'sequencemint' ? '7' : null,
+      amount: '1',
+      vesselId: action === 'sequencemint' ? null : String(n),
+      detail: action,
+    }
+  })
+}
+
 test('homepage defers secondary tab data and reuses header stats', async ({ page }) => {
   const apiRequests: string[] = []
   page.on('request', (request) => {
@@ -34,6 +63,20 @@ test('homepage defers secondary tab data and reuses header stats', async ({ page
 })
 
 test('homepage activity filters can isolate one event', async ({ page }) => {
+  const apiRequests: string[] = []
+
+  await page.route(/\/api\/activity(\?.*)?$/, async (route) => {
+    const url = new URL(route.request().url())
+    apiRequests.push(`${url.pathname}${url.search}`)
+    const pageNumber = Number(url.searchParams.get('page') || '1')
+    const action = url.searchParams.get('type') === 'sequencemint' ? 'sequencemint' : 'claim'
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockActivityRows(action, pageNumber)),
+    })
+  })
+
   await page.goto('/')
   await expect(page.locator('.feed-row').first()).toBeVisible()
 
@@ -44,9 +87,45 @@ test('homepage activity filters can isolate one event', async ({ page }) => {
   await sequenceFilter.click()
   await expect(activeFilterCount).toHaveCount(1)
   await expect(sequenceFilter).toHaveAttribute('aria-pressed', 'true')
+  await expect.poll(() => apiRequests.some((path) => hasApiParams(path, '/api/activity', {
+    page: '1',
+    type: 'sequencemint',
+    types: 'sequencemint',
+  }))).toBe(true)
 
   await sequenceFilter.click()
   await expect(activeFilterCount).toHaveCount(9)
+})
+
+test('homepage filtered activity keeps paginating selected event', async ({ page }) => {
+  const apiRequests: string[] = []
+
+  await page.route(/\/api\/activity(\?.*)?$/, async (route) => {
+    const url = new URL(route.request().url())
+    apiRequests.push(`${url.pathname}${url.search}`)
+    const pageNumber = Number(url.searchParams.get('page') || '1')
+    const type = url.searchParams.get('type')
+    const action = type === 'sequencemint' ? 'sequencemint' : 'claim'
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockActivityRows(action, pageNumber)),
+    })
+  })
+
+  await page.goto('/')
+  await expect(page.locator('.feed-row').first()).toBeVisible()
+
+  await page.getByRole('button', { name: 'sequence mint' }).click()
+  await expect(page.locator('.feed-row').first()).toContainText('sequencemint')
+
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+  await expect.poll(() => apiRequests.some((path) => hasApiParams(path, '/api/activity', {
+    page: '2',
+    type: 'sequencemint',
+    types: 'sequencemint',
+  }))).toBe(true)
 })
 
 test('heatmap renders useful contrast without the old date range caption', async ({ page }) => {

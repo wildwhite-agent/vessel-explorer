@@ -59,9 +59,29 @@ export interface DailyActivityResponse {
   source: 'ponder'
 }
 
-export async function fetchVesselActivity(page = 1, offset = 50): Promise<VesselTransaction[]> {
+interface ActivityFetchOptions {
+  type?: string
+  types?: readonly string[] | string
+}
+
+export async function fetchVesselActivity(
+  page = 1,
+  offset = 50,
+  options: ActivityFetchOptions = {},
+): Promise<VesselTransaction[]> {
+  const query: Record<string, string | number> = { page, offset }
+  let types: string | undefined
+  if (typeof options.types === 'string') {
+    types = options.types
+  } else if (options.types) {
+    types = [...options.types].filter(Boolean).join(',')
+  }
+
+  if (options.type) query.type = options.type
+  if (types) query.types = types
+
   const txs = await $fetch<unknown[]>('/api/activity', {
-    query: { page, offset },
+    query,
   })
   if (!Array.isArray(txs)) return []
 

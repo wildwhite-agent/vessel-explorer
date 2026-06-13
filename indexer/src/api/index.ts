@@ -898,6 +898,7 @@ function activityFilters(c: { req: { query: (key: string) => string | undefined 
   const tokenId = c.req.query('tokenId') || c.req.query('id')
   const address = (c.req.query('address') || '').trim()
   const type = c.req.query('type')
+  const types = parseActivityTypes(c.req.query('types'), type)
   const source = c.req.query('source')
   const subjectId = c.req.query('subjectId')
   const startTime = c.req.query('startTime')
@@ -915,7 +916,11 @@ function activityFilters(c: { req: { query: (key: string) => string | undefined 
       OR lower(${activityEvent}.machine) = lower(${address})
     )`)
   }
-  if (type) conds.push(sql`${activityEvent}.type = ${type}`)
+  if (types.length === 1) {
+    conds.push(sql`${activityEvent}.type = ${types[0]}`)
+  } else if (types.length > 1) {
+    conds.push(orClause(types.map((type) => sql`${activityEvent}.type = ${type}`)))
+  }
   if (source) conds.push(sql`${activityEvent}.source = ${source}`)
   if (subjectId && /^\d+$/.test(subjectId)) {
     conds.push(sql`${activityEvent}.subject_id = ${BigInt(subjectId)}`)
@@ -928,6 +933,24 @@ function activityFilters(c: { req: { query: (key: string) => string | undefined 
   }
 
   return conds
+}
+
+function parseActivityTypes(...values: Array<string | undefined>) {
+  const types: string[] = []
+  const seen = new Set<string>()
+
+  for (const value of values) {
+    if (!value) continue
+    for (const rawType of value.split(',')) {
+      const type = rawType.trim().toLowerCase()
+      if (!/^[a-z0-9_-]+$/.test(type) || seen.has(type)) continue
+      seen.add(type)
+      types.push(type)
+      if (types.length >= 25) return types
+    }
+  }
+
+  return types
 }
 
 function andClause(conds: ReturnType<typeof sql>[]) {

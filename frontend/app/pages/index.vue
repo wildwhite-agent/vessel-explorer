@@ -192,11 +192,19 @@ const feedLoadingMore = ref(false)
 const feedExhausted = ref(false)
 const sentinel = ref<HTMLElement | null>(null)
 const previewCanvas = ref<HTMLCanvasElement | null>(null)
+let feedObserver: IntersectionObserver | null = null
+let stopSentinelWatch: (() => void) | null = null
+let refreshInterval: number | null = null
 
 const actionTypes = ['claim', 'sale', 'write', 'transfer', 'machine', 'delegate', 'setvaultentry', 'vwuclaim', 'sequencemint'] as const
 const activeFilters = ref(new Set<string>(actionTypes))
+const ACTIVITY_PAGE_SIZE = 50
+const FILTER_EMPTY_PAGE_SCAN_LIMIT = 10
 const ACTIVITY_REFRESH_MS = 15_000
 const allFiltersActive = computed(() => activeFilters.value.size === actionTypes.length)
+const activeFilterList = computed(() => actionTypes.filter((action) => activeFilters.value.has(action)))
+const activeFilterKey = computed(() => activeFilterList.value.join(','))
+let feedRequestId = 0
 
 interface Holder {
   address: string
@@ -482,26 +490,84 @@ function resetFilters() {
   activeFilters.value = new Set(actionTypes)
 }
 
-async function loadPage(page: number) {
-  const all = await fetchVesselActivity(page)
-  const filtered = all.filter(tx => tx.isError !== '1' && showActions.has(tx.action))
-  if (all.length === 0) feedExhausted.value = true
-  return filtered
+function activityFetchOptions(filters: readonly string[]) {
+  if (filters.length === actionTypes.length) return {}
+  if (filters.length === 1) return { type: filters[0], types: filters }
+  return { types: filters }
+}
+
+function isVisibleActivity(tx: VesselTransaction, filters: readonly string[]) {
+  return tx.isError !== '1' && showActions.has(tx.action) && filters.includes(tx.action)
+}
+
+async function loadPage(page: number, filters: readonly string[] = activeFilterList.value) {
+  const all = await fetchVesselActivity(page, ACTIVITY_PAGE_SIZE, activityFetchOptions(filters))
+  return {
+    rows: all.filter((tx) => isVisibleActivity(tx, filters)),
+    exhausted: all.length < ACTIVITY_PAGE_SIZE,
+  }
+}
+
+async function loadVisiblePage(startPage: number, filters: readonly string[]) {
+  const rows: VesselTransaction[] = []
+  let currentPage = startPage
+  let exhausted = false
+
+  for (let scanned = 0; scanned < FILTER_EMPTY_PAGE_SCAN_LIMIT; scanned++) {
+    const page = await loadPage(currentPage, filters)
+    rows.push(...page.rows)
+    exhausted = page.exhausted
+
+    if (page.rows.length || exhausted || filters.length === actionTypes.length) break
+    currentPage++
+  }
+
+  return { rows, exhausted, page: currentPage }
+}
+
+async function reloadActivity() {
+  const requestId = ++feedRequestId
+  const filters = activeFilterList.value
+
+  feedLoading.value = true
+  feedLoadingMore.value = false
+  feedError.value = null
+  feedExhausted.value = false
+  feedPage.value = 1
+
+  try {
+    const page = await loadVisiblePage(1, filters)
+    if (requestId !== feedRequestId) return
+    activity.value = page.rows
+    feedPage.value = page.page
+    feedExhausted.value = page.exhausted
+  } catch (e: any) {
+    if (requestId !== feedRequestId) return
+    feedError.value = e?.message || 'failed to fetch activity'
+  } finally {
+    if (requestId === feedRequestId) feedLoading.value = false
+  }
 }
 
 async function loadMore() {
   if (feedLoadingMore.value || feedExhausted.value) return
+  const requestId = feedRequestId
+  const filterKey = activeFilterKey.value
+  const filters = activeFilterList.value
+
   feedLoadingMore.value = true
   try {
-    feedPage.value++
-    const more = await loadPage(feedPage.value)
-    if (more.length === 0) {
-      feedExhausted.value = true
-    } else {
-      activity.value.push(...more)
-    }
+    const nextPage = feedPage.value + 1
+    const page = await loadVisiblePage(nextPage, filters)
+    if (requestId !== feedRequestId || filterKey !== activeFilterKey.value) return
+
+    feedPage.value = page.page
+    if (page.rows.length) activity.value.push(...page.rows)
+    feedExhausted.value = page.exhausted
   } catch { /* silently fail */ }
-  finally { feedLoadingMore.value = false }
+  finally {
+    if (requestId === feedRequestId) feedLoadingMore.value = false
+  }
 }
 
 async function refreshLatestActivity() {
@@ -509,11 +575,11 @@ async function refreshLatestActivity() {
   if (typeof document !== 'undefined' && document.hidden) return
 
   try {
-    const latest = await loadPage(1)
+    const { rows: latest } = await loadPage(1)
     if (!latest.length) return
 
     const latestKeys = new Set(latest.map(activityKey))
-    const maxRows = Math.max(1, feedPage.value) * 50
+    const maxRows = Math.max(1, feedPage.value) * ACTIVITY_PAGE_SIZE
     activity.value = [
       ...latest,
       ...activity.value.filter((tx) => !latestKeys.has(activityKey(tx))),
@@ -524,32 +590,31 @@ async function refreshLatestActivity() {
   }
 }
 
-onMounted(async () => {
-  try {
-    activity.value = await loadPage(1)
-  } catch (e: any) {
-    feedError.value = e?.message || 'failed to fetch activity'
-  } finally {
-    feedLoading.value = false
-  }
+watch(activeFilterKey, () => {
+  void reloadActivity()
+})
+
+onMounted(() => {
+  void reloadActivity()
 
   // Infinite scroll via IntersectionObserver
-  const observer = new IntersectionObserver((entries) => {
+  feedObserver = new IntersectionObserver((entries) => {
     if (entries[0]?.isIntersecting && activeTab.value === 'activity') loadMore()
   }, { rootMargin: '200px' })
 
-  watch(sentinel, (el) => {
-    if (el) observer.observe(el)
+  stopSentinelWatch = watch(sentinel, (el) => {
+    if (el) feedObserver?.observe(el)
   }, { immediate: true })
 
-  const refreshInterval = window.setInterval(() => {
+  refreshInterval = window.setInterval(() => {
     void refreshLatestActivity()
   }, ACTIVITY_REFRESH_MS)
+})
 
-  onUnmounted(() => {
-    observer.disconnect()
-    window.clearInterval(refreshInterval)
-  })
+onUnmounted(() => {
+  feedObserver?.disconnect()
+  stopSentinelWatch?.()
+  if (refreshInterval) window.clearInterval(refreshInterval)
 })
 </script>
 
