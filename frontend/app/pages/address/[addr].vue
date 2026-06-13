@@ -101,10 +101,9 @@
                   class="sequence-thumb"
                   loading="lazy"
                 />
-              </div>
-              <div v-if="sequence.artist" class="sequence-artist">{{ sequence.artist }}</div>
-              <div v-if="Number(sequence.balance) > 1" class="sequence-balance">x{{ sequence.balance }}</div>
-            </NuxtLink>
+	              </div>
+	              <div v-if="Number(sequence.balance) > 1" class="sequence-balance">x{{ sequence.balance }}</div>
+	            </NuxtLink>
           </div>
         </template>
       </div>
@@ -164,7 +163,6 @@ const sequenceLoading = ref(false)
 interface OwnedSequence {
   tokenId: string
   balance: string
-  artist: string
   imageUrl: string
 }
 
@@ -252,7 +250,6 @@ function rowToSequence(row: SequenceBalance): OwnedSequence {
   return {
     tokenId: row.tokenId,
     balance: row.balance,
-    artist: row.token?.artist || '',
     imageUrl: sequenceImageUrl(row),
   }
 }
@@ -428,17 +425,6 @@ watch(addr, async (newAddr) => {
 
 .sequence-card {
   position: relative;
-}
-
-.sequence-artist {
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.2;
-  max-width: 100%;
-  overflow: hidden;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .sequence-balance {
