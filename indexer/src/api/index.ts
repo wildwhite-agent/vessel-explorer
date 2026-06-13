@@ -287,12 +287,29 @@ app.get('/activity', async (c) => {
     Math.max(1, Number(c.req.query('offset') ?? c.req.query('limit')) || 50),
   )
   const offset = (page - 1) * limit
-  const conds = activityFilters(c)
+  const requestedTypes = activityTypesForRequest(c)
+  const conds = [
+    ...activityFilters(c),
+    automaticMachineSuppressionClause(requestedTypes),
+  ]
   const whereClause = andClause(conds)
 
   const result = await db.execute(sql`
     SELECT
       ${activityEvent}.*,
+      auto_machine.id AS related_machine_id,
+      auto_machine.type AS related_machine_type,
+      auto_machine.source AS related_machine_source,
+      auto_machine.source_event AS related_machine_source_event,
+      auto_machine.actor AS related_machine_actor,
+      auto_machine.machine AS related_machine_machine,
+      auto_machine.tx_hash AS related_machine_tx_hash,
+      auto_machine.block_number AS related_machine_block_number,
+      auto_machine.log_index AS related_machine_log_index,
+      auto_machine.timestamp AS related_machine_timestamp,
+      auto_claim.id AS consolidated_claim_id,
+      auto_claim.log_index AS consolidated_claim_log_index,
+      (auto_claim.id IS NOT NULL) AS automatic_machine,
       ${payloadWrite}.entry_index AS write_entry_index,
       ${seaportSale}.buyer AS sale_buyer,
       ${seaportSale}.seller AS sale_seller,
@@ -316,6 +333,20 @@ app.get('/activity', async (c) => {
       ${sequenceToken}.updated_at AS sequence_updated_at,
       ${sequenceToken}.block_number AS sequence_block_number
     FROM ${activityEvent}
+    LEFT JOIN ${activityEvent} AS auto_machine
+      ON ${activityEvent}.type = 'claim'
+      AND auto_machine.type = 'machine'
+      AND auto_machine.tx_hash = ${activityEvent}.tx_hash
+      AND auto_machine.block_number = ${activityEvent}.block_number
+      AND auto_machine.token_id = ${activityEvent}.token_id
+      AND auto_machine.log_index + 1 = ${activityEvent}.log_index
+    LEFT JOIN ${activityEvent} AS auto_claim
+      ON ${activityEvent}.type = 'machine'
+      AND auto_claim.type = 'claim'
+      AND auto_claim.tx_hash = ${activityEvent}.tx_hash
+      AND auto_claim.block_number = ${activityEvent}.block_number
+      AND auto_claim.token_id = ${activityEvent}.token_id
+      AND ${activityEvent}.log_index + 1 = auto_claim.log_index
     LEFT JOIN ${token}
       ON ${token}.token_id = ${activityEvent}.token_id
     LEFT JOIN ${sequenceToken}
@@ -338,7 +369,11 @@ app.get('/activity', async (c) => {
 })
 
 app.get('/activity/daily', async (c) => {
-  const conds = activityFilters(c)
+  const requestedTypes = activityTypesForRequest(c)
+  const conds = [
+    ...activityFilters(c),
+    automaticMachineSuppressionClause(requestedTypes),
+  ]
   const whereClause = andClause(conds)
 
   const [rangeResult, countResult] = await Promise.all([
@@ -935,6 +970,23 @@ function activityFilters(c: { req: { query: (key: string) => string | undefined 
       OR lower(${activityEvent}."to") = lower(${address})
       OR lower(${activityEvent}.delegate) = lower(${address})
       OR lower(${activityEvent}.machine) = lower(${address})
+      OR EXISTS (
+        SELECT 1
+        FROM ${activityEvent} AS paired_machine
+        WHERE ${activityEvent}.type = 'claim'
+          AND paired_machine.type = 'machine'
+          AND paired_machine.tx_hash = ${activityEvent}.tx_hash
+          AND paired_machine.block_number = ${activityEvent}.block_number
+          AND paired_machine.token_id = ${activityEvent}.token_id
+          AND paired_machine.log_index + 1 = ${activityEvent}.log_index
+          AND (
+            lower(paired_machine.actor) = lower(${address})
+            OR lower(paired_machine."from") = lower(${address})
+            OR lower(paired_machine."to") = lower(${address})
+            OR lower(paired_machine.delegate) = lower(${address})
+            OR lower(paired_machine.machine) = lower(${address})
+          )
+      )
     )`)
   }
   if (types.length === 1) {
@@ -954,6 +1006,27 @@ function activityFilters(c: { req: { query: (key: string) => string | undefined 
   }
 
   return conds
+}
+
+function activityTypesForRequest(c: { req: { query: (key: string) => string | undefined } }) {
+  return parseActivityTypes(c.req.query('types'), c.req.query('type'))
+}
+
+function automaticMachineSuppressionClause(types: string[]) {
+  if (types.length === 1 && types[0] === 'machine') return sql`true`
+
+  return sql`NOT (
+    ${activityEvent}.type = 'machine'
+    AND EXISTS (
+      SELECT 1
+      FROM ${activityEvent} AS paired_claim
+      WHERE paired_claim.type = 'claim'
+        AND paired_claim.tx_hash = ${activityEvent}.tx_hash
+        AND paired_claim.block_number = ${activityEvent}.block_number
+        AND paired_claim.token_id = ${activityEvent}.token_id
+        AND ${activityEvent}.log_index + 1 = paired_claim.log_index
+    )
+  )`
 }
 
 function parseActivityTypes(...values: Array<string | undefined>) {
@@ -1124,8 +1197,11 @@ function activityToExplorerTx(row: Row) {
     vesselId: tokenId,
     craftType: row.craft_type == null ? null : String(row.craft_type),
     entry: row.entry == null && row.write_entry_index != null ? Number(row.write_entry_index) : row.entry == null ? null : Number(row.entry),
+    machineAddress: row.related_machine_machine ?? row.machine ?? null,
     buyer: row.sale_buyer ?? null,
     seller: row.sale_seller ?? null,
+    ...automaticMachineFields(row),
+    ...relatedEventsFields(row),
     ...(salePrice ? { salePrice } : {}),
     ...(sequence ? { sequence } : {}),
     detail,
@@ -1221,6 +1297,42 @@ function sequenceTokenFromJoinedRow(row: Row) {
   })
 }
 
+function automaticMachineFields(row: Row) {
+  if (!isTruthy(row.automatic_machine)) return {}
+
+  return {
+    automatic: true,
+    consolidatedInto: {
+      id: row.consolidated_claim_id ?? null,
+      type: 'claim',
+      logIndex: row.consolidated_claim_log_index == null
+        ? null
+        : Number(row.consolidated_claim_log_index),
+    },
+  }
+}
+
+function relatedEventsFields(row: Row) {
+  if (row.related_machine_id == null) return {}
+
+  return {
+    relatedEvents: [{
+      id: row.related_machine_id,
+      action: row.related_machine_type ?? 'machine',
+      source: row.related_machine_source ?? 'vessel',
+      sourceEvent: row.related_machine_source_event ?? 'MachineSet',
+      actor: row.related_machine_actor ?? null,
+      machineAddress: row.related_machine_machine ?? null,
+      hash: row.related_machine_tx_hash ?? row.tx_hash,
+      blockNumber: stringify(row.related_machine_block_number ?? row.block_number),
+      logIndex: row.related_machine_log_index == null
+        ? null
+        : Number(row.related_machine_log_index),
+      timeStamp: stringify(row.related_machine_timestamp ?? row.timestamp),
+    }],
+  }
+}
+
 function writeDetail(row: Row, suffix: string) {
   const bytes = Number(row.payload_bytes ?? 0).toLocaleString()
   const entry = row.entry == null && row.write_entry_index != null ? row.write_entry_index : row.entry
@@ -1233,7 +1345,7 @@ function stringify(value: unknown) {
 }
 
 function isTruthy(value: unknown) {
-  return value === '1' || value === 'true' || value === 'yes'
+  return value === true || value === '1' || value === 'true' || value === 'yes'
 }
 
 function salePriceForActivity(row: Row) {

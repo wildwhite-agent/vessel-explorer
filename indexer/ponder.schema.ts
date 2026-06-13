@@ -210,6 +210,12 @@ export const activityEvent = onchainTable(
       table.subject_id,
       table.timestamp,
     ),
+    txTokenBlockLogIdx: index('activity_tx_token_block_log_idx').on(
+      table.tx_hash,
+      table.token_id,
+      table.block_number,
+      table.log_index,
+    ),
     actorTimestampIdx: index('activity_actor_timestamp_idx').on(
       table.actor,
       table.timestamp,
