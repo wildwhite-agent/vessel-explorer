@@ -36,11 +36,8 @@
               <span class="meta-label">machine address</span>
               <span class="meta-value">
                 <AddressDisplay :address="vessel.machineAddress" external />
+                <span v-if="vessel.machineName"> ({{ vessel.machineName }})</span>
               </span>
-            </div>
-            <div v-if="vessel.machineName" class="meta-row">
-              <span class="meta-label">machine name</span>
-              <span class="meta-value">{{ vessel.machineName }}</span>
             </div>
             <div v-if="vessel.chosenMachine" class="meta-row">
               <span class="meta-label">chosen machine</span>
