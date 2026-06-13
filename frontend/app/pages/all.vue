@@ -7,7 +7,8 @@
         <button class="text-btn back-link" type="button" @click="$router.back()">[back]</button>
         <h1 class="all-heading">all vessel tokens</h1>
         <span class="all-meta">{{ totalRows.toLocaleString() }} matched</span>
-        <span v-if="databaseLoading" class="all-meta">loading database</span>
+        <span v-if="ensLoading" class="all-meta">resolving ens</span>
+        <span v-else-if="databaseLoading" class="all-meta">loading database</span>
         <span v-else-if="ownershipLoading" class="all-meta">loading ownership</span>
         <span v-else-if="detailsLoading" class="all-meta">{{ detailLoadLabel }}</span>
         <div class="pager">
@@ -29,7 +30,7 @@
             v-model.trim="search"
             class="filter-input"
             type="search"
-            placeholder="token id or owner address"
+            placeholder="token id, owner address, or ens"
           >
         </label>
 
@@ -136,6 +137,8 @@
 <script setup lang="ts">
 import { colorModeName, type ColorMode } from '~/utils/vessel'
 import { fetchTokenPage, type TokenRow } from '~/utils/indexer'
+import { resolveEnsName } from '~/utils/ens'
+import { parseVesselSearchQuery } from '~/utils/search'
 
 type SortKey =
   | 'id'
@@ -165,11 +168,11 @@ interface VesselRow extends Omit<TokenRow, 'claimed' | 'filled' | 'payloadBytes'
 }
 
 const PAGE_SIZE = 50
-const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
 
 const databaseRows = ref<VesselRow[]>([])
 const databaseTotalRows = ref(0)
 const databaseLoading = ref(false)
+const ensLoading = ref(false)
 const ownershipLoading = ref(false)
 const detailsLoading = ref(false)
 const databaseError = ref<string | null>(null)
@@ -203,9 +206,9 @@ const columns: { key: SortKey; label: string }[] = [
 ]
 
 const searchError = computed(() => {
-  const q = search.value.trim()
-  if (!q || /^\d+$/.test(q) || ADDRESS_PATTERN.test(q)) return null
-  return 'search currently supports token ids and exact owner addresses'
+  const parsed = parseVesselSearchQuery(search.value)
+  if (parsed.kind !== 'invalid') return null
+  return 'search currently supports token ids, exact owner addresses, and ens names'
 })
 
 const hasError = computed(() => Boolean(databaseError.value || searchError.value))
@@ -252,6 +255,9 @@ function numberValue(value: unknown): number | null {
 
 async function loadDatabaseRows() {
   if (searchError.value) {
+    databaseToken++
+    databaseLoading.value = false
+    ensLoading.value = false
     databaseRows.value = []
     databaseTotalRows.value = 0
     return false
@@ -259,13 +265,22 @@ async function loadDatabaseRows() {
 
   const token = ++databaseToken
   databaseLoading.value = true
+  ensLoading.value = false
   databaseError.value = null
 
   try {
+    const resolvedSearch = await searchValueForIndexer(token)
+    if (token !== databaseToken) return true
+    if (resolvedSearch == null) {
+      databaseRows.value = []
+      databaseTotalRows.value = 0
+      return false
+    }
+
     const data = await fetchTokenPage({
       page: String(page.value),
       pageSize: String(PAGE_SIZE),
-      search: search.value.trim(),
+      search: resolvedSearch,
       claim: claimFilter.value,
       filled: filledFilter.value,
       type: typeFilter.value,
@@ -284,8 +299,23 @@ async function loadDatabaseRows() {
     databaseError.value = e?.data?.message || e?.message || 'indexer token index unavailable'
     return false
   } finally {
-    if (token === databaseToken) databaseLoading.value = false
+    if (token === databaseToken) {
+      databaseLoading.value = false
+      ensLoading.value = false
+    }
   }
+}
+
+async function searchValueForIndexer(token: number) {
+  const parsed = parseVesselSearchQuery(search.value)
+  if (parsed.kind === 'empty') return ''
+  if (parsed.kind === 'token' || parsed.kind === 'address') return parsed.value
+  if (parsed.kind === 'invalid') return null
+
+  ensLoading.value = true
+  const resolution = await resolveEnsName(parsed.value)
+  if (token !== databaseToken) return null
+  return resolution.address
 }
 
 async function reload() {

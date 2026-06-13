@@ -161,6 +161,66 @@ test('homepage search accepts ENS names', async ({ page }) => {
   await expect(page.locator('.profile-address')).toHaveText(address)
 })
 
+test('all token search resolves ENS before querying tokens', async ({ page }) => {
+  const address = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+  const tokenRequests: string[] = []
+
+  await page.route(/\/api\/ens\/vitalik\.eth$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ name: 'vitalik.eth', address }),
+    })
+  })
+
+  await page.route(/\/api\/tokens(\?.*)?$/, async (route) => {
+    const url = new URL(route.request().url())
+    tokenRequests.push(`${url.pathname}${url.search}`)
+    const search = url.searchParams.get('search')
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        rows: search?.toLowerCase() === address.toLowerCase()
+          ? [{
+              id: 13,
+              claimed: true,
+              owner: address,
+              type: 'Capsule',
+              filled: true,
+              payloadBytes: 92,
+              capacityBytes: 13,
+              colorMode: 0,
+              role: 1,
+              claimBlock: '24500000',
+              entryCount: 1,
+              chosenEntry: 0,
+              delegate: null,
+              machineAddress: null,
+              chosenMachine: null,
+              isVault: false,
+              isMachine: false,
+            }]
+          : [],
+        total: search?.toLowerCase() === address.toLowerCase() ? 1 : 0,
+        page: 1,
+        pageSize: 50,
+        source: 'ponder',
+      }),
+    })
+  })
+
+  await page.goto('/all')
+  await page.getByPlaceholder('token id, owner address, or ens').fill('vitalik.eth')
+
+  await expect.poll(() => tokenRequests.some((path) => hasApiParams(path, '/api/tokens', {
+    page: '1',
+    pageSize: '50',
+    search: address,
+  }))).toBe(true)
+  await expect(page.getByRole('link', { name: '#13' })).toBeVisible()
+})
+
 test('heatmap renders useful contrast without the old date range caption', async ({ page }) => {
   await page.goto('/')
   await page.getByText('heatmap', { exact: true }).click()

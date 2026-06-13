@@ -17,7 +17,8 @@ export function parseVesselSearchQuery(input: string): VesselSearchQuery {
 }
 
 export function isEnsName(value: string) {
-  return value.includes('.') && !/[\s/]/.test(value)
+  const labels = value.split('.')
+  return labels.length > 1 && labels.every(Boolean) && !/[\s/]/.test(value)
 }
 
 export function safeDecode(value: string) {
