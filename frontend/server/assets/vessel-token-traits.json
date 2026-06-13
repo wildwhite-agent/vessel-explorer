@@ -1,0 +1,6743 @@
+{
+  "1": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "4": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "6": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "7": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "8": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "10": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "11": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "12": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "13": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Entropy"
+  },
+  "14": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "15": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "16": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "17": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "18": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "19": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "20": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "21": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "22": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "23": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "24": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "25": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "26": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "27": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "28": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "29": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "30": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "31": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "32": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "33": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "34": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "35": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "36": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "37": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "38": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "39": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "40": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "41": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "42": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "43": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "44": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "45": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "46": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "47": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "48": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "49": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "50": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "51": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "52": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "53": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "54": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "55": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "56": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "57": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "58": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "59": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "60": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "61": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "62": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "63": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "64": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "65": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "66": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "67": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "68": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "69": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "70": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "71": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "72": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "73": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "74": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "75": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "76": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "77": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "78": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "79": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "80": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "81": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "82": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "83": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "84": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "85": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "86": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "87": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "88": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "89": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "90": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "91": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "92": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "93": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "94": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "95": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "96": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "97": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "98": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "99": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "100": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "101": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Manhattan Blocks",
+    "machineName": null
+  },
+  "102": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "103": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "104": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "105": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "106": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "107": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "108": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "109": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "110": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "111": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "112": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "113": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "114": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "115": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "116": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "117": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "118": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "119": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "120": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "121": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "122": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "123": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "124": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "125": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "126": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "127": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "128": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "129": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "130": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "131": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "132": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "133": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "134": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "135": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "136": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "137": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "138": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "139": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "140": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "141": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "142": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "143": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "144": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "145": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "146": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "147": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "148": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "149": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "150": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "151": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "152": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "153": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "154": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "155": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "156": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "157": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "158": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "159": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "160": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "161": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "162": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "163": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "164": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "165": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Platform",
+    "machineName": null
+  },
+  "166": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "167": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "168": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "169": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "170": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "171": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "172": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "173": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "174": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "175": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "176": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "177": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "178": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "179": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "180": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "181": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "182": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "183": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "184": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "185": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "186": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "187": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "188": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "189": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "190": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "191": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "192": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "193": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "194": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "195": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "196": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "197": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "198": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "199": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Vessel Integrator"
+  },
+  "200": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "201": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "202": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "203": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "204": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "205": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "206": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Hyperportal"
+  },
+  "207": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "208": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "209": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "210": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "211": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "212": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "213": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "214": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "215": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "216": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "217": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "218": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "219": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "220": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "221": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "222": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "223": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "224": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "225": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "226": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "227": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "228": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "229": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "230": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "231": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "232": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "233": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "234": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "235": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "236": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "237": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "238": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "239": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "240": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "241": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "242": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "243": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "244": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "245": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "246": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "247": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "248": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "249": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "250": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "251": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "252": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "253": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "254": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "255": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "256": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "257": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "258": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "259": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "260": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "261": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "262": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "263": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "264": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "265": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "266": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "267": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "268": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "269": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "270": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "271": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "272": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "273": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "274": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "275": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "276": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "277": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "278": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "279": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "280": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "281": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "282": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "283": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "284": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "285": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "286": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "287": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "288": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "289": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "290": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "291": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "292": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "293": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "294": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "295": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "296": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "297": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "298": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Vessel Integrator"
+  },
+  "299": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "300": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "301": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "302": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "303": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "304": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "305": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "306": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "307": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "308": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "309": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "310": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "311": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Hyperportal"
+  },
+  "312": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "313": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "314": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "315": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "316": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "317": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "318": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "319": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "320": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "321": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "322": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "323": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "324": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "325": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "326": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "327": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "328": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "329": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "330": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "331": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "332": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "333": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "334": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "335": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "336": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "337": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "338": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "339": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "340": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "341": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "342": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "343": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "344": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "345": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "346": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "347": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "348": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "349": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "350": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "351": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "352": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "353": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "354": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "355": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "356": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "357": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "358": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "359": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "360": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "361": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "362": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "363": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "364": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "365": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Message Machine"
+  },
+  "366": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "367": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "368": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "369": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "370": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "371": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "372": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "373": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "374": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "375": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "376": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "377": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "378": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "379": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "380": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "381": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "382": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "383": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "384": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "385": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "386": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "387": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "388": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "389": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "390": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "391": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "392": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "393": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "394": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "395": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "396": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "397": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "398": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "399": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "400": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "401": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "402": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "403": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "404": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "405": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "406": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "407": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "408": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "409": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "410": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "411": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "412": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "413": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "414": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "415": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "416": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "417": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "418": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "419": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "420": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "421": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "422": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "423": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "424": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "425": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "426": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "427": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "428": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "429": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "430": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "431": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "432": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "433": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "434": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "435": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "436": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "437": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "438": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "439": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "440": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "441": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "442": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "443": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "444": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "445": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "446": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "447": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "448": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "449": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "450": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "451": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "452": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "453": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "454": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "455": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "456": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "457": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "458": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "459": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "460": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "461": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "462": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "463": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "464": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "465": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "466": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "467": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "468": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "469": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "470": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "471": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "472": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "473": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "474": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "475": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "476": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "477": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "478": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "479": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "480": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "481": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "482": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "483": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "484": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "485": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "486": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "487": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "488": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "489": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "490": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "491": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "492": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "493": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "494": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "495": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "496": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "497": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "498": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "499": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "500": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "501": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "502": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "503": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "504": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "505": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "506": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "507": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "508": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "509": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "510": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "511": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "512": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "513": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "514": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "515": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "516": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "517": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "518": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "519": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "520": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "521": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "522": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "523": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "524": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "525": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "526": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "527": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "528": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "529": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "530": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "531": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "532": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "533": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "534": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "535": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "536": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "537": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "538": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "539": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "540": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "541": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "542": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "543": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "544": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "545": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "546": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "547": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "548": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "549": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "550": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "551": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "552": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "553": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "554": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "555": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "556": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "557": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "558": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "559": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "560": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "561": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "562": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "563": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "564": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "565": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "566": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "567": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "568": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "569": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "570": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "571": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "572": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "573": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "574": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "575": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "576": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "577": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "578": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "579": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "580": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "581": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "582": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "583": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "584": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "585": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "586": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "587": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "588": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "589": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "590": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "591": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "592": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "593": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "594": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "595": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "596": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "597": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "598": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "599": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "600": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "601": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "602": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "603": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "604": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "605": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "606": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "607": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "608": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "609": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "610": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "611": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "612": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "613": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "614": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "615": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "616": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "617": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "618": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "619": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "620": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "621": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "622": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "623": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "624": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "625": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "626": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "627": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "628": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "629": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "630": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "631": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "632": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "633": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "634": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "635": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "636": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "637": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "638": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "639": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "640": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "641": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "642": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "643": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "644": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "645": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "646": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "647": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "648": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "650": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "652": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "662": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "666": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "669": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "671": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "673": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "675": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "676": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "683": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "686": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "690": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "691": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "692": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "698": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "699": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "700": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "701": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "702": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "703": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "704": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "705": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "706": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "707": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "708": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "709": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "710": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "711": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "712": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "713": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "714": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "715": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "716": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "717": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Message Machine"
+  },
+  "722": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Artificial Gateway"
+  },
+  "728": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "729": {
+    "roleLabel": "Merchant",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "733": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "734": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "741": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "749": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "752": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "759": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "764": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "774": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "777": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "778": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "779": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "780": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "781": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Audio",
+    "machineName": null
+  },
+  "783": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "784": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "785": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "797": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "798": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "800": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "801": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "802": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "803": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "804": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "805": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "806": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "807": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "808": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "809": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "820": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "824": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "826": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "836": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "837": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "839": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "840": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "841": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "843": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "852": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "861": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "879": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "884": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "887": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "888": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Hyperpatch",
+    "machineName": "Hyperportal"
+  },
+  "899": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "900": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "907": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "913": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "914": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "926": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "928": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "932": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "935": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "941": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "942": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "944": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "945": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "947": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "949": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "959": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "960": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "961": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "966": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "967": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "972": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "980": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "985": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "986": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "987": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "988": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "991": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "997": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "999": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1000": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1001": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1014": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Hyperpatch",
+    "machineName": "Hyperportal"
+  },
+  "1015": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "1024": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1031": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Hyperpatch",
+    "machineName": "Hyperportal"
+  },
+  "1033": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1038": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1040": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1043": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1045": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1051": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1054": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1075": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1089": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1100": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1105": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1106": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1111": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1122": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1126": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1130": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1131": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1140": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1155": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1156": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1162": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Audio",
+    "machineName": null
+  },
+  "1166": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1183": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1188": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1191": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1225": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1231": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Hyperpatch",
+    "machineName": "Hyperportal"
+  },
+  "1238": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1267": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "1296": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1299": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1303": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Audio",
+    "machineName": null
+  },
+  "1337": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1350": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1364": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "1369": {
+    "roleLabel": "Merchant",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1379": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Audio",
+    "machineName": null
+  },
+  "1386": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1444": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1459": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Audio",
+    "machineName": null
+  },
+  "1497": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1521": {
+    "roleLabel": "Merchant",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1561": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Audio",
+    "machineName": null
+  },
+  "1600": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1628": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1631": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1657": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1669": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1671": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1681": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1687": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "01 : 0x08"
+  },
+  "1737": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1758": {
+    "roleLabel": "Merchant",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "1764": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1787": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Artificial Gateway"
+  },
+  "1800": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1841": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "1849": {
+    "roleLabel": "Merchant",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1863": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1936": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "1949": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "1975": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2001": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "2008": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2009": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2025": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2048": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2099": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2116": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "2140": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2209": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2242": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2256": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Entropy"
+  },
+  "2304": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2401": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "2433": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Artificial Gateway"
+  },
+  "2458": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2500": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2501": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Message Machine"
+  },
+  "2557": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2601": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2623": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2666": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "2704": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2732": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2809": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Vessel Integrator"
+  },
+  "2832": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "2840": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "2901": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2916": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "2920": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "3025": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3031": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3039": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3078": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Cyborg",
+    "machineName": null
+  },
+  "3088": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "3136": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3151": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3171": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3348": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3350": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "3364": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3481": {
+    "roleLabel": "Merchant",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "3569": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3600": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3721": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3828": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3878": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Hyperpatch",
+    "machineName": "EDAP0.01"
+  },
+  "3880": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "3887": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "3961": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "4030": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Lost Cyborgs",
+    "machineName": null
+  },
+  "4096": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "4231": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Cyborg",
+    "machineName": null
+  },
+  "4356": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "4400": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "4457": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "4486": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "4543": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Lost Cyborgs",
+    "machineName": null
+  },
+  "4567": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Hyperpatch",
+    "machineName": "Hyperportal"
+  },
+  "4618": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "4745": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "4873": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "4962": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5000": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "5039": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5041": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5078": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5095": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5134": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Message Machine"
+  },
+  "5246": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Diary Machine"
+  },
+  "5282": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5298": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5338": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5343": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5386": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Message Machine"
+  },
+  "5419": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Entropy"
+  },
+  "5532": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Entropy"
+  },
+  "5582": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Cyborg",
+    "machineName": null
+  },
+  "5625": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5662": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5730": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "5792": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Cyborg",
+    "machineName": null
+  },
+  "5837": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "5904": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Entropy"
+  },
+  "6081": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6150": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6176": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6210": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6251": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6479": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6520": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6603": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6669": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6670": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6673": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6786": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Manhattan Blocks",
+    "machineName": null
+  },
+  "6790": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6865": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6926": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "6969": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7110": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7194": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7360": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7431": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7452": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7544": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "7547": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7620": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7709": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7717": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "7900": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Insignia",
+    "machineName": null
+  },
+  "8000": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "8150": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8243": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Message Machine"
+  },
+  "8263": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8281": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Machine Router: Entropy"
+  },
+  "8468": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8543": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8603": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Artificial Gateway"
+  },
+  "8615": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8651": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8752": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8888": {
+    "roleLabel": "Steward",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8921": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8994": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "8995": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9036": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9144": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9196": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9253": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9604": {
+    "roleLabel": "Steward",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9608": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9721": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": true,
+    "relicKind": "Manhattan Blocks",
+    "machineName": null
+  },
+  "9801": {
+    "roleLabel": "Undefined",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9902": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9994": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9995": {
+    "roleLabel": "Navigator",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "9999": {
+    "roleLabel": "Undefined",
+    "axiom": false,
+    "relic": false,
+    "relicKind": null,
+    "machineName": null
+  },
+  "10000": {
+    "roleLabel": "Navigator",
+    "axiom": true,
+    "relic": false,
+    "relicKind": null,
+    "machineName": "Message Machine"
+  }
+}

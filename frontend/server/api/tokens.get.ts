@@ -12,5 +12,6 @@ export default defineCachedEventHandler(async (event) => {
     }
   }
 
-  return await fetchIndexerJson('/tokens', params)
+  const data = await fetchIndexerJson('/tokens', params)
+  return await applyTokenTraitFallback(data, query, params)
 }, apiCacheOptions('vessel-tokens', TOKENS_CACHE_SECONDS))

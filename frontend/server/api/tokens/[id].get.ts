@@ -8,5 +8,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return await fetchIndexerJson(`/tokens/${tokenId}`)
+  const data = await fetchIndexerJson(`/tokens/${tokenId}`)
+  return await applyTokenDetailTraitFallback(data)
 })
