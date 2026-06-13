@@ -21,7 +21,7 @@ export function buildDiscordPayload(
   displayNames?: string | ActivityDisplayNames,
 ): DiscordEmbedPayload {
   const activities = Array.isArray(activityOrActivities) ? activityOrActivities : [activityOrActivities]
-  const activity = activities[0]
+  const activity = primaryActivity(activities)
   if (!activity) {
     throw new Error('cannot build Discord payload without activity')
   }
@@ -58,7 +58,7 @@ export function buildDiscordPayload(
     embeds: [
       {
         title: actionTitle(activity),
-        description: `${sentenceForActivity(activity, names)}\n\n${vesselUrl}`,
+        description: `${sentenceForNotification(activities, names)}\n\n${vesselUrl}`,
         url: evmNowTxUrl(activity.hash),
         image: { url: imageUrl },
       },
@@ -122,6 +122,16 @@ export function sentenceForActivity(
     return `**${escapeDiscordMarkdown(actor)}** claimed **${escapeDiscordMarkdown(amountText(activity.amount))} VWU** from **${craftLabel(activity)} #${escapeDiscordMarkdown(activity.vesselId)}**`
   }
 
+  if (activity.action.toLowerCase() === 'claim') {
+    const actor = names.actor || shortenAddress(activity.from)
+    return `**${escapeDiscordMarkdown(actor)}** claimed **${craftLabel(activity)} #${escapeDiscordMarkdown(activity.vesselId)}**`
+  }
+
+  if (activity.action.toLowerCase() === 'machine') {
+    const actor = names.actor || shortenAddress(activity.from)
+    return `**${escapeDiscordMarkdown(actor)}** configured **${craftLabel(activity)} #${escapeDiscordMarkdown(activity.vesselId)}**`
+  }
+
   const action = activitySentenceFragment(activity)
   const actor = names.actor || shortenAddress(activity.from)
   return `**${escapeDiscordMarkdown(actor)}** ${action} on **${craftLabel(activity)} #${escapeDiscordMarkdown(activity.vesselId)}**`
@@ -134,7 +144,7 @@ function activitySentenceFragment(activity: VesselActivity) {
     case 'write':
       return writeFragment(activity)
     case 'machine':
-      return 'set machine'
+      return 'configured'
     case 'delegate':
       return 'set delegate'
     case 'setvaultentry':
@@ -177,7 +187,7 @@ function actionTitle(activity: VesselActivity) {
     case 'write':
       return `${titleCase(activity.craftType || 'Craft')} write`
     case 'machine':
-      return 'Machine set'
+      return 'Machine configured'
     case 'delegate':
       return 'Delegate set'
     case 'setvaultentry':
@@ -221,6 +231,28 @@ function sequenceSentence(
   const preview = ids.slice(0, 5).map((id) => `#${id}`).join(', ')
   const more = ids.length > 5 ? `, +${ids.length - 5} more` : ''
   return `**${escapeDiscordMarkdown(actor)}** minted **${escapeDiscordMarkdown(totalAmount.toLocaleString('en-US'))} Sequence editions** (${escapeDiscordMarkdown(preview + more)})`
+}
+
+function sentenceForNotification(
+  activities: VesselActivity[],
+  displayNames: string | ActivityDisplayNames,
+) {
+  const group = claimMachineGroup(activities)
+  if (!group) return sentenceForActivity(primaryActivity(activities), displayNames)
+
+  const names = normalizeDisplayNames(displayNames)
+  const actor = names.actor || shortenAddress(group.claim.from)
+  return `**${escapeDiscordMarkdown(actor)}** claimed **${craftLabel(group.claim)} #${escapeDiscordMarkdown(group.claim.vesselId || '')}** and configured its machine address`
+}
+
+function primaryActivity(activities: VesselActivity[]) {
+  return claimMachineGroup(activities)?.claim ?? activities[0]!
+}
+
+function claimMachineGroup(activities: VesselActivity[]) {
+  const claim = activities.find((activity) => activity.action.toLowerCase() === 'claim')
+  const machine = activities.find((activity) => activity.action.toLowerCase() === 'machine')
+  return claim && machine ? { claim, machine } : null
 }
 
 function normalizeDisplayNames(value: string | ActivityDisplayNames): ActivityDisplayNames {

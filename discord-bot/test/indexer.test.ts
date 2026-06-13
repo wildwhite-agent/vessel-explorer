@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
+  activityKey,
   cursorForActivity,
   fetchActivity,
   fetchAllActivity,
@@ -76,6 +77,41 @@ test('fetchActivity sends pagination and time range filters', async () => {
   assert.equal(url.searchParams.get('page'), '2')
   assert.equal(url.searchParams.get('startTime'), '1780945200')
   assert.equal(url.searchParams.get('endTime'), '1781031600')
+})
+
+test('fetchActivity normalizes consolidated activity fields', async () => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = (async () => Response.json([activity({
+    id: '2-11',
+    hash: '0xpair',
+    blockNumber: '2',
+    action: 'claim',
+    logIndex: 11,
+    machineAddress: '0xfeed00000000000000000000000000000000beef',
+    relatedEvents: [{
+      id: '2-10',
+      action: 'machine',
+      source: 'vessel',
+      sourceEvent: 'MachineSet',
+      actor: '0xabc100000000000000000000000000000000def2',
+      machineAddress: '0xfeed00000000000000000000000000000000beef',
+      hash: '0xpair',
+      blockNumber: '2',
+      logIndex: 10,
+      timeStamp: '1780943435',
+    }],
+  })])) as typeof fetch
+
+  try {
+    const rows = await fetchActivity('https://indexer.example', { limit: 1 })
+    assert.equal(rows[0]?.id, '2-11')
+    assert.equal(rows[0]?.logIndex, 11)
+    assert.equal(rows[0]?.machineAddress, '0xfeed00000000000000000000000000000000beef')
+    assert.equal(rows[0]?.relatedEvents?.[0]?.id, '2-10')
+    assert.equal(activityKey(rows[0]!), 'id:2-11')
+  } finally {
+    globalThis.fetch = originalFetch
+  }
 })
 
 test('fetchAllActivity paginates until a short page', async () => {

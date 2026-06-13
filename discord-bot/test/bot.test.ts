@@ -252,6 +252,81 @@ test('collapses Sequence mint rows by transaction before sending', async () => {
   assert.equal(saved.length, 1)
 })
 
+test('groups same transaction claim and automatic machine rows before sending', async () => {
+  const sent: VesselActivity[][] = []
+
+  const state = await processActivities({
+    cursor: {
+      blockNumber: '1',
+      hash: '0x1',
+      action: 'write',
+      vesselId: '10',
+    },
+    lastSummaryWindowEnd: null,
+    lastForcedSummaryWindowEnd: null,
+  }, [
+    activity({ hash: '0xpair', blockNumber: '2', action: 'claim', vesselId: '2501', craftType: 'machine', logIndex: 11 }),
+    activity({ hash: '0xpair', blockNumber: '2', action: 'machine', vesselId: '2501', craftType: 'machine', logIndex: 10 }),
+    activity({ hash: '0x1', blockNumber: '1', action: 'write', vesselId: '10' }),
+  ], {
+    excludedEventTypes: new Set(['transfer', 'metadata']),
+    startMode: 'latest',
+    sendLatestOnStart: false,
+    send: async (group) => {
+      sent.push(group)
+    },
+    save: async () => {},
+  })
+
+  assert.equal(sent.length, 1)
+  assert.deepEqual(sent[0]?.map((row) => row.action), ['machine', 'claim'])
+  assert.equal(state.cursor?.action, 'claim')
+  assert.deepEqual(state.sentActivityKeys, [
+    'log:2:0xpair:10',
+    'log:2:0xpair:11',
+  ])
+})
+
+test('suppresses late automatic machine row when related key was already remembered', async () => {
+  const machine = activity({
+    id: '2-10',
+    hash: '0xpair',
+    blockNumber: '2',
+    action: 'machine',
+    vesselId: '2501',
+    craftType: 'machine',
+    logIndex: 10,
+  })
+  const sent: VesselActivity[][] = []
+
+  const state = await processActivities({
+    cursor: {
+      blockNumber: '1',
+      hash: '0x1',
+      action: 'write',
+      vesselId: '10',
+    },
+    lastSummaryWindowEnd: null,
+    lastForcedSummaryWindowEnd: null,
+    sentActivityKeys: [activityKey(machine)],
+  }, [
+    machine,
+    activity({ hash: '0x1', blockNumber: '1', action: 'write', vesselId: '10' }),
+  ], {
+    excludedEventTypes: new Set(['transfer', 'metadata']),
+    startMode: 'latest',
+    sendLatestOnStart: false,
+    send: async (group) => {
+      sent.push(group)
+    },
+    save: async () => {},
+  })
+
+  assert.deepEqual(sent, [])
+  assert.equal(state.cursor?.hash, '0xpair')
+  assert.deepEqual(state.sentActivityKeys, [activityKey(machine)])
+})
+
 test('does not advance cursor when Discord send fails', async () => {
   const originalState: BotState = {
     cursor: {

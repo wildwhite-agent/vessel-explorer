@@ -4,10 +4,10 @@ import { buildDiscordPayload, sentenceForActivity } from '../src/discord.js'
 import type { VesselActivity } from '../src/types.js'
 
 test('formats minimal activity sentences', () => {
-  assert.equal(sentenceForActivity(activity({ action: 'claim', detail: 'claimed #728' })), '**0xabc1...def2** claimed on **vault #2623**')
+  assert.equal(sentenceForActivity(activity({ action: 'claim', detail: 'claimed #728' })), '**0xabc1...def2** claimed **vault #2623**')
   assert.equal(sentenceForActivity(activity({ action: 'write', detail: 'wrote 2,623 bytes to #2623' })), '**0xabc1...def2** wrote 2,623 bytes on **vault #2623**')
   assert.equal(sentenceForActivity(activity({ action: 'write', entry: 3 })), '**0xabc1...def2** wrote 2,623 bytes to entry 3 on **vault #2623**')
-  assert.equal(sentenceForActivity(activity({ action: 'machine', detail: 'set machine on #5134', vesselId: '5134', craftType: 'machine' })), '**0xabc1...def2** set machine on **machine #5134**')
+  assert.equal(sentenceForActivity(activity({ action: 'machine', detail: 'set machine on #5134', vesselId: '5134', craftType: 'machine' })), '**0xabc1...def2** configured **machine #5134**')
   assert.equal(sentenceForActivity(activity({ action: 'delegate', detail: 'delegated #2623' })), '**0xabc1...def2** set delegate on **vault #2623**')
   assert.equal(sentenceForActivity(activity({ action: 'setvaultentry', detail: 'set entry 3 on #2623' })), '**0xabc1...def2** set vault entry 3 on **vault #2623**')
   assert.equal(sentenceForActivity(activity({ action: 'write' }), 'agent.yougogirl.eth'), '**agent.yougogirl.eth** wrote 2,623 bytes on **vault #2623**')
@@ -29,11 +29,34 @@ test('formats minimal activity sentences', () => {
 test('builds Discord embed with vessel link and OG image', () => {
   const payload = buildDiscordPayload(activity({ action: 'machine', vesselId: '5134' }), 'https://vessel.worldcomputer.art')
 
-  assert.equal(payload.embeds[0]?.title, 'Machine set')
+  assert.equal(payload.embeds[0]?.title, 'Machine configured')
   assert.equal(payload.embeds[0]?.url, 'https://evm.now/tx/0xhash')
   assert.equal(payload.embeds[0]?.image?.url, 'https://vessel.worldcomputer.art/api/og/5134?v=25274501-machine-5134-1780943435')
   assert.match(payload.embeds[0]?.description || '', /\n\nhttps:\/\/vessel\.worldcomputer\.art\/5134/)
   assert.match(payload.embeds[0]?.description || '', /https:\/\/vessel\.worldcomputer\.art\/5134/)
+})
+
+test('builds grouped claim and machine copy from defensive bot grouping', () => {
+  const payload = buildDiscordPayload([
+    activity({
+      action: 'machine',
+      vesselId: '2501',
+      craftType: 'machine',
+      logIndex: 10,
+      detail: 'set machine on #2501',
+    }),
+    activity({
+      action: 'claim',
+      vesselId: '2501',
+      craftType: 'machine',
+      logIndex: 11,
+      detail: 'claimed #2501',
+    }),
+  ], 'https://vessel.worldcomputer.art', 'time-walker.eth')
+
+  assert.equal(payload.embeds[0]?.title, 'Claimed')
+  assert.equal(payload.embeds[0]?.description, '**time-walker.eth** claimed **machine #2501** and configured its machine address\n\nhttps://vessel.worldcomputer.art/2501')
+  assert.equal(payload.embeds[0]?.image?.url, 'https://vessel.worldcomputer.art/api/og/2501?v=25274501-claim-2501-1780943435')
 })
 
 test('builds human action titles', () => {

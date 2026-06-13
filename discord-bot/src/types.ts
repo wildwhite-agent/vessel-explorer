@@ -1,5 +1,7 @@
 export interface VesselActivity {
+  id?: string | null
   hash: string
+  logIndex?: number | null
   actor?: string | null
   from: string
   to: string
@@ -16,6 +18,14 @@ export interface VesselActivity {
   vesselId: string | null
   craftType: string | null
   entry: number | null
+  machineAddress?: string | null
+  automatic?: boolean
+  consolidatedInto?: {
+    id: string | null
+    type: string
+    logIndex: number | null
+  } | null
+  relatedEvents?: ActivityRelatedEvent[]
   sequence?: {
     tokenId: string
     artist: string
@@ -44,7 +54,22 @@ export interface VesselActivity {
   detail: string
 }
 
+export interface ActivityRelatedEvent {
+  id: string
+  action: string
+  source: string
+  sourceEvent: string
+  actor: string | null
+  machineAddress: string | null
+  hash: string
+  blockNumber: string
+  logIndex: number | null
+  timeStamp: string
+}
+
 export interface ActivityCursor {
+  id?: string | null
+  logIndex?: number | null
   blockNumber: string
   hash: string
   action: string

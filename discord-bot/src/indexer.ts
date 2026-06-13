@@ -70,6 +70,8 @@ export function cursorForActivity(activity: VesselActivity): ActivityCursor {
     throw new Error('cannot create cursor for activity without vesselId or subjectId')
   }
   return {
+    ...(activity.id ? { id: activity.id } : {}),
+    ...(activity.logIndex != null ? { logIndex: activity.logIndex } : {}),
     blockNumber: activity.blockNumber,
     hash: activity.hash,
     action: activity.action,
@@ -78,7 +80,17 @@ export function cursorForActivity(activity: VesselActivity): ActivityCursor {
 }
 
 export function cursorKey(cursor: ActivityCursor) {
+  if (cursor.id) return `id:${cursor.id}`
+  if (cursor.logIndex != null) {
+    return [
+      'log',
+      cursor.blockNumber,
+      cursor.hash.toLowerCase(),
+      cursor.logIndex,
+    ].join(':')
+  }
   return [
+    'legacy',
     cursor.blockNumber,
     cursor.hash.toLowerCase(),
     cursor.action.toLowerCase(),
@@ -87,7 +99,51 @@ export function cursorKey(cursor: ActivityCursor) {
 }
 
 export function activityKey(activity: VesselActivity) {
-  return cursorKey(cursorForActivity(activity))
+  if (activity.id) return `id:${activity.id}`
+  if (activity.logIndex != null) {
+    return [
+      'log',
+      activity.blockNumber,
+      activity.hash.toLowerCase(),
+      activity.logIndex,
+    ].join(':')
+  }
+  return legacyActivityKey(activity)
+}
+
+export function relatedActivityKey(activity: NonNullable<VesselActivity['relatedEvents']>[number]) {
+  if (activity.id) return `id:${activity.id}`
+  if (activity.logIndex != null) {
+    return [
+      'log',
+      activity.blockNumber,
+      activity.hash.toLowerCase(),
+      activity.logIndex,
+    ].join(':')
+  }
+  return ''
+}
+
+export function activityRememberKeys(activity: VesselActivity) {
+  return [
+    activityKey(activity),
+    ...(activity.relatedEvents ?? []).map(relatedActivityKey),
+  ].filter(Boolean)
+}
+
+export function activityMatchesCursor(activity: VesselActivity, cursor: ActivityCursor) {
+  const key = cursorKey(cursor)
+  return activityKey(activity) === key || legacyActivityKey(activity) === key
+}
+
+function legacyActivityKey(activity: VesselActivity) {
+  return [
+    'legacy',
+    activity.blockNumber,
+    activity.hash.toLowerCase(),
+    activity.action.toLowerCase(),
+    activity.vesselId ?? activity.subjectId ?? '',
+  ].join(':')
 }
 
 export function newActivitiesSinceCursor(
@@ -99,7 +155,7 @@ export function newActivitiesSinceCursor(
   const key = cursorKey(cursor)
   const newer: VesselActivity[] = []
   for (const activity of activitiesNewestFirst) {
-    if (activityKey(activity) === key) break
+    if (activityMatchesCursor(activity, cursor)) break
     newer.push(activity)
   }
   return newer.reverse()
@@ -114,6 +170,8 @@ function normalizeActivity(value: unknown): VesselActivity | null {
   if (!hash || !action || !blockNumber) return null
 
   return {
+    id: nullableString(row.id),
+    logIndex: numberField(row.logIndex),
     hash,
     actor: nullableString(row.actor),
     from: stringField(row.from),
@@ -131,12 +189,47 @@ function normalizeActivity(value: unknown): VesselActivity | null {
     vesselId: nullableString(row.vesselId ?? row._vesselId),
     craftType: nullableString(row.craftType ?? row._craftType),
     entry: numberField(row.entry),
+    machineAddress: nullableString(row.machineAddress),
+    automatic: Boolean(row.automatic),
+    consolidatedInto: normalizeConsolidatedInto(row.consolidatedInto),
+    relatedEvents: normalizeRelatedEvents(row.relatedEvents),
     sequence: normalizeSequence(row.sequence),
     buyer: nullableString(row.buyer),
     seller: nullableString(row.seller),
     salePrice: normalizeSalePrice(row.salePrice),
     detail: stringField(row.detail ?? row._detail),
   }
+}
+
+function normalizeConsolidatedInto(value: unknown): VesselActivity['consolidatedInto'] {
+  if (!value || typeof value !== 'object') return null
+  const row = value as Record<string, unknown>
+  return {
+    id: nullableString(row.id),
+    type: stringField(row.type) || 'claim',
+    logIndex: numberField(row.logIndex),
+  }
+}
+
+function normalizeRelatedEvents(value: unknown): VesselActivity['relatedEvents'] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((event) => event && typeof event === 'object')
+    .map((event) => {
+      const row = event as Record<string, unknown>
+      return {
+        id: stringField(row.id),
+        action: stringField(row.action),
+        source: stringField(row.source) || 'vessel',
+        sourceEvent: stringField(row.sourceEvent),
+        actor: nullableString(row.actor),
+        machineAddress: nullableString(row.machineAddress),
+        hash: stringField(row.hash),
+        blockNumber: stringField(row.blockNumber),
+        logIndex: numberField(row.logIndex),
+        timeStamp: stringField(row.timeStamp),
+      }
+    })
 }
 
 function normalizeSequence(value: unknown): VesselActivity['sequence'] {
