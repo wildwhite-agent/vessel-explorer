@@ -11,7 +11,6 @@
         <h1 class="sequences-title">sequences</h1>
         <div class="sequences-summary">
           <span v-if="tokens.length">{{ tokens.length }} tokens</span>
-          <span v-if="totalMinted"> · {{ formatInteger(totalMinted) }} minted</span>
         </div>
       </div>
 
@@ -39,10 +38,6 @@
           </div>
           <div class="sequence-meta">
             <div class="sequence-artist">{{ token.artist || 'unknown artist' }}</div>
-            <div class="sequence-stats">
-              <span>{{ formatInteger(token.minted) }} minted</span>
-              <span v-if="holderCounts[token.tokenId] != null"> · {{ holderCounts[token.tokenId] }} holders</span>
-            </div>
           </div>
         </NuxtLink>
       </div>
@@ -52,16 +47,11 @@
 
 <script setup lang="ts">
 import type { SequenceToken } from '~/utils/activity'
-import { fetchAllSequenceTokens, fetchSequenceBalancePage } from '~/utils/indexer'
+import { fetchAllSequenceTokens } from '~/utils/indexer'
 
 const tokens = ref<SequenceToken[]>([])
-const holderCounts = ref<Record<string, number>>({})
 const loading = ref(true)
 const error = ref<string | null>(null)
-
-const totalMinted = computed(() =>
-  tokens.value.reduce((sum, token) => sum + integerValue(token.minted), 0n),
-)
 
 onMounted(async () => {
   loading.value = true
@@ -69,30 +59,12 @@ onMounted(async () => {
 
   try {
     tokens.value = await fetchAllSequenceTokens({ pageSize: 250 })
-    await loadHolderCounts(tokens.value)
   } catch (err: any) {
     error.value = err?.data?.message || err?.message || 'failed to load sequences'
   } finally {
     loading.value = false
   }
 })
-
-async function loadHolderCounts(rows: SequenceToken[]) {
-  const entries = await Promise.all(rows.map(async (token) => {
-    try {
-      const page = await fetchSequenceBalancePage({ tokenId: token.tokenId, limit: 1 })
-      return [token.tokenId, page.total] as const
-    } catch {
-      return [token.tokenId, null] as const
-    }
-  }))
-
-  holderCounts.value = Object.fromEntries(
-    entries
-      .filter((entry): entry is readonly [string, number] => entry[1] != null)
-      .map(([tokenId, count]) => [tokenId, count]),
-  )
-}
 
 function sequenceImageUrl(token: SequenceToken) {
   const version = encodeURIComponent([
@@ -101,20 +73,6 @@ function sequenceImageUrl(token: SequenceToken) {
     token.minted || '0',
   ].join('-'))
   return `/api/sequence-og/${token.tokenId}?v=${version}`
-}
-
-function integerValue(value: string | null | undefined) {
-  if (!value || !/^\d+$/.test(value)) return 0n
-  try {
-    return BigInt(value)
-  } catch {
-    return 0n
-  }
-}
-
-function formatInteger(value: string | bigint | null | undefined) {
-  const number = typeof value === 'bigint' ? value : integerValue(value)
-  return number.toLocaleString('en-US')
 }
 </script>
 
@@ -213,11 +171,6 @@ function formatInteger(value: string | bigint | null | undefined) {
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.sequence-stats {
-  color: var(--muted);
-  line-height: 1.45;
 }
 
 @media (max-width: 640px) {
