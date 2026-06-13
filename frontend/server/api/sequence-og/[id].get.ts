@@ -42,10 +42,10 @@ async function renderSequenceOgImage(event: Parameters<typeof loadSequenceMetada
   const metadata = await loadSequenceMetadata(event, id)
   const [image, animation] = await Promise.all([
     metadata.imageUri
-      ? inspectSequenceMediaAsset(id, 'image', metadata.imageUri).catch(() => null)
+      ? inspectSequenceMediaAsset(event, id, 'image', metadata.imageUri).catch(() => null)
       : null,
     metadata.animationUri
-      ? inspectSequenceMediaAsset(id, 'animation', metadata.animationUri).catch(() => null)
+      ? inspectSequenceMediaAsset(event, id, 'animation', metadata.animationUri).catch(() => null)
       : null,
   ])
   const preferred = animation || image

@@ -302,6 +302,38 @@ test('sequence detail renders video media with native controls', async ({ page }
   expect(controls).toBe(true)
 })
 
+test('sequence #6 recovers its real HTML animation from the vault entry', async ({ page }) => {
+  // Sequence #6's on-chain animation_url embeds the wrong vault payload (the raw RGB
+  // carrier bytes), which renders as mojibake. The interactive piece lives in vessel
+  // #3348 entry 5, so the media pipeline serves that bootstrap HTML instead.
+  const media = await page.request.get('/api/sequences/tokens/6/media')
+  expect(media.ok()).toBe(true)
+  const body = await media.json()
+  expect(body.animation?.kind).toBe('html')
+  expect(body.preferred?.kind).toBe('html')
+  expect(body.preferred?.url).toContain('/api/sequence-media/6/animation')
+
+  const animation = await page.request.get('/api/sequence-media/6/animation')
+  expect(animation.ok()).toBe(true)
+  expect(animation.headers()['content-type']).toContain('text/html')
+  const html = await animation.text()
+  expect(html.trimStart().startsWith('<!DOCTYPE html>')).toBe(true)
+  expect(html).toContain('RGB Carrier')
+  expect(html).toContain('0x39c50f01') // vaultToEntry selector used by the bootstrap
+  expect(html).toContain('publicnode.com') // public RPC fallback retained
+  // The wallet branch must be neutralized: window.ethereum hangs in the sandboxed
+  // cross-origin iframe, leaving the loader stuck on "reading entry 1/5...".
+  expect(html).not.toContain('if(window.ethereum)')
+  expect(html).not.toContain('vessel-sequence-7-play-fix')
+
+  await page.goto('/sequences/6')
+  await expect(page.getByRole('heading', { name: /Sequence #6/ })).toBeVisible()
+  const frame = page.locator('.sequence-art-wrap iframe.sequence-art')
+  await expect(frame).toBeVisible()
+  await expect(frame).toHaveAttribute('src', /\/api\/sequence-media\/6\/animation/)
+  await expect(frame).toHaveAttribute('sandbox', /allow-scripts/)
+})
+
 test('sequence links from activity and address pages navigate to detail pages', async ({ page }) => {
   await page.goto('/')
   const sequenceActivityLink = page.locator('a.subject-preview-trigger').first()

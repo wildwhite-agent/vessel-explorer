@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { createPublicClient, http } from 'viem'
+import { createPublicClient, http, hexToBytes, type Hex } from 'viem'
 import { mainnet } from 'viem/chains'
 
 const SEQUENCE_ADDRESS = '0x9423548a957284eD17E55c37c4B6D96e5E63065f'
@@ -12,6 +12,40 @@ const SEQUENCE_URI_ABI = [
     stateMutability: 'view',
   },
 ] as const
+
+const VESSEL_ADDRESS = '0xECb92Cc7112b80A2234936315BbB493fb48d1463'
+const VAULT_ENTRY_ABI = [
+  {
+    type: 'function',
+    name: 'vaultToEntry',
+    inputs: [
+      { name: 'tokenId', type: 'uint256' },
+      { name: 'entryIndex', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bytes' }],
+    stateMutability: 'view',
+  },
+] as const
+
+interface SequenceAnimationOverride {
+  vaultTokenId: number
+  entryIndex: number
+}
+
+// Some sequences embed the wrong asset in their on-chain `animation_url`.
+// Sequence #6 ("RGB Carrier") ships entry 1 — the raw RGB carrier bytes — instead
+// of the HTML renderer, so the browser shows a wall of mojibake. The actual
+// interactive piece lives in vessel #3348, entry 5: a small bootstrap that reads
+// the carrier data from chain and document.write()s the full artwork (animation +
+// audio). Serve that entry as the animation instead. Mirrors the existing
+// per-sequence patch for #7 in the [asset] route.
+const SEQUENCE_ANIMATION_OVERRIDES: Record<string, SequenceAnimationOverride> = {
+  '6': { vaultTokenId: 3348, entryIndex: 5 },
+}
+
+function getSequenceAnimationOverride(id: string): SequenceAnimationOverride | null {
+  return SEQUENCE_ANIMATION_OVERRIDES[id] ?? null
+}
 
 type SequenceMediaSlot = 'image' | 'animation'
 
@@ -96,6 +130,11 @@ export async function loadSequenceMediaAsset(
   id: string,
   slot: SequenceMediaSlot,
 ) {
+  const override = slot === 'animation' ? getSequenceAnimationOverride(id) : null
+  if (override) {
+    return { bytes: await loadSequenceAnimationOverride(event, override), mime: 'text/html' }
+  }
+
   const metadata = await loadSequenceMetadata(event, id)
   const uri = slot === 'animation' ? metadata.animationUri : metadata.imageUri
   if (!uri) {
@@ -110,10 +149,22 @@ export async function loadSequenceMediaAsset(
 }
 
 export async function inspectSequenceMediaAsset(
+  event: H3Event,
   id: string,
   slot: SequenceMediaSlot,
   uri: string,
 ) {
+  const override = slot === 'animation' ? getSequenceAnimationOverride(id) : null
+  if (override) {
+    const bytes = await loadSequenceAnimationOverride(event, override)
+    return {
+      url: `/api/sequence-media/${id}/${slot}`,
+      mime: 'text/html',
+      kind: 'html',
+      bytes: bytes.length || null,
+    } satisfies SequenceMediaAssetInfo
+  }
+
   const asset = await inspectBytes(uri)
   const mime = detectMime(asset)
   return {
@@ -122,6 +173,50 @@ export async function inspectSequenceMediaAsset(
     kind: mediaKindForMime(mime),
     bytes: asset.bytes.length || null,
   } satisfies SequenceMediaAssetInfo
+}
+
+// Load an overridden animation: the bootstrap HTML from a vault entry, adapted so
+// it renders inside our sandboxed iframe.
+async function loadSequenceAnimationOverride(
+  event: H3Event,
+  override: SequenceAnimationOverride,
+): Promise<Uint8Array> {
+  const bytes = await loadVesselVaultEntry(event, override.vaultTokenId, override.entryIndex)
+  return forceSandboxSafeRpc(bytes)
+}
+
+// The on-chain bootstrap tries the visitor's injected `window.ethereum` provider
+// before falling back to public RPCs. Inside our cross-origin sandboxed iframe
+// (no allow-same-origin → opaque origin) that provider can't postMessage back, so
+// the awaited request never resolves and the loader hangs on "reading entry 1/5…".
+// Neutralize the wallet branch so it goes straight to the public RPC path, which
+// works in the sandbox. No-op (returns the original bytes) if the marker is absent.
+function forceSandboxSafeRpc(bytes: Uint8Array): Uint8Array {
+  const html = new TextDecoder().decode(bytes)
+  const patched = html.replace(/if\s*\(\s*window\.ethereum\s*\)/g, 'if(false)')
+  return patched === html ? bytes : new TextEncoder().encode(patched)
+}
+
+// Read a single vault entry (raw bytes) from the Vessel contract. Used to recover
+// the real animation for sequences whose on-chain animation_url points at the
+// wrong payload (see SEQUENCE_ANIMATION_OVERRIDES).
+async function loadVesselVaultEntry(
+  event: H3Event,
+  vaultTokenId: number,
+  entryIndex: number,
+): Promise<Uint8Array> {
+  const payload = await getClient(event).readContract({
+    address: VESSEL_ADDRESS,
+    abi: VAULT_ENTRY_ABI,
+    functionName: 'vaultToEntry',
+    args: [BigInt(vaultTokenId), BigInt(entryIndex)],
+  }) as Hex
+
+  const bytes = payload && payload !== '0x' ? hexToBytes(payload) : new Uint8Array()
+  if (!bytes.length) {
+    throw createError({ statusCode: 404, message: 'sequence animation unavailable' })
+  }
+  return bytes
 }
 
 export function mediaKindForMime(mime: string): SequenceMediaAssetInfo['kind'] {
