@@ -112,11 +112,11 @@
 </template>
 
 <script setup lang="ts">
-import { isAddress } from 'viem'
 import type { ComponentPublicInstance } from 'vue'
 import { renderToCanvas, type ColorMode } from '~/utils/vessel'
 import { bytesFromHex, fetchAllTokenRows, fetchSequenceBalancesForAddress, type SequenceBalance, type TokenRow } from '~/utils/indexer'
 import { resolveEnsName } from '~/utils/ens'
+import { parseVesselSearchQuery } from '~/utils/search'
 
 async function copyAddress() {
   if (resolvedAddress.value) {
@@ -181,33 +181,21 @@ async function resolveAddr(identifier: string) {
   resolving.value = true
   resolveError.value = null
   resolvedAddress.value = ''
-  const normalizedIdentifier = safeDecode(identifier).trim()
+  const parsed = parseVesselSearchQuery(identifier)
 
   try {
-    if (isAddress(normalizedIdentifier)) {
-      resolvedAddress.value = normalizedIdentifier
-    } else if (isEnsName(normalizedIdentifier)) {
-      const resolution = await resolveEnsName(normalizedIdentifier)
+    if (parsed.kind === 'address') {
+      resolvedAddress.value = parsed.value
+    } else if (parsed.kind === 'ens') {
+      const resolution = await resolveEnsName(parsed.value)
       resolvedAddress.value = resolution.address
     } else {
-      resolveError.value = `invalid address ${normalizedIdentifier || identifier}`
+      resolveError.value = `invalid address ${parsed.value || identifier}`
     }
   } catch (e: any) {
     resolveError.value = e?.data?.message || e?.message || 'failed to resolve address'
   } finally {
     resolving.value = false
-  }
-}
-
-function isEnsName(value: string) {
-  return value.includes('.') && !/[\s/]/.test(value)
-}
-
-function safeDecode(value: string) {
-  try {
-    return decodeURIComponent(value)
-  } catch {
-    return value
   }
 }
 

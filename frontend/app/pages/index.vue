@@ -178,6 +178,7 @@
 <script setup lang="ts">
 import { fetchDailyActivity, fetchVesselActivity, type DailyActivityResponse, type VesselTransaction } from '~/utils/activity'
 import { EXPLORER_BASE, renderToCanvas, type ColorMode } from '~/utils/vessel'
+import { parseVesselSearchQuery } from '~/utils/search'
 import { bytesFromHex, fetchHolders, fetchToken } from '~/utils/indexer'
 
 const router = useRouter()
@@ -338,19 +339,14 @@ const payloadCache = new Map<string, Uint8Array>()
 const colorModeCache = new Map<string, ColorMode>()
 
 function goToVessel() {
-  const q = searchQuery.value.trim()
-  if (!q) return
-  if (q.startsWith('0x') && q.length === 42) {
-    router.push(`/address/${q}`)
-  } else if (/^\d+$/.test(q)) {
-    router.push(`/${q}`)
-  } else if (isEnsName(q)) {
-    router.push(`/address/${encodeURIComponent(q)}`)
+  const q = parseVesselSearchQuery(searchQuery.value)
+  if (q.kind === 'address') {
+    router.push(`/address/${q.value}`)
+  } else if (q.kind === 'token') {
+    router.push(`/${q.value}`)
+  } else if (q.kind === 'ens') {
+    router.push(`/address/${encodeURIComponent(q.value)}`)
   }
-}
-
-function isEnsName(value: string) {
-  return value.includes('.') && !/[\s/]/.test(value)
 }
 
 function randomVessel() {
