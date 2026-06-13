@@ -48,7 +48,7 @@
         </div>
       </div>
     </Tooltip>
-    <div class="header-actions">
+    <div class="header-actions desktop-actions">
       <NuxtLink to="/sequences" class="text-btn">[sequences]</NuxtLink>
       <NuxtLink to="/grid" class="text-btn">[grid]</NuxtLink>
       <NuxtLink to="/all" class="text-btn">[all]</NuxtLink>
@@ -56,12 +56,46 @@
         {{ isDark ? '[light]' : '[dark]' }}
       </button>
     </div>
+    <Dropdown
+      v-model:open="menuOpen"
+      class="header-menu-dropdown"
+      side="bottom"
+      align="end"
+      :side-offset="8"
+      :arrow="false"
+      :modal="false"
+    >
+      <template #trigger>
+        <button
+          type="button"
+          class="text-btn mobile-menu-trigger"
+          :aria-expanded="menuOpen"
+          aria-label="Open navigation menu"
+        >
+          [menu]
+        </button>
+      </template>
+
+      <DropdownItem text-value="sequences" @select="goTo('/sequences')">
+        [sequences]
+      </DropdownItem>
+      <DropdownItem text-value="grid" @select="goTo('/grid')">
+        [grid]
+      </DropdownItem>
+      <DropdownItem text-value="all" @select="goTo('/all')">
+        [all]
+      </DropdownItem>
+      <DropdownItem :text-value="isDark ? 'light' : 'dark'" @select="toggleDarkFromMenu">
+        {{ isDark ? '[light]' : '[dark]' }}
+      </DropdownItem>
+    </Dropdown>
   </header>
 </template>
 
 <script setup lang="ts">
 const COLOR_MODE_KEY = 'vessel-color-mode'
 const isDark = ref(true)
+const menuOpen = ref(false)
 const { stats, loadHeaderStats } = useHeaderStats()
 const claimed = computed(() => stats.value.claimed)
 const holderCount = computed(() => stats.value.holderCount)
@@ -94,6 +128,16 @@ function toggleDark() {
   root.classList.toggle('dark')
   isDark.value = root.classList.contains('dark')
   localStorage.setItem(COLOR_MODE_KEY, isDark.value ? 'dark' : 'light')
+}
+
+function toggleDarkFromMenu() {
+  toggleDark()
+  menuOpen.value = false
+}
+
+function goTo(path: string) {
+  menuOpen.value = false
+  void navigateTo(path)
 }
 </script>
 
@@ -169,9 +213,36 @@ function toggleDark() {
   gap: 1rem;
 }
 
+.mobile-menu-trigger {
+  display: none;
+}
+
+:global(.header-menu-dropdown) {
+  --dropdown-border-radius: 0;
+  --dropdown-padding: 0.25rem;
+  min-inline-size: 8rem;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+:global(.header-menu-dropdown .dropdown-item) {
+  justify-content: flex-end;
+  border-radius: 0;
+  padding: 0.45rem 0.65rem;
+  text-align: right;
+}
+
 @media (max-width: 640px) {
   .header-stats {
     display: none;
+  }
+
+  .desktop-actions {
+    display: none;
+  }
+
+  .mobile-menu-trigger {
+    display: inline-flex;
   }
 }
 </style>
