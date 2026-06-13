@@ -33,7 +33,7 @@
               <span class="meta-value"><AddressDisplay :address="vessel.delegate" /></span>
             </div>
             <div v-if="vessel.machineAddress" class="meta-row">
-              <span class="meta-label">machine address</span>
+              <span class="meta-label">machine</span>
               <span class="meta-value">
                 <AddressDisplay :address="vessel.machineAddress" external />
                 <span v-if="vessel.machineName"> ({{ vessel.machineName }})</span>
