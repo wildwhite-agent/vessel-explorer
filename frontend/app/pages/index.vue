@@ -108,14 +108,15 @@
               >
                 #{{ tx.vesselId }}
               </NuxtLink>
-              <span
+              <NuxtLink
                 v-else-if="tx.action === 'sequencemint' && tx.subjectId"
+                :to="`/sequences/${tx.subjectId}`"
                 class="vessel-link subject-preview-trigger"
                 @mouseenter="showSequencePreview(tx, $event)"
                 @mouseleave="hidePreview"
               >
                 seq #{{ tx.subjectId }}
-              </span>
+              </NuxtLink>
               <span v-else class="text-faint">--</span>
             </span>
             <span class="col-from">

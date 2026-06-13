@@ -87,9 +87,10 @@
           <h2 class="section-title">sequences</h2>
           <div v-if="sequenceLoading && sequences.length === 0" class="status">loading sequences...</div>
           <div v-else class="vessel-grid">
-            <div
+            <NuxtLink
               v-for="sequence in sequences"
               :key="sequence.tokenId"
+              :to="`/sequences/${sequence.tokenId}`"
               class="vessel-card sequence-card"
             >
               <div class="card-id">#{{ sequence.tokenId }}</div>
@@ -103,7 +104,7 @@
               </div>
               <div v-if="sequence.artist" class="sequence-artist">{{ sequence.artist }}</div>
               <div v-if="Number(sequence.balance) > 1" class="sequence-balance">x{{ sequence.balance }}</div>
-            </div>
+            </NuxtLink>
           </div>
         </template>
       </div>
