@@ -74,6 +74,27 @@ export interface SequenceBalance {
   token: SequenceToken | null
 }
 
+export interface SequenceTokenPage {
+  rows: SequenceToken[]
+  total: number
+  page: number
+  pageSize: number
+  source: 'ponder'
+}
+
+export interface SequenceTransfer {
+  hash: string
+  logIndex: number
+  batchIndex: number
+  operator: string
+  from: string
+  to: string
+  tokenId: string
+  value: string
+  blockNumber: string
+  timeStamp: string
+}
+
 type QueryValue = string | number | boolean | null | undefined
 
 export function bytesFromHex(hex: string | null | undefined) {
@@ -168,6 +189,85 @@ export async function fetchSequenceBalancesForAddress(address: string) {
         updatedAt: row.updatedAt == null ? null : String(row.updatedAt),
         blockNumber: row.blockNumber == null ? null : String(row.blockNumber),
         token: normalizeSequenceToken(row.token),
+      }))
+    : []
+}
+
+export async function fetchSequenceTokenPage(params: Record<string, QueryValue> = {}) {
+  const data = await $fetch<{ rows: any[]; total: number; page: number; pageSize: number; source: 'ponder' }>('/api/sequences/tokens', {
+    query: params,
+  })
+
+  return {
+    rows: Array.isArray(data.rows)
+      ? data.rows.map(normalizeSequenceToken).filter(Boolean) as SequenceToken[]
+      : [],
+    total: Number(data.total || 0),
+    page: Number(data.page || 1),
+    pageSize: Number(data.pageSize || 0),
+    source: 'ponder' as const,
+  }
+}
+
+export async function fetchAllSequenceTokens(params: Record<string, QueryValue> = {}) {
+  const pageSize = Math.min(250, Math.max(1, Number(params.pageSize) || 250))
+  const rows: SequenceToken[] = []
+
+  for (let page = 1; page <= 100; page++) {
+    const data = await fetchSequenceTokenPage({ ...params, page, pageSize })
+    rows.push(...data.rows)
+    if (rows.length >= Number(data.total || 0) || data.rows.length < pageSize) break
+  }
+
+  return rows
+}
+
+export async function fetchSequenceToken(id: string | number) {
+  const data = await $fetch<unknown>(`/api/sequences/tokens/${id}`)
+  return normalizeSequenceToken(data)
+}
+
+export async function fetchSequenceBalancesForToken(tokenId: string | number, limit = 250) {
+  const data = await $fetch<{ rows: any[] }>('/api/sequences/balances', {
+    query: {
+      tokenId,
+      includeToken: 'true',
+      limit,
+    },
+  })
+
+  return Array.isArray(data.rows)
+    ? data.rows.map((row): SequenceBalance => ({
+        address: String(row.address ?? ''),
+        tokenId: String(row.tokenId ?? tokenId),
+        balance: String(row.balance ?? '0'),
+        updatedAt: row.updatedAt == null ? null : String(row.updatedAt),
+        blockNumber: row.blockNumber == null ? null : String(row.blockNumber),
+        token: normalizeSequenceToken(row.token),
+      }))
+    : []
+}
+
+export async function fetchSequenceTransfersForToken(tokenId: string | number, limit = 100) {
+  const data = await $fetch<unknown[]>('/api/sequences/transfers', {
+    query: {
+      tokenId,
+      limit,
+    },
+  })
+
+  return Array.isArray(data)
+    ? data.map((row: any): SequenceTransfer => ({
+        hash: String(row.hash ?? ''),
+        logIndex: Number(row.logIndex ?? 0),
+        batchIndex: Number(row.batchIndex ?? 0),
+        operator: String(row.operator ?? ''),
+        from: String(row.from ?? ''),
+        to: String(row.to ?? ''),
+        tokenId: String(row.tokenId ?? tokenId),
+        value: String(row.value ?? '0'),
+        blockNumber: String(row.blockNumber ?? ''),
+        timeStamp: String(row.timeStamp ?? ''),
       }))
     : []
 }
