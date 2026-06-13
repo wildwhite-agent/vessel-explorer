@@ -14,12 +14,58 @@
       <Transition name="sequence-in">
       <div v-if="sequence" :key="sequence.tokenId" class="sequence-loaded">
         <section class="sequence-hero">
-          <div class="sequence-art-wrap">
+          <div :class="['sequence-art-wrap', `sequence-media-${activeMediaKind}`]">
+            <template v-if="activeMedia">
+              <iframe
+                v-if="activeMedia.kind === 'html' || activeMedia.kind === 'svg'"
+                :src="mediaAssetUrl(activeMedia)"
+                :title="sequenceMediaTitle"
+                class="sequence-art sequence-frame"
+                sandbox="allow-scripts allow-pointer-lock allow-popups"
+                allow="autoplay; fullscreen"
+              />
+              <video
+                v-else-if="activeMedia.kind === 'video'"
+                :src="mediaAssetUrl(activeMedia)"
+                :poster="posterUrl"
+                class="sequence-art sequence-video"
+                controls
+                playsinline
+                preload="metadata"
+              />
+              <div
+                v-else-if="activeMedia.kind === 'audio'"
+                class="sequence-art sequence-audio-panel"
+              >
+                <img
+                  v-if="posterUrl"
+                  :src="posterUrl"
+                  alt=""
+                  class="sequence-audio-poster"
+                />
+                <audio
+                  :src="mediaAssetUrl(activeMedia)"
+                  class="sequence-audio-control"
+                  controls
+                  preload="metadata"
+                />
+              </div>
+              <img
+                v-else
+                :src="mediaAssetUrl(activeMedia)"
+                alt=""
+                class="sequence-art"
+              />
+            </template>
             <img
+              v-else-if="mediaLoading"
               :src="sequenceImageUrl(sequence)"
               alt=""
               class="sequence-art"
             />
+            <div v-else class="sequence-media-status">
+              {{ mediaError || 'media unavailable' }}
+            </div>
           </div>
 
           <div class="sequence-header">
@@ -147,9 +193,12 @@
 <script setup lang="ts">
 import type { SequenceToken } from '~/utils/activity'
 import {
+  fetchSequenceMedia,
   fetchSequenceBalancePage,
   fetchSequenceToken,
   fetchSequenceTransfersForToken,
+  type SequenceMedia,
+  type SequenceMediaAsset,
   type SequenceBalance,
   type SequenceTransfer,
 } from '~/utils/indexer'
@@ -160,13 +209,16 @@ const route = useRoute()
 
 const id = computed(() => String(route.params.id || ''))
 const sequence = ref<SequenceToken | null>(null)
+const media = ref<SequenceMedia | null>(null)
 const holders = ref<SequenceBalance[]>([])
 const transfers = ref<SequenceTransfer[]>([])
 const holderTotal = ref(0)
 const loading = ref(true)
+const mediaLoading = ref(false)
 const holdersLoading = ref(false)
 const transfersLoading = ref(false)
 const error = ref<string | null>(null)
+const mediaError = ref<string | null>(null)
 const holdersError = ref<string | null>(null)
 const transfersError = ref<string | null>(null)
 let requestId = 0
@@ -179,6 +231,18 @@ const updatedLabel = computed(() => {
   return parts.join(' · ') || 'unknown'
 })
 
+const activeMedia = computed(() => media.value?.preferred || null)
+const activeMediaKind = computed(() => activeMedia.value?.kind || (mediaLoading.value ? 'loading' : 'missing'))
+const sequenceMediaTitle = computed(() => {
+  const title = media.value?.name || (sequence.value ? `Sequence #${sequence.value.tokenId}` : 'Sequence')
+  return `${title} media`
+})
+const posterUrl = computed(() => {
+  const image = media.value?.image
+  if (image) return mediaAssetUrl(image)
+  return sequence.value ? sequenceImageUrl(sequence.value) : ''
+})
+
 watch(id, (nextId) => {
   void loadSequence(nextId)
 }, { immediate: true })
@@ -186,12 +250,15 @@ watch(id, (nextId) => {
 async function loadSequence(sequenceId: string) {
   const currentRequest = ++requestId
   sequence.value = null
+  media.value = null
   holders.value = []
   transfers.value = []
   holderTotal.value = 0
   error.value = null
+  mediaError.value = null
   holdersError.value = null
   transfersError.value = null
+  mediaLoading.value = false
 
   if (!/^\d+$/.test(sequenceId)) {
     loading.value = false
@@ -209,6 +276,7 @@ async function loadSequence(sequenceId: string) {
     }
 
     sequence.value = token
+    void loadMedia(sequenceId, currentRequest)
     void loadHolders(sequenceId, currentRequest)
     void loadTransfers(sequenceId, currentRequest)
   } catch (err: any) {
@@ -219,6 +287,27 @@ async function loadSequence(sequenceId: string) {
       : err?.data?.message || err?.message || 'failed to load sequence'
   } finally {
     if (currentRequest === requestId) loading.value = false
+  }
+}
+
+async function loadMedia(sequenceId: string, currentRequest: number) {
+  mediaLoading.value = true
+  mediaError.value = null
+
+  try {
+    const data = await fetchSequenceMedia(sequenceId)
+    if (currentRequest !== requestId) return
+    media.value = data
+    if (!data.preferred) mediaError.value = 'media unavailable'
+  } catch (err: any) {
+    if (currentRequest !== requestId) return
+    const status = err?.statusCode || err?.response?.status
+    media.value = null
+    mediaError.value = status === 404
+      ? 'media unavailable'
+      : err?.data?.message || err?.message || 'failed to load media'
+  } finally {
+    if (currentRequest === requestId) mediaLoading.value = false
   }
 }
 
@@ -262,13 +351,22 @@ async function loadTransfers(sequenceId: string, currentRequest: number) {
   }
 }
 
-function sequenceImageUrl(token: SequenceToken) {
-  const version = encodeURIComponent([
+function sequenceVersion(token: SequenceToken) {
+  return encodeURIComponent([
     token.blockNumber || '0',
     token.updatedAt || '0',
     token.minted || '0',
   ].join('-'))
-  return `/api/sequence-og/${token.tokenId}?v=${version}`
+}
+
+function sequenceImageUrl(token: SequenceToken) {
+  return `/api/sequence-og/${token.tokenId}?v=${sequenceVersion(token)}`
+}
+
+function mediaAssetUrl(asset: SequenceMediaAsset) {
+  if (!sequence.value) return asset.url
+  const separator = asset.url.includes('?') ? '&' : '?'
+  return `${asset.url}${separator}v=${sequenceVersion(sequence.value)}`
 }
 
 function transferKey(transfer: SequenceTransfer) {
@@ -343,6 +441,7 @@ function shortHash(hash: string) {
 
 .sequence-art-wrap {
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: center;
   aspect-ratio: 1;
@@ -353,9 +452,48 @@ function shortHash(hash: string) {
 
 .sequence-art {
   display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sequence-frame {
+  border: 0;
+  background: #000;
+}
+
+.sequence-video {
+  background: #000;
+}
+
+.sequence-audio-panel {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+.sequence-audio-poster {
+  display: block;
+  align-self: center;
+  justify-self: center;
+  min-width: 0;
+  min-height: 0;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+.sequence-audio-control {
+  width: 100%;
+}
+
+.sequence-media-status {
+  padding: 1rem;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
 }
 
 .sequence-title {

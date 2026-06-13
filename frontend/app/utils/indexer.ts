@@ -103,6 +103,24 @@ export interface SequenceTransfer {
   timeStamp: string
 }
 
+export type SequenceMediaKind = 'html' | 'video' | 'audio' | 'svg' | 'image' | 'unknown'
+
+export interface SequenceMediaAsset {
+  url: string
+  mime: string
+  kind: SequenceMediaKind
+  bytes: number | null
+}
+
+export interface SequenceMedia {
+  tokenId: string
+  name: string
+  description: string
+  image: SequenceMediaAsset | null
+  animation: SequenceMediaAsset | null
+  preferred: SequenceMediaAsset | null
+}
+
 type QueryValue = string | number | boolean | null | undefined
 
 export function bytesFromHex(hex: string | null | undefined) {
@@ -252,6 +270,18 @@ export async function fetchSequenceToken(id: string | number) {
   return normalizeSequenceToken(data)
 }
 
+export async function fetchSequenceMedia(id: string | number) {
+  const data = await $fetch<any>(`/api/sequences/tokens/${id}/media`)
+  return {
+    tokenId: String(data?.tokenId ?? id),
+    name: String(data?.name ?? ''),
+    description: String(data?.description ?? ''),
+    image: normalizeSequenceMediaAsset(data?.image),
+    animation: normalizeSequenceMediaAsset(data?.animation),
+    preferred: normalizeSequenceMediaAsset(data?.preferred),
+  } satisfies SequenceMedia
+}
+
 export async function fetchSequenceBalancesForToken(tokenId: string | number, limit = 250) {
   const data = await fetchSequenceBalancePage({
     tokenId,
@@ -284,4 +314,28 @@ export async function fetchSequenceTransfersForToken(tokenId: string | number, l
         timeStamp: String(row.timeStamp ?? ''),
       }))
     : []
+}
+
+function normalizeSequenceMediaAsset(value: any): SequenceMediaAsset | null {
+  if (!value || typeof value !== 'object') return null
+  return {
+    url: String(value.url ?? ''),
+    mime: String(value.mime ?? 'application/octet-stream'),
+    kind: normalizeSequenceMediaKind(value.kind),
+    bytes: value.bytes == null ? null : Number(value.bytes),
+  }
+}
+
+function normalizeSequenceMediaKind(value: unknown): SequenceMediaKind {
+  if (
+    value === 'html'
+    || value === 'video'
+    || value === 'audio'
+    || value === 'svg'
+    || value === 'image'
+    || value === 'unknown'
+  ) {
+    return value
+  }
+  return 'unknown'
 }
