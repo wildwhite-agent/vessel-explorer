@@ -1180,7 +1180,9 @@ function activityToExplorerTx(row: Row) {
   const sequence = sequenceTokenFromJoinedRow(row)
 
   const tx = {
+    id: row.id,
     hash: row.tx_hash,
+    logIndex: row.log_index == null ? null : Number(row.log_index),
     actor: row.actor ?? null,
     from,
     to: row.to ?? row.delegate ?? row.machine ?? ZERO_ADDRESS,

@@ -136,11 +136,11 @@
             <div v-else-if="!machineRows.length" class="status">no indexed machine changes</div>
 
             <div v-else class="history-list">
-              <article v-for="event in machineRows" :key="event.hash" class="history-row machine-row">
+              <article v-for="event in machineRows" :key="machineEventKey(event)" class="history-row machine-row">
                 <div class="history-accent" aria-hidden="true" />
                 <div class="history-content">
                   <div class="history-topline">
-                    <span class="history-kind machine-kind">set machine</span>
+                    <span class="history-kind machine-kind">{{ machineEventLabel(event) }}</span>
                     <a
                       :href="`${EXPLORER_BASE}/address/${event.to}`"
                       target="_blank"
@@ -270,7 +270,7 @@
 import { detectContent } from '~/utils/content'
 import { fetchMachineName } from '~/utils/machine'
 import { EXPLORER_BASE, colorModeName, shortenAddress } from '~/utils/vessel'
-import type { VesselTransaction } from '~/utils/activity'
+import { normalizeVesselTransaction, type VesselTransaction } from '~/utils/activity'
 
 interface PayloadWrite {
   id: string
@@ -559,7 +559,7 @@ async function loadMachineEvents() {
       },
     })
     if (requestId !== machineEventsRequestId) return
-    machineRows.value = Array.isArray(rows) ? rows : []
+    machineRows.value = Array.isArray(rows) ? rows.map(normalizeVesselTransaction) : []
     void loadMachineNames(machineRows.value)
   } catch (err: any) {
     if (requestId !== machineEventsRequestId) return
@@ -576,6 +576,14 @@ function machineAddressKey(address: string) {
 
 function machineHistoryName(address: string) {
   return machineNames.value[machineAddressKey(address)] || shortenAddress(address)
+}
+
+function machineEventLabel(event: VesselTransaction) {
+  return event.automatic ? 'set at claim' : 'configured machine'
+}
+
+function machineEventKey(event: VesselTransaction) {
+  return event.id || `${event.hash}-${event.logIndex ?? 'machine'}`
 }
 
 async function loadMachineNames(rows: VesselTransaction[]) {

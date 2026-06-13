@@ -429,6 +429,8 @@ function renderPreview(data: Uint8Array, tokenId: number, colorMode: ColorMode =
 const showActions = new Set(['claim', 'sale', 'transfer', 'write', 'machine', 'delegate', 'setvaultentry', 'vwuclaim', 'sequencemint'])
 
 function activityKey(tx: VesselTransaction) {
+  if (tx.id) return tx.id
+  if (tx.logIndex != null) return `${tx.hash}-${tx.logIndex}`
   return `${tx.hash}-${tx.action}-${tx.vesselId ?? tx.subjectId ?? ''}-${tx.amount ?? ''}-${tx.blockNumber}`
 }
 
@@ -445,9 +447,15 @@ function activityLabel(action: string) {
 
 function activityValue(tx: VesselTransaction) {
   if (tx.action === 'sale') return tx.salePrice?.formatted || 'mixed payment'
+  if (tx.action === 'claim' && hasRelatedMachine(tx)) return 'machine configured'
+  if (tx.action === 'machine' && tx.automatic) return 'at claim'
   if (tx.action === 'vwuclaim') return `${formatInteger(tx.amount)} VWU`
   if (tx.action === 'sequencemint') return `x${formatInteger(tx.amount)}`
   return ''
+}
+
+function hasRelatedMachine(tx: VesselTransaction) {
+  return Boolean(tx.machineAddress || tx.relatedEvents?.some((event) => event.action === 'machine'))
 }
 
 function formatInteger(value: string | null | undefined) {
