@@ -137,11 +137,27 @@ test('sequence list and detail pages expose artwork, holders, and history', asyn
   await page.getByRole('link', { name: /Sequence #7/ }).click()
   await expect(page).toHaveURL(/\/sequences\/7$/)
   await expect(page.getByRole('heading', { name: /Sequence #7/ })).toBeVisible()
-  await expect(page.locator('.sequence-art')).toBeVisible()
+  const sequenceFrame = page.locator('.sequence-art-wrap iframe.sequence-art')
+  await expect(sequenceFrame).toBeVisible()
+  await expect(sequenceFrame).toHaveAttribute('src', /\/api\/sequence-media\/7\/animation/)
+  await expect(sequenceFrame).toHaveAttribute('sandbox', /allow-scripts/)
   await expect(page.locator('.sequence-meta')).toContainText('artist')
   await expect(page.locator('.sequence-meta')).toContainText('minted')
   await expect(page.locator('.holder-row').nth(1)).toBeVisible()
   await expect(page.locator('.history-row').first()).toBeVisible()
+})
+
+test('sequence detail renders video media with native controls', async ({ page }) => {
+  await page.goto('/sequences/1')
+  await expect(page.getByRole('heading', { name: /Sequence #1/ })).toBeVisible()
+
+  const video = page.locator('.sequence-art-wrap video.sequence-art')
+  await expect(video).toBeVisible()
+  await expect(video).toHaveAttribute('src', /\/api\/sequence-media\/1\/animation/)
+  await expect(video).toHaveAttribute('poster', /\/api\/sequence-media\/1\/image/)
+
+  const controls = await video.evaluate((element) => (element as HTMLVideoElement).controls)
+  expect(controls).toBe(true)
 })
 
 test('sequence links from activity and address pages navigate to detail pages', async ({ page }) => {
