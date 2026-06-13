@@ -17,6 +17,8 @@
 
         <div v-if="ownedVessels.length > 0 || sequences.length > 0" class="profile-stats">
           <span v-if="ownedVessels.length > 0">{{ ownedVessels.length }} {{ ownedVessels.length === 1 ? 'vessel' : 'vessels' }}</span>
+          <span v-if="stats.axiom" class="stat-axiom"> · {{ stats.axiom }} {{ stats.axiom === 1 ? 'axiom' : 'axioms' }}</span>
+          <span v-if="stats.relic" class="stat-relic"> · {{ stats.relic }} {{ stats.relic === 1 ? 'relic' : 'relics' }}</span>
           <span v-if="stats.machine" class="stat-machine"> · {{ stats.machine }} {{ stats.machine === 1 ? 'machine' : 'machines' }}</span>
           <span v-if="stats.vault" class="stat-vault"> · {{ stats.vault }} {{ stats.vault === 1 ? 'vault' : 'vaults' }}</span>
           <span v-if="stats.capsule" class="stat-capsule"> · {{ stats.capsule }} {{ stats.capsule === 1 ? 'capsule' : 'capsules' }}</span>
@@ -138,6 +140,8 @@ interface OwnedVessel {
   loaded: boolean
   type: string | null
   colorMode: ColorMode
+  axiom: boolean
+  relic: boolean
 }
 
 const stats = computed(() => {
@@ -150,6 +154,8 @@ const stats = computed(() => {
     if (v.loaded && (!v.payload || v.payload.length === 0)) {
       counts.empty = (counts.empty || 0) + 1
     }
+    if (v.axiom) counts.axiom = (counts.axiom || 0) + 1
+    if (v.relic) counts.relic = (counts.relic || 0) + 1
   }
   return counts
 })
@@ -207,6 +213,8 @@ function rowToVessel(row: TokenRow): OwnedVessel {
     loaded: true,
     type: row.type,
     colorMode: Number(row.colorMode || 0) as ColorMode,
+    axiom: Boolean(row.axiom),
+    relic: Boolean(row.relic),
   }
 }
 

@@ -17,6 +17,8 @@
           <h1 class="vessel-title">
             vessel #{{ vessel.id }}
             <span :class="['type-badge', `type-${vessel.type}`]">[{{ vessel.type }}]</span>
+            <span v-if="vessel.axiom" class="type-badge trait-badge">[axiom]</span>
+            <span v-if="vessel.relic" class="type-badge trait-badge">[relic{{ vessel.relicKind ? `: ${vessel.relicKind}` : '' }}]</span>
             <span v-if="!vessel.claimed" class="type-badge unclaimed">[unclaimed]</span>
             <span v-if="vessel.locked" class="type-badge locked">[locked]</span>
           </h1>
@@ -30,12 +32,15 @@
               <span class="meta-label">delegate</span>
               <span class="meta-value"><AddressDisplay :address="vessel.delegate" /></span>
             </div>
-            <div v-if="vessel.isMachine && vessel.machineAddress" class="meta-row">
-              <span class="meta-label">machine</span>
+            <div v-if="vessel.machineAddress" class="meta-row">
+              <span class="meta-label">machine address</span>
               <span class="meta-value">
                 <AddressDisplay :address="vessel.machineAddress" external />
-                <template v-if="vessel.machineName"> ({{ vessel.machineName }})</template>
               </span>
+            </div>
+            <div v-if="vessel.machineName" class="meta-row">
+              <span class="meta-label">machine name</span>
+              <span class="meta-value">{{ vessel.machineName }}</span>
             </div>
             <div v-if="vessel.chosenMachine" class="meta-row">
               <span class="meta-label">chosen machine</span>
@@ -44,6 +49,14 @@
             <div class="meta-row">
               <span class="meta-label">type</span>
               <span class="meta-value">{{ vessel.type }}</span>
+            </div>
+            <div v-if="vessel.roleLabel" class="meta-row">
+              <span class="meta-label">role</span>
+              <span class="meta-value">{{ vessel.roleLabel }}</span>
+            </div>
+            <div v-if="vessel.relic && vessel.relicKind" class="meta-row">
+              <span class="meta-label">relic kind</span>
+              <span class="meta-value">{{ vessel.relicKind }}</span>
             </div>
             <div v-if="vessel.isVault" class="meta-row">
               <span class="meta-label">entries</span>
@@ -654,6 +667,7 @@ function shortHash(hash: string) {
 .type-machine { color: var(--color-machine); }
 .unclaimed { color: var(--text-faint); }
 .locked { color: var(--error, #e06c75); }
+.trait-badge { color: var(--accent); }
 
 .vessel-meta {
   font-size: 13px;

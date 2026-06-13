@@ -17,6 +17,10 @@ export interface VesselData {
   owner: string | null
   delegate: string | null
   role: number
+  roleLabel: string | null
+  axiom: boolean
+  relic: boolean
+  relicKind: string | null
   colorMode: ColorMode
   claimBlock: number
   locked: boolean
@@ -80,6 +84,10 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         owner: token.owner,
         delegate: token.delegate,
         role: Number(token.role || 0),
+        roleLabel: token.roleLabel,
+        axiom: Boolean(token.axiom),
+        relic: Boolean(token.relic),
+        relicKind: token.relicKind,
         colorMode: Number(token.colorMode || 0) as ColorMode,
         claimBlock: Number(token.claimBlock || 0),
         locked: Boolean(token.locked),
@@ -93,7 +101,7 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         })),
         isMachine: Boolean(token.isMachine),
         machineAddress: token.machineAddress,
-        machineName: liveMachine?.name ?? null,
+        machineName: liveMachine?.name ?? token.machineName ?? null,
         chosenMachine: token.chosenMachine,
         payload: bytesFromHex(payloadHex),
       }

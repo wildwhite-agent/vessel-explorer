@@ -63,6 +63,15 @@
         </label>
 
         <label class="filter-field">
+          <span>trait</span>
+          <select v-model="traitFilter" class="filter-input">
+            <option value="all">all</option>
+            <option value="axiom">axiom</option>
+            <option value="relic">relic</option>
+          </select>
+        </label>
+
+        <label class="filter-field">
           <span>color</span>
           <select v-model="colorFilter" class="filter-input">
             <option value="all">all</option>
@@ -106,11 +115,17 @@
                 <span v-else>-</span>
               </td>
               <td :class="typeClass(row.type)">{{ row.type ?? '-' }}</td>
+              <td>
+                <span v-if="traitLabels(row).length" class="trait-list">
+                  <span v-for="trait in traitLabels(row)" :key="trait" class="trait-label">[{{ trait }}]</span>
+                </span>
+                <span v-else>-</span>
+              </td>
               <td>{{ filledLabel(row) }}</td>
               <td class="number-cell">{{ formatNullable(row.payloadBytes) }}</td>
               <td class="number-cell">{{ row.capacityBytes.toLocaleString() }}</td>
               <td>{{ colorLabel(row) }}</td>
-              <td class="number-cell">{{ formatNullable(row.role) }}</td>
+              <td>{{ roleLabel(row) }}</td>
               <td class="number-cell">{{ formatNullable(row.claimBlock) }}</td>
               <td class="number-cell">{{ formatNullable(row.entryCount) }}</td>
               <td class="number-cell">{{ formatNullable(row.chosenEntry) }}</td>
@@ -119,7 +134,10 @@
                 <span v-else>-</span>
               </td>
               <td>
-                <AddressDisplay v-if="row.machineAddress" :address="row.machineAddress" external />
+                <template v-if="row.machineAddress">
+                  <span v-if="row.machineName" class="machine-name">{{ row.machineName }}</span>
+                  <AddressDisplay :address="row.machineAddress" external />
+                </template>
                 <span v-else>-</span>
               </td>
               <td>
@@ -149,7 +167,9 @@ type SortKey =
   | 'payloadBytes'
   | 'capacityBytes'
   | 'colorMode'
-  | 'role'
+  | 'roleLabel'
+  | 'axiom'
+  | 'relic'
   | 'claimBlock'
   | 'entryCount'
   | 'chosenEntry'
@@ -181,6 +201,7 @@ const search = ref('')
 const claimFilter = ref<'all' | 'claimed' | 'unclaimed'>('all')
 const filledFilter = ref<'all' | 'filled' | 'empty'>('all')
 const typeFilter = ref<'all' | 'capsule' | 'vault' | 'machine'>('all')
+const traitFilter = ref<'all' | 'axiom' | 'relic'>('all')
 const colorFilter = ref<'all' | '0' | '1' | '2' | '3'>('all')
 const page = ref(1)
 const sortKey = ref<SortKey>('claimed')
@@ -192,11 +213,12 @@ const columns: { key: SortKey; label: string }[] = [
   { key: 'claimed', label: 'claimed' },
   { key: 'owner', label: 'owner' },
   { key: 'type', label: 'type' },
+  { key: 'axiom', label: 'traits' },
   { key: 'filled', label: 'filled' },
   { key: 'payloadBytes', label: 'bytes' },
   { key: 'capacityBytes', label: 'capacity' },
   { key: 'colorMode', label: 'color' },
-  { key: 'role', label: 'role' },
+  { key: 'roleLabel', label: 'role' },
   { key: 'claimBlock', label: 'claim block' },
   { key: 'entryCount', label: 'entries' },
   { key: 'chosenEntry', label: 'chosen entry' },
@@ -236,6 +258,11 @@ function rowFromIndexer(row: TokenRow): VesselRow {
     capacityBytes: numberValue(row.capacityBytes) ?? Number(row.id),
     colorMode: numberValue(row.colorMode) as ColorMode | null,
     role: numberValue(row.role),
+    roleLabel: row.roleLabel || null,
+    axiom: Boolean(row.axiom),
+    relic: Boolean(row.relic),
+    relicKind: row.relicKind || null,
+    machineName: row.machineName || null,
     claimBlock: numberValue(row.claimBlock),
     entryCount: numberValue(row.entryCount),
     chosenEntry: numberValue(row.chosenEntry),
@@ -284,6 +311,7 @@ async function loadDatabaseRows() {
       claim: claimFilter.value,
       filled: filledFilter.value,
       type: typeFilter.value,
+      trait: traitFilter.value,
       color: colorFilter.value,
       sort: sortKey.value,
       dir: sortDir.value,
@@ -347,6 +375,7 @@ function resetFilters() {
   claimFilter.value = 'all'
   filledFilter.value = 'all'
   typeFilter.value = 'all'
+  traitFilter.value = 'all'
   colorFilter.value = 'all'
   page.value = 1
   sortKey.value = 'claimed'
@@ -359,6 +388,25 @@ function typeClass(type: string | null) {
 
 function colorLabel(row: VesselRow) {
   return row.colorMode == null ? '-' : colorModeName(row.colorMode as ColorMode)
+}
+
+function roleLabel(row: VesselRow) {
+  return row.roleLabel || (row.role == null ? '-' : roleFallbackLabel(row.role))
+}
+
+function roleFallbackLabel(role: number) {
+  if (role === 0) return 'Undefined'
+  if (role === 1) return 'Navigator'
+  if (role === 2) return 'Steward'
+  if (role === 3) return 'Merchant'
+  return role.toLocaleString()
+}
+
+function traitLabels(row: VesselRow) {
+  const labels: string[] = []
+  if (row.axiom) labels.push('axiom')
+  if (row.relic) labels.push(row.relicKind ? `relic: ${row.relicKind}` : 'relic')
+  return labels
 }
 
 function filledLabel(row: VesselRow) {
@@ -376,7 +424,7 @@ function formatNullable(value: number | null) {
 }
 
 watch(
-  [search, claimFilter, filledFilter, typeFilter, colorFilter, sortKey, sortDir],
+  [search, claimFilter, filledFilter, typeFilter, traitFilter, colorFilter, sortKey, sortDir],
   () => {
     if (page.value !== 1) {
       page.value = 1
@@ -536,7 +584,7 @@ select.filter-input {
 
 .vessel-table {
   border-collapse: collapse;
-  min-width: 112rem;
+  min-width: 118rem;
   width: 100%;
   font-size: 12px;
   line-height: 1.35;
@@ -640,6 +688,21 @@ select.filter-input {
 
 .number-cell {
   text-align: right;
+}
+
+.trait-list {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.trait-label,
+.machine-name {
+  color: var(--accent);
+}
+
+.machine-name {
+  margin-right: 0.4rem;
 }
 
 .empty-cell {

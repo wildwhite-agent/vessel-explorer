@@ -11,6 +11,11 @@ export interface TokenRow {
   capacityBytes: number
   colorMode: ColorMode | null
   role: number | null
+  roleLabel: string | null
+  axiom: boolean
+  relic: boolean
+  relicKind: string | null
+  machineName: string | null
   claimBlock: number | null
   entryCount: number
   chosenEntry: number
