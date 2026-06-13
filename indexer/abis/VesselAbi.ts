@@ -1,6 +1,13 @@
 export const VesselAbi = [
   {
     type: 'function',
+    name: 'tokenURI',
+    inputs: [{ name: 'tokenId', type: 'uint256' }],
+    outputs: [{ name: '', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     name: 'ownerOf',
     inputs: [{ name: 'tokenId', type: 'uint256' }],
     outputs: [{ name: '', type: 'address' }],

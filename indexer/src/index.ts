@@ -45,6 +45,7 @@ import {
   WORK_UNIT_START_BLOCK,
 } from '../ponder.config'
 import { findSeaportSaleForTransfer, type SeaportSaleMatch } from './seaport'
+import { parseTokenTraits } from './token-traits'
 
 type Address = `0x${string}`
 type PonderEvent = {
@@ -65,6 +66,11 @@ type TokenState = {
   capacityBytes: number
   colorMode: number
   role: number | null
+  roleLabel: string | null
+  axiom: boolean
+  relic: boolean
+  relicKind: string | null
+  machineName: string | null
   claimBlock: bigint | null
   entryCount: number
   chosenEntry: number
@@ -109,6 +115,7 @@ const DETAIL_CALLS = [
   'craftToLockBlock',
   'craftToVaultStatus',
   'craftToMachineStatus',
+  'tokenURI',
 ] as const
 
 ponder.on('Vessel:setup', async ({ context }) => {
@@ -812,6 +819,11 @@ function seedTokenRow(id: number, blockEvent0: bigint, lockStart: bigint) {
     capacity_bytes: id,
     color_mode: colorMode,
     role: null,
+    role_label: null,
+    axiom: false,
+    relic: false,
+    relic_kind: null,
+    machine_name: null,
     claim_block: null,
     entry_count: 0,
     chosen_entry: 0,
@@ -853,6 +865,11 @@ async function refreshTokenState(
     capacity_bytes: state.capacityBytes,
     color_mode: state.colorMode,
     role: state.role,
+    role_label: state.roleLabel,
+    axiom: state.axiom,
+    relic: state.relic,
+    relic_kind: state.relicKind,
+    machine_name: state.machineName,
     claim_block: state.claimBlock,
     entry_count: state.entryCount,
     chosen_entry: state.chosenEntry,
@@ -883,6 +900,11 @@ async function refreshTokenState(
       capacity_bytes: values.capacity_bytes,
       color_mode: values.color_mode,
       role: values.role,
+      role_label: values.role_label,
+      axiom: values.axiom,
+      relic: values.relic,
+      relic_kind: values.relic_kind,
+      machine_name: values.machine_name,
       claim_block: values.claim_block,
       entry_count: values.entry_count,
       chosen_entry: values.chosen_entry,
@@ -938,6 +960,8 @@ async function readTokenState(
   const entryCount = numberResult(results, 6, 0)
   const rawLockBlock = bigintResult(results, 12)
   const lockBlock = rawLockBlock === MAX_UINT256 ? null : rawLockBlock
+  const role = nullableNumberResult(results, 4)
+  const traits = parseTokenTraits(stringResult(results, 15, ''), role)
 
   return {
     tokenId,
@@ -949,7 +973,12 @@ async function readTokenState(
     payloadBytes: payloadByteLength(payloadHex),
     capacityBytes: Number(tokenId),
     colorMode: numberResult(results, 3, deterministicColorMode(tokenId, BigInt(VESSEL_START_BLOCK))),
-    role: nullableNumberResult(results, 4),
+    role,
+    roleLabel: traits.roleLabel,
+    axiom: traits.axiom,
+    relic: traits.relic,
+    relicKind: traits.relicKind,
+    machineName: traits.machineName,
     claimBlock: bigintResult(results, 5),
     entryCount,
     chosenEntry: numberResult(results, 7, 0),

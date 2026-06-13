@@ -36,6 +36,11 @@ const tokenSortColumns: Record<string, string> = {
   capacityBytes: 'capacity_bytes',
   colorMode: 'color_mode',
   role: 'role',
+  roleLabel: 'role_label',
+  axiom: 'axiom',
+  relic: 'relic',
+  relicKind: 'relic_kind',
+  machineName: 'machine_name',
   claimBlock: 'claim_block',
   entryCount: 'entry_count',
   chosenEntry: 'chosen_entry',
@@ -85,6 +90,11 @@ app.get('/tokens', async (c) => {
         capacity_bytes AS "capacityBytes",
         color_mode AS "colorMode",
         role,
+        role_label AS "roleLabel",
+        axiom,
+        relic,
+        relic_kind AS "relicKind",
+        machine_name AS "machineName",
         claim_block AS "claimBlock",
         entry_count AS "entryCount",
         chosen_entry AS "chosenEntry",
@@ -131,6 +141,11 @@ app.get('/tokens/:id{[0-9]+}', async (c) => {
       capacityBytes: row.capacity_bytes,
       colorMode: row.color_mode,
       role: row.role,
+      roleLabel: row.role_label,
+      axiom: row.axiom,
+      relic: row.relic,
+      relicKind: row.relic_kind,
+      machineName: row.machine_name,
       claimBlock: row.claim_block,
       entryCount: row.entry_count,
       chosenEntry: row.chosen_entry,
@@ -760,6 +775,8 @@ app.get('/stats', async (c) => {
         COUNT(*) FILTER (WHERE vessel_type = 'machine')::integer AS machines,
         COUNT(*) FILTER (WHERE vessel_type = 'vault')::integer AS vaults,
         COUNT(*) FILTER (WHERE vessel_type = 'capsule')::integer AS capsules,
+        COUNT(*) FILTER (WHERE axiom = true)::integer AS axioms,
+        COUNT(*) FILTER (WHERE relic = true)::integer AS relics,
         COALESCE(SUM(capacity_bytes) FILTER (WHERE claimed = true), 0)::integer AS "claimedCapacityBytes",
         COALESCE(SUM(payload_bytes), 0)::integer AS "filledBytes",
         COUNT(DISTINCT owner) FILTER (WHERE claimed = true AND owner IS NOT NULL)::integer AS "uniqueHolders"
@@ -867,6 +884,10 @@ function tokenFilters(c: { req: { query: (key: string) => string | undefined } }
   if (['capsule', 'vault', 'machine'].includes(type)) {
     conds.push(sql`vessel_type = ${type}`)
   }
+
+  const trait = c.req.query('trait') || 'all'
+  if (trait === 'axiom') conds.push(sql`axiom = true`)
+  if (trait === 'relic') conds.push(sql`relic = true`)
 
   const color = c.req.query('color') || 'all'
   if (/^[0-3]$/.test(color)) {
@@ -979,6 +1000,11 @@ function normalizeTokenRow(row: Row) {
     capacityBytes: Number(row.capacityBytes ?? row.id ?? 0),
     colorMode: row.colorMode == null ? null : Number(row.colorMode),
     role: row.role == null ? null : Number(row.role),
+    roleLabel: row.roleLabel ?? null,
+    axiom: Boolean(row.axiom),
+    relic: Boolean(row.relic),
+    relicKind: row.relicKind ?? null,
+    machineName: row.machineName ?? null,
     claimBlock: row.claimBlock == null ? null : Number(row.claimBlock),
     entryCount: row.entryCount == null ? null : Number(row.entryCount),
     chosenEntry: row.chosenEntry == null ? null : Number(row.chosenEntry),
