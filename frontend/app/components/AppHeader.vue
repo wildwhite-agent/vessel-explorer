@@ -49,6 +49,7 @@
       </div>
     </Tooltip>
     <div class="header-actions">
+      <NuxtLink to="/sequences" class="text-btn">[sequences]</NuxtLink>
       <NuxtLink to="/grid" class="text-btn">[grid]</NuxtLink>
       <NuxtLink to="/all" class="text-btn">[all]</NuxtLink>
       <button class="text-btn" @click="toggleDark">
