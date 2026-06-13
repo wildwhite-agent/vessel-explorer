@@ -205,6 +205,7 @@ import {
 import { EXPLORER_BASE } from '~/utils/vessel'
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+const SEQUENCE_MEDIA_VIEW_VERSION = '2'
 const route = useRoute()
 
 const id = computed(() => String(route.params.id || ''))
@@ -366,7 +367,7 @@ function sequenceImageUrl(token: SequenceToken) {
 function mediaAssetUrl(asset: SequenceMediaAsset) {
   if (!sequence.value) return asset.url
   const separator = asset.url.includes('?') ? '&' : '?'
-  return `${asset.url}${separator}v=${sequenceVersion(sequence.value)}`
+  return `${asset.url}${separator}v=${sequenceVersion(sequence.value)}&view=${SEQUENCE_MEDIA_VIEW_VERSION}`
 }
 
 function transferKey(transfer: SequenceTransfer) {

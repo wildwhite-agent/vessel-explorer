@@ -140,7 +140,20 @@ test('sequence list and detail pages expose artwork, holders, and history', asyn
   const sequenceFrame = page.locator('.sequence-art-wrap iframe.sequence-art')
   await expect(sequenceFrame).toBeVisible()
   await expect(sequenceFrame).toHaveAttribute('src', /\/api\/sequence-media\/7\/animation/)
+  await expect(sequenceFrame).toHaveAttribute('src', /view=2/)
   await expect(sequenceFrame).toHaveAttribute('sandbox', /allow-scripts/)
+  const playButtonOffset = await page
+    .frameLocator('.sequence-art-wrap iframe.sequence-art')
+    .locator('#audioPlay')
+    .evaluate((button) => {
+      const rect = button.getBoundingClientRect()
+      return {
+        x: Math.round((rect.left + rect.width / 2) - window.innerWidth / 2),
+        y: Math.round((rect.top + rect.height / 2) - window.innerHeight / 2),
+      }
+    })
+  expect(Math.abs(playButtonOffset.x)).toBeLessThanOrEqual(1)
+  expect(Math.abs(playButtonOffset.y)).toBeLessThanOrEqual(1)
   await expect(page.locator('.sequence-meta')).toContainText('artist')
   await expect(page.locator('.sequence-meta')).toContainText('minted')
   await expect(page.locator('.holder-row').nth(1)).toBeVisible()
@@ -154,6 +167,7 @@ test('sequence detail renders video media with native controls', async ({ page }
   const video = page.locator('.sequence-art-wrap video.sequence-art')
   await expect(video).toBeVisible()
   await expect(video).toHaveAttribute('src', /\/api\/sequence-media\/1\/animation/)
+  await expect(video).toHaveAttribute('src', /view=2/)
   await expect(video).toHaveAttribute('poster', /\/api\/sequence-media\/1\/image/)
 
   const controls = await video.evaluate((element) => (element as HTMLVideoElement).controls)
