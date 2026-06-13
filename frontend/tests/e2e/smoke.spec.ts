@@ -38,6 +38,42 @@ function mockActivityRows(action: string, pageNumber: number) {
   })
 }
 
+function traitToken(overrides: Record<string, unknown>) {
+  return {
+    id: 13,
+    claimed: true,
+    owner: '0xabc100000000000000000000000000000000def2',
+    type: 'Capsule',
+    filled: false,
+    payloadBytes: 0,
+    capacityBytes: 13,
+    colorMode: 0,
+    role: 0,
+    roleLabel: 'Undefined',
+    axiom: false,
+    relic: false,
+    relicKind: null,
+    machineName: null,
+    claimBlock: '24571088',
+    entryCount: 0,
+    chosenEntry: 0,
+    delegate: null,
+    machineAddress: null,
+    chosenMachine: null,
+    locked: false,
+    lockBlock: null,
+    isVault: false,
+    isMachine: false,
+    firstClaimedAt: '1780943435',
+    lastPayloadAt: null,
+    lastTransferAt: '1780943435',
+    updatedAt: '1780943435',
+    blockNumber: '25274501',
+    payloadHex: '0x',
+    ...overrides,
+  }
+}
+
 test('homepage defers secondary tab data and reuses header stats', async ({ page }) => {
   const apiRequests: string[] = []
   page.on('request', (request) => {
@@ -219,6 +255,91 @@ test('all token search resolves ENS before querying tokens', async ({ page }) =>
     search: address,
   }))).toBe(true)
   await expect(page.getByRole('link', { name: '#13' })).toBeVisible()
+})
+
+test('vessel trait UI shows axiom and relic metadata without profile card noise', async ({ page }) => {
+  const owner = '0xabc100000000000000000000000000000000def2'
+  const tokens = [
+    traitToken({
+      id: 13,
+      owner,
+      role: 1,
+      roleLabel: 'Navigator',
+      axiom: true,
+      machineAddress: '0xfeed00000000000000000000000000000000beef',
+      machineName: 'Entropy',
+    }),
+    traitToken({
+      id: 3,
+      owner,
+      role: 2,
+      roleLabel: 'Steward',
+      relic: true,
+      relicKind: 'Insignia',
+    }),
+  ]
+  const tokenRequests: string[] = []
+
+  await page.route(/\/api\/tokens\/13$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ...tokens[0], payloadHex: '0x' }),
+    })
+  })
+  await page.route(/\/api\/tokens\/13\/entries$/, async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rows: [] }) })
+  })
+  await page.route(/\/api\/tokens\/13\/writes(\?.*)?$/, async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rows: [], total: 0, page: 1, limit: 25 }) })
+  })
+  await page.route(/\/api\/tokens(\?.*)?$/, async (route) => {
+    const url = new URL(route.request().url())
+    tokenRequests.push(`${url.pathname}${url.search}`)
+    const trait = url.searchParams.get('trait')
+    const rows = trait === 'axiom'
+      ? tokens.filter((token) => token.axiom)
+      : trait === 'relic'
+        ? tokens.filter((token) => token.relic)
+        : tokens
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ rows, total: rows.length, page: 1, pageSize: 50, source: 'ponder' }),
+    })
+  })
+  await page.route(/\/api\/sequences\/balances(\?.*)?$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ rows: [], total: 0, page: 1, pageSize: 250, source: 'ponder' }),
+    })
+  })
+
+  await page.goto('/all')
+  await page.locator('.filter-field').filter({ hasText: 'trait' }).locator('select').selectOption('axiom')
+  await expect.poll(() => tokenRequests.some((path) => hasApiParams(path, '/api/tokens', { trait: 'axiom' }))).toBe(true)
+  await expect(page.getByRole('link', { name: '#13' })).toBeVisible()
+  await expect(page.locator('.vessel-table')).toContainText('[axiom]')
+  await expect(page.locator('.vessel-table')).toContainText('Navigator')
+  await expect(page.locator('.vessel-table')).toContainText('Entropy')
+
+  await page.goto('/13')
+  await expect(page.getByRole('heading', { name: /vessel #13/ })).toContainText('[axiom]')
+  await expect(page.locator('.vessel-meta')).toContainText('Navigator')
+  await expect(page.locator('.vessel-meta')).toContainText('Entropy')
+
+  await page.goto(`/address/${owner}`)
+  await expect(page.locator('.profile-stats')).toContainText('1 axiom')
+  await expect(page.locator('.profile-stats')).toContainText('1 relic')
+  await expect(page.locator('.vessel-card').first()).not.toContainText('Navigator')
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/all')
+  const overflow = await page.evaluate(() =>
+    document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )
+  expect(overflow).toBe(false)
 })
 
 test('heatmap renders useful contrast without the old date range caption', async ({ page }) => {
