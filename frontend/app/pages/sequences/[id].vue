@@ -33,11 +33,12 @@
             <div class="sequence-meta">
               <div class="meta-row">
                 <span class="meta-label">artist</span>
-                <span class="meta-value">{{ sequence.artist || 'unknown' }}</span>
-              </div>
-              <div v-if="sequence.artistAddress" class="meta-row">
-                <span class="meta-label">artist address</span>
-                <span class="meta-value"><AddressDisplay :address="sequence.artistAddress" /></span>
+                <span class="meta-value">
+                  {{ sequence.artist || 'unknown' }}
+                  <template v-if="sequence.artistAddress">
+                    (<AddressDisplay :address="sequence.artistAddress" />)
+                  </template>
+                </span>
               </div>
               <div class="meta-row">
                 <span class="meta-label">minted</span>
