@@ -25,9 +25,6 @@
           <div class="sequence-header">
             <h1 class="sequence-title">
               Sequence #{{ sequence.tokenId }}
-              <span :class="['sequence-lock', { locked: sequence.locked }]">
-                [{{ sequence.locked ? 'locked' : 'open' }}]
-              </span>
             </h1>
 
             <div class="sequence-meta">
@@ -369,16 +366,6 @@ function shortHash(hash: string) {
   font-size: 18px;
   font-weight: 700;
   margin: 0 0 1rem;
-}
-
-.sequence-lock {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-
-  &.locked {
-    color: var(--error);
-  }
 }
 
 .sequence-meta {

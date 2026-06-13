@@ -28,9 +28,6 @@
         >
           <div class="sequence-card-top">
             <span class="sequence-id">Sequence #{{ token.tokenId }}</span>
-            <span :class="['sequence-lock', { locked: token.locked }]">
-              {{ token.locked ? 'locked' : 'open' }}
-            </span>
           </div>
           <div class="sequence-image-wrap">
             <img
@@ -188,16 +185,6 @@ function formatInteger(value: string | bigint | null | undefined) {
   color: var(--accent);
   font-size: 13px;
   font-weight: 700;
-}
-
-.sequence-lock {
-  color: var(--muted);
-  font-size: 11px;
-  flex-shrink: 0;
-
-  &.locked {
-    color: var(--error);
-  }
 }
 
 .sequence-image-wrap {
