@@ -230,6 +230,7 @@ function goTo(path: string) {
   border-radius: 0;
   padding: 0.45rem 0.65rem;
   text-align: right;
+  text-transform: uppercase;
 }
 
 @media (max-width: 640px) {
