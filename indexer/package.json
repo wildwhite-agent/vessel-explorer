@@ -9,6 +9,7 @@
     "serve": "ponder serve",
     "backfill:sales": "node scripts/backfill-sales.mjs",
     "backfill:activity": "node scripts/backfill-vwu-sequence-activity.mjs",
+    "backfill:token-traits": "node scripts/backfill-token-traits.mjs",
     "db": "ponder db",
     "codegen": "ponder codegen",
     "typecheck": "tsc",

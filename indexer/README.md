@@ -13,6 +13,8 @@ capsules and vault entries can still be inspected.
   claim state
 - Current ownership, delegates, roles, machine addresses, chosen machines,
   vault entry counts, chosen entries, lock state, and payload size
+- Official `tokenURI` trait labels for roles, axioms, relics, relic kind, and
+  indexed machine names
 - Current payload bytes for capsules and vaults as `payload_hex`
 - Machine addresses are indexed, but live machine contract payloads/names are
   intentionally read by the frontend because they can change without
@@ -88,6 +90,28 @@ Leave `VESSEL_INDEXER_START_BLOCK` and `VESSEL_INDEXER_END_BLOCK` unset in
 production. Production must sync from the deployment block so seeded tokens,
 claim state, transfers, and historical writes are complete.
 
+## Backfills
+
+### Token Traits
+
+After deploying the schema with token trait columns, populate existing rows with
+official `tokenURI` metadata:
+
+```bash
+DATABASE_URL=postgresql://... \
+PONDER_RPC_URLS_1=https://... \
+pnpm backfill:token-traits
+```
+
+Useful options:
+
+- `--dry-run`: read and print parsed traits without updating Postgres
+- `--limit 25`: process a small batch
+- `--token-id 13`: inspect or update one token
+
+This backfill only updates rows in `tokens`. It does not insert activity rows,
+reset cursors, or touch Discord bot state.
+
 ## REST API
 
 All routes return JSON unless noted.
@@ -100,8 +124,9 @@ Query params:
 
 - `page`, `pageSize`
 - `sort`: `id`, `claimed`, `owner`, `type`, `filled`, `payloadBytes`,
-  `capacityBytes`, `colorMode`, `role`, `claimBlock`, `entryCount`,
-  `chosenEntry`, `delegate`, `machineAddress`, `chosenMachine`
+  `capacityBytes`, `colorMode`, `role`, `roleLabel`, `axiom`, `relic`,
+  `relicKind`, `machineName`, `claimBlock`, `entryCount`, `chosenEntry`,
+  `delegate`, `machineAddress`, `chosenMachine`
 - `dir`: `asc` or `desc`
 - `search`: token ID or owner address
 - `ids`: comma-separated token IDs, up to the current page-size limit
@@ -110,6 +135,7 @@ Query params:
 - `claim`: `all`, `claimed`, `unclaimed`
 - `filled`: `all`, `filled`, `empty`
 - `type`: `all`, `capsule`, `vault`, `machine`
+- `trait`: `all`, `axiom`, `relic`
 - `color`: `all`, `0`, `1`, `2`, `3`
 - `includePayload`: `true` to include `payloadHex`
 
@@ -128,7 +154,7 @@ Response shape:
 ### `GET /tokens/:id`
 
 Single token state, including current `payloadHex`, machine address, lock
-metadata, timestamps, and machine/vault flags.
+metadata, timestamps, trait labels, and machine/vault flags.
 
 ### `GET /tokens/:id/entries`
 
