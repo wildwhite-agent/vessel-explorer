@@ -101,9 +101,8 @@
                   class="sequence-thumb"
                   loading="lazy"
                 />
-	              </div>
-	              <div v-if="Number(sequence.balance) > 1" class="sequence-balance">x{{ sequence.balance }}</div>
-	            </NuxtLink>
+              </div>
+            </NuxtLink>
           </div>
         </template>
       </div>
@@ -421,22 +420,6 @@ watch(addr, async (newAddr) => {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-}
-
-.sequence-card {
-  position: relative;
-}
-
-.sequence-balance {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  color: var(--color);
-  background: var(--bg);
-  border: 1px solid var(--border-color);
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 4px;
 }
 
 .vessel-in-enter-active {

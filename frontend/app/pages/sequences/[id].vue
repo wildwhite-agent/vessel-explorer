@@ -433,10 +433,6 @@ function shortHash(hash: string) {
 }
 
 .sequence-hero {
-  display: grid;
-  grid-template-columns: minmax(220px, 360px) minmax(0, 1fr);
-  gap: 1.5rem;
-  align-items: start;
   margin-bottom: 1.5rem;
 }
 
@@ -495,6 +491,10 @@ function shortHash(hash: string) {
   color: var(--muted);
   font-size: 12px;
   text-align: center;
+}
+
+.sequence-header {
+  margin-top: 1rem;
 }
 
 .sequence-title {
@@ -688,15 +688,6 @@ function shortHash(hash: string) {
 }
 
 @media (max-width: 760px) {
-  .sequence-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .sequence-art-wrap {
-    max-width: 420px;
-    width: 100%;
-  }
-
   .history-meta-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
