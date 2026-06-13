@@ -464,7 +464,7 @@ function sequenceImageUrl(tx: VesselTransaction) {
     tx.hash,
     tx.amount || '0',
   ].join('-'))
-  return `/api/sequence-og/${id}?v=${version}`
+  return `/api/sequence-media/${id}/image?v=${version}`
 }
 
 function toggleFilter(action: string) {

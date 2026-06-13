@@ -72,7 +72,7 @@ function sequenceImageUrl(token: SequenceToken) {
     token.updatedAt || '0',
     token.minted || '0',
   ].join('-'))
-  return `/api/sequence-og/${token.tokenId}?v=${version}`
+  return `/api/sequence-media/${token.tokenId}/image?v=${version}`
 }
 </script>
 

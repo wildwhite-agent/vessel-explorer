@@ -259,7 +259,7 @@ function sequenceImageUrl(row: SequenceBalance) {
     row.token?.updatedAt || row.updatedAt || '0',
     row.balance,
   ].join('-'))
-  return `/api/sequence-og/${row.tokenId}?v=${version}`
+  return `/api/sequence-media/${row.tokenId}/image?v=${version}`
 }
 
 async function loadSequences(address: string) {
