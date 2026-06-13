@@ -32,12 +32,12 @@ export function buildDiscordPayload(
     if (!sequenceId) {
       throw new Error('cannot build Sequence payload without subjectId')
     }
-    const profileUrl = `${vesselBaseUrl}/address/${profileAddress(activity)}`
+    const sequenceUrl = `${vesselBaseUrl}/sequences/${sequenceId}`
     return {
       embeds: [
         {
           title: actionTitle(activity),
-          description: `${sequenceSentence(activities, names)}\n\n${profileUrl}`,
+          description: `${sequenceSentence(activities, names)}\n\n${sequenceUrl}`,
           url: evmNowTxUrl(activity.hash),
           image: {
             url: `${vesselBaseUrl}/api/sequence-og/${sequenceId}?v=${sequenceImageVersion(activities)}`,

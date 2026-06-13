@@ -68,7 +68,7 @@ test('builds Sequence mint embed with sequence image', () => {
   }), 'https://vessel.worldcomputer.art', 'collector.eth')
 
   assert.equal(payload.embeds[0]?.title, 'Sequence Mint')
-  assert.equal(payload.embeds[0]?.description, '**collector.eth** minted **1x Sequence #8**\n\nhttps://vessel.worldcomputer.art/address/0xabc100000000000000000000000000000000def2')
+  assert.equal(payload.embeds[0]?.description, '**collector.eth** minted **1x Sequence #8**\n\nhttps://vessel.worldcomputer.art/sequences/8')
   assert.equal(payload.embeds[0]?.image?.url, 'https://vessel.worldcomputer.art/api/sequence-og/8?v=25274501-0xhash-8%3A1')
 })
 
@@ -94,7 +94,7 @@ test('collapses Sequence batch mint copy', () => {
     }),
   ], 'https://vessel.worldcomputer.art', 'collector.eth')
 
-  assert.equal(payload.embeds[0]?.description, '**collector.eth** minted **6 Sequence editions** (#1, #2)\n\nhttps://vessel.worldcomputer.art/address/0xabc100000000000000000000000000000000def2')
+  assert.equal(payload.embeds[0]?.description, '**collector.eth** minted **6 Sequence editions** (#1, #2)\n\nhttps://vessel.worldcomputer.art/sequences/1')
   assert.equal(payload.embeds[0]?.image?.url, 'https://vessel.worldcomputer.art/api/sequence-og/1?v=25274501-0xhash-1%3A4%2C2%3A2')
 })
 
