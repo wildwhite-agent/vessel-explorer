@@ -41,15 +41,11 @@
               </div>
               <div class="meta-row">
                 <span class="meta-label">minted</span>
-                <span class="meta-value">{{ formatInteger(sequence.minted) }} / {{ formatInteger(sequence.maxSupply) }}</span>
+                <span class="meta-value">{{ formatInteger(sequence.minted) }}</span>
               </div>
               <div class="meta-row">
                 <span class="meta-label">holders</span>
                 <span class="meta-value">{{ holderTotal }}</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">price</span>
-                <span class="meta-value">{{ formatInteger(sequence.price) }} VWU</span>
               </div>
               <div class="meta-row">
                 <span class="meta-label">event range</span>

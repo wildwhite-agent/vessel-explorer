@@ -43,7 +43,7 @@
           <div class="sequence-meta">
             <div class="sequence-artist">{{ token.artist || 'unknown artist' }}</div>
             <div class="sequence-stats">
-              <span>{{ formatInteger(token.minted) }} / {{ formatInteger(token.maxSupply) }}</span>
+              <span>{{ formatInteger(token.minted) }} minted</span>
               <span v-if="holderCounts[token.tokenId] != null"> · {{ holderCounts[token.tokenId] }} holders</span>
             </div>
           </div>
