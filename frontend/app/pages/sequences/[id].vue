@@ -47,10 +47,6 @@
                 <span class="meta-label">holders</span>
                 <span class="meta-value">{{ holderTotal }}</span>
               </div>
-              <div class="meta-row">
-                <span class="meta-label">event range</span>
-                <span class="meta-value">{{ sequence.eventNumStart }} -> {{ sequence.eventNumEnd }}</span>
-              </div>
               <div v-if="sequence.renderer" class="meta-row">
                 <span class="meta-label">renderer</span>
                 <span class="meta-value"><AddressDisplay :address="sequence.renderer" external /></span>
