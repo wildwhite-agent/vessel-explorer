@@ -128,3 +128,61 @@ test('grid and all-token table load from the indexer proxy', async ({ page }) =>
   await expect(page.getByRole('heading', { name: 'all vessel tokens' })).toBeVisible()
   await expect(page.locator('.vessel-table tbody tr').first()).toBeVisible()
 })
+
+test('sequence list and detail pages expose artwork, holders, and history', async ({ page }) => {
+  await page.goto('/sequences')
+  await expect(page.getByRole('heading', { name: 'sequences' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Sequence #7/ })).toBeVisible()
+
+  await page.getByRole('link', { name: /Sequence #7/ }).click()
+  await expect(page).toHaveURL(/\/sequences\/7$/)
+  await expect(page.getByRole('heading', { name: /Sequence #7/ })).toBeVisible()
+  await expect(page.locator('.sequence-art')).toBeVisible()
+  await expect(page.locator('.sequence-meta')).toContainText('artist')
+  await expect(page.locator('.sequence-meta')).toContainText('minted')
+  await expect(page.locator('.holder-row').nth(1)).toBeVisible()
+  await expect(page.locator('.history-row').first()).toBeVisible()
+})
+
+test('sequence links from activity and address pages navigate to detail pages', async ({ page }) => {
+  await page.goto('/')
+  const sequenceActivityLink = page.locator('a.subject-preview-trigger').first()
+
+  for (let attempt = 0; attempt < 8; attempt++) {
+    if (await sequenceActivityLink.count()) break
+    await page.mouse.wheel(0, 1800)
+    await page.waitForTimeout(400)
+  }
+
+  await expect(sequenceActivityLink).toBeVisible()
+  await sequenceActivityLink.click()
+  await expect(page).toHaveURL(/\/sequences\/\d+$/)
+  await expect(page.locator('.sequence-art')).toBeVisible()
+
+  await page.goto('/address/0xfab22550fcd520a7eced27414cd74bc70a6ac1a9')
+  const sequenceCard = page.locator('a.sequence-card').first()
+  await expect(sequenceCard).toBeVisible()
+  await sequenceCard.click()
+  await expect(page).toHaveURL(/\/sequences\/7$/)
+})
+
+test('sequence detail fits mobile viewport', async ({ browser, baseURL }) => {
+  const context = await browser.newContext({
+    baseURL,
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  })
+  const page = await context.newPage()
+
+  await page.goto('/sequences/7')
+  await expect(page.getByRole('heading', { name: /Sequence #7/ })).toBeVisible()
+  await expect(page.locator('.sequence-art')).toBeVisible()
+
+  const overflow = await page.evaluate(() =>
+    document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )
+  expect(overflow).toBe(false)
+
+  await context.close()
+})

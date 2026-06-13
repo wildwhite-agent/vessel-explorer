@@ -1,4 +1,3 @@
-import { Resvg } from '@resvg/resvg-js'
 import type { H3Event } from 'h3'
 import { createPublicClient, http } from 'viem'
 import { mainnet } from 'viem/chains'
@@ -66,22 +65,15 @@ export default defineEventHandler(async (event) => {
   }
 
   const image = await loadBytes(imageUri)
-  const imageMime = sniffImageMime(image.bytes) || image.mime
-  const rendered = imageMime.includes('svg') || looksLikeSvg(image.bytes)
-    ? {
-        bytes: new Resvg(Buffer.from(image.bytes), {
-          fitTo: { mode: 'width', value: 1200 },
-        }).render().asPng(),
-        mime: 'image/png',
-      }
-    : { ...image, mime: imageMime }
+  const imageMime = sniffImageMime(image.bytes)
+    || (looksLikeSvg(image.bytes) ? 'image/svg+xml' : image.mime)
 
   setResponseHeaders(event, {
-    'Content-Type': rendered.mime,
+    'Content-Type': imageMime,
     'Cache-Control': 'public, max-age=3600',
   })
 
-  return rendered.bytes
+  return image.bytes
 })
 
 async function loadJson(uri: string) {
