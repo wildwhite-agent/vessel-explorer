@@ -128,6 +128,39 @@ test('homepage filtered activity keeps paginating selected event', async ({ page
   }))).toBe(true)
 })
 
+test('homepage search accepts ENS names', async ({ page }) => {
+  const address = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+
+  await page.route(/\/api\/ens\/vitalik\.eth$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ name: 'vitalik.eth', address }),
+    })
+  })
+  await page.route(/\/api\/tokens(\?.*)?$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ rows: [], total: 0, page: 1, pageSize: 250, source: 'ponder' }),
+    })
+  })
+  await page.route(/\/api\/sequences\/balances(\?.*)?$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ rows: [], total: 0, page: 1, pageSize: 250, source: 'ponder' }),
+    })
+  })
+
+  await page.goto('/')
+  await page.locator('.search-input').fill('vitalik.eth')
+  await page.getByRole('button', { name: '[go]' }).click()
+
+  await expect(page).toHaveURL(/\/address\/vitalik\.eth$/)
+  await expect(page.locator('.profile-address')).toHaveText(address)
+})
+
 test('heatmap renders useful contrast without the old date range caption', async ({ page }) => {
   await page.goto('/')
   await page.getByText('heatmap', { exact: true }).click()
@@ -342,4 +375,16 @@ test('sequence detail fits mobile viewport', async ({ browser, baseURL }) => {
   expect(overflow).toBe(false)
 
   await context.close()
+})
+
+test('sequence og endpoint returns rendered png media', async ({ request }) => {
+  for (const [id, minBytes] of [['2', 50_000], ['7', 5_000]] as const) {
+    const response = await request.get(`/api/sequence-og/${id}?v=e2e`)
+    expect(response.status()).toBe(200)
+    expect(response.headers()['content-type']).toContain('image/png')
+
+    const body = await response.body()
+    expect(body.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a')
+    expect(body.length).toBeGreaterThan(minBytes)
+  }
 })

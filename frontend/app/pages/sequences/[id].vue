@@ -361,7 +361,7 @@ function sequenceVersion(token: SequenceToken) {
 }
 
 function sequenceImageUrl(token: SequenceToken) {
-  return `/api/sequence-og/${token.tokenId}?v=${sequenceVersion(token)}`
+  return `/api/sequence-media/${token.tokenId}/image?v=${sequenceVersion(token)}`
 }
 
 function mediaAssetUrl(asset: SequenceMediaAsset) {

@@ -7,6 +7,7 @@ export default defineNitroPlugin((nitroApp) => {
     let title = 'vessel explorer'
     let description = 'explore THE_VESSEL on-chain storage protocol on ethereum'
     let image = ''
+    let imageType = ''
     let card = 'summary'
 
     // Vessel detail page: /<number>
@@ -16,6 +17,17 @@ export default defineNitroPlugin((nitroApp) => {
       title = `vessel #${id}`
       description = `vessel #${id} on THE_VESSEL — on-chain storage protocol on ethereum`
       image = `${origin}/api/og/${id}`
+      imageType = 'image/png'
+      card = 'summary_large_image'
+    }
+
+    // Sequence detail page: /sequences/<number>
+    const sequenceMatch = path.match(/^\/sequences\/(\d+)$/)
+    if (sequenceMatch) {
+      const id = sequenceMatch[1]
+      title = `Sequence #${id}`
+      description = `Sequence #${id} on THE_VESSEL`
+      image = `${origin}/api/sequence-og/${id}`
       card = 'summary_large_image'
     }
 
@@ -54,10 +66,12 @@ export default defineNitroPlugin((nitroApp) => {
     if (image) {
       tags.push(
         `<meta property="og:image" content="${image}" />`,
-        `<meta property="og:image:type" content="image/png" />`,
         `<meta name="twitter:card" content="${card}" />`,
         `<meta name="twitter:image" content="${image}" />`,
       )
+      if (imageType) {
+        tags.push(`<meta property="og:image:type" content="${imageType}" />`)
+      }
     } else {
       tags.push(`<meta name="twitter:card" content="${card}" />`)
     }

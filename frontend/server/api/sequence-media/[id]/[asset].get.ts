@@ -1,3 +1,5 @@
+import { gunzipSync } from 'node:zlib'
+
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const asset = getRouterParam(event, 'asset')
@@ -8,7 +10,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'invalid sequence asset' })
   }
 
-  let media = await loadSequenceMediaAsset(event, id, asset)
+  let media = normalizeCompressedHtmlScripts(await loadSequenceMediaAsset(event, id, asset))
   if (id === '7' && asset === 'animation' && media.mime === 'text/html') {
     media = patchSequence7AudioButton(media)
   }
@@ -20,6 +22,27 @@ export default defineEventHandler(async (event) => {
 
   return media.bytes
 })
+
+function normalizeCompressedHtmlScripts(media: { bytes: Uint8Array; mime: string }) {
+  if (media.mime !== 'text/html') return media
+
+  const html = new TextDecoder().decode(media.bytes)
+  const patched = html.replace(
+    /<script\b([^>]*)\btype=["']text\/javascript\+gzip["']([^>]*)\bsrc=["']data:text\/javascript;base64,([^"']+)["']([^>]*)><\/script>/gi,
+    (_match, beforeType: string, afterTypeBeforeSrc: string, encoded: string, afterSrc: string) => {
+      const script = gunzipSync(Buffer.from(encoded, 'base64'))
+      const src = Buffer.from(script).toString('base64')
+      return `<script${beforeType}${afterTypeBeforeSrc}${afterSrc} src="data:text/javascript;base64,${src}"></script>`
+    },
+  )
+
+  if (patched === html) return media
+
+  return {
+    bytes: new TextEncoder().encode(patched),
+    mime: media.mime,
+  }
+}
 
 function patchSequence7AudioButton(media: { bytes: Uint8Array; mime: string }) {
   const html = new TextDecoder().decode(media.bytes)

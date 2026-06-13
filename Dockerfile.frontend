@@ -12,10 +12,12 @@ ENV NITRO_PRESET=node-server
 RUN pnpm build
 
 FROM node:24-alpine AS production
+RUN apk add --no-cache ca-certificates chromium chromium-swiftshader freetype harfbuzz mesa-vulkan-swrast nss ttf-freefont vulkan-loader
 WORKDIR /app
 COPY --from=build /app/frontend/.output ./
 
 ENV HOST=0.0.0.0
 ENV PORT=3000
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 EXPOSE 3000
 CMD ["node", "/app/server/index.mjs"]
