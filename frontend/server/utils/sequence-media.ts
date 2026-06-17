@@ -56,11 +56,19 @@ export interface SequenceMediaAssetInfo {
   bytes: number | null
 }
 
+export interface SequenceTrait {
+  traitType: string
+  value: string
+  displayType: string
+}
+
 export interface SequenceMediaMetadata {
   name: string
   description: string
   imageUri: string
   animationUri: string
+  externalUrl: string
+  attributes: SequenceTrait[]
 }
 
 interface LoadedBytes {
@@ -122,6 +130,8 @@ export async function loadSequenceMetadata(event: H3Event, id: string) {
     description: stringValue(metadata.description),
     imageUri: stringValue(metadata.image) || stringValue(metadata.image_url),
     animationUri: stringValue(metadata.animation_url) || stringValue(metadata.animation),
+    externalUrl: stringValue(metadata.external_url) || stringValue(metadata.external_link),
+    attributes: normalizeAttributes(metadata.attributes),
   } satisfies SequenceMediaMetadata
 }
 
@@ -286,6 +296,30 @@ function normalizeUri(uri: string) {
 
 function stringValue(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : ''
+}
+
+// Renderers emit OpenSea-style `attributes`: an array of { trait_type, value }.
+// Keep entries that carry either a label or a value, coercing scalar values to
+// text so numeric/boolean traits survive.
+function normalizeAttributes(value: unknown): SequenceTrait[] {
+  if (!Array.isArray(value)) return []
+  const traits: SequenceTrait[] = []
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') continue
+    const row = entry as Record<string, unknown>
+    const traitType = stringValue(row.trait_type) || stringValue(row.traitType)
+    const displayType = stringValue(row.display_type) || stringValue(row.displayType)
+    const traitValue = traitValueText(row.value)
+    if (!traitType && !traitValue) continue
+    traits.push({ traitType, value: traitValue, displayType })
+  }
+  return traits
+}
+
+function traitValueText(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  return ''
 }
 
 function detectMime(asset: LoadedBytes) {

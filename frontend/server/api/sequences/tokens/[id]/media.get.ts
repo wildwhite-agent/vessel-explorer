@@ -19,6 +19,8 @@ export default defineEventHandler(async (event) => {
     tokenId: id,
     name: metadata.name,
     description: metadata.description,
+    externalUrl: metadata.externalUrl,
+    attributes: metadata.attributes,
     image,
     animation,
     preferred: animation || image,

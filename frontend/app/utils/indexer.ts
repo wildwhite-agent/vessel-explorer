@@ -117,10 +117,18 @@ export interface SequenceMediaAsset {
   bytes: number | null
 }
 
+export interface SequenceTrait {
+  traitType: string
+  value: string
+  displayType: string
+}
+
 export interface SequenceMedia {
   tokenId: string
   name: string
   description: string
+  externalUrl: string
+  attributes: SequenceTrait[]
   image: SequenceMediaAsset | null
   animation: SequenceMediaAsset | null
   preferred: SequenceMediaAsset | null
@@ -281,10 +289,26 @@ export async function fetchSequenceMedia(id: string | number) {
     tokenId: String(data?.tokenId ?? id),
     name: String(data?.name ?? ''),
     description: String(data?.description ?? ''),
+    externalUrl: String(data?.externalUrl ?? ''),
+    attributes: normalizeSequenceTraits(data?.attributes),
     image: normalizeSequenceMediaAsset(data?.image),
     animation: normalizeSequenceMediaAsset(data?.animation),
     preferred: normalizeSequenceMediaAsset(data?.preferred),
   } satisfies SequenceMedia
+}
+
+function normalizeSequenceTraits(value: any): SequenceTrait[] {
+  if (!Array.isArray(value)) return []
+  const traits: SequenceTrait[] = []
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') continue
+    const traitType = String(entry.traitType ?? entry.trait_type ?? '')
+    const traitValue = entry.value == null ? '' : String(entry.value)
+    const displayType = String(entry.displayType ?? entry.display_type ?? '')
+    if (!traitType && !traitValue) continue
+    traits.push({ traitType, value: traitValue, displayType })
+  }
+  return traits
 }
 
 export async function fetchSequenceBalancesForToken(tokenId: string | number, limit = 250) {
