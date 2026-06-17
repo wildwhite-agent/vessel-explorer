@@ -7,6 +7,7 @@ test('formats minimal activity sentences', () => {
   assert.equal(sentenceForActivity(activity({ action: 'claim', detail: 'claimed #728' })), '**0xabc1...def2** claimed **vault #2623**')
   assert.equal(sentenceForActivity(activity({ action: 'write', detail: 'wrote 2,623 bytes to #2623' })), '**0xabc1...def2** wrote 2,623 bytes on **vault #2623**')
   assert.equal(sentenceForActivity(activity({ action: 'write', entry: 3 })), '**0xabc1...def2** wrote 2,623 bytes to entry 3 on **vault #2623**')
+  assert.equal(sentenceForActivity(activity({ action: 'write', vesselId: '80', craftType: 'capsule', entry: 0, detail: 'wrote 80 bytes to entry 0 on #80' })), '**0xabc1...def2** wrote 80 bytes on **capsule #80**')
   assert.equal(sentenceForActivity(activity({ action: 'machine', detail: 'set machine on #5134', vesselId: '5134', craftType: 'machine' })), '**0xabc1...def2** configured **machine #5134**')
   assert.equal(sentenceForActivity(activity({ action: 'delegate', detail: 'delegated #2623' })), '**0xabc1...def2** set delegate on **vault #2623**')
   assert.equal(sentenceForActivity(activity({ action: 'setvaultentry', detail: 'set entry 3 on #2623' })), '**0xabc1...def2** set vault entry 3 on **vault #2623**')

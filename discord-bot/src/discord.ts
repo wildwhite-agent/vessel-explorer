@@ -169,7 +169,8 @@ function entryFragment(detail: string) {
 
 function writeFragment(activity: VesselActivity) {
   const bytes = Number(activity.detail.match(/[\d,]+(?= bytes)/)?.[0]?.replace(/,/g, '') || 0).toLocaleString()
-  const entry = activity.entry ?? activity.detail.match(/entry\s+(\d+)/i)?.[1] ?? null
+  const isVault = activity.craftType?.toLowerCase() === 'vault'
+  const entry = isVault ? activity.entry ?? activity.detail.match(/entry\s+(\d+)/i)?.[1] ?? null : null
   const entryText = entry === null ? '' : ` to entry ${entry}`
   return `wrote ${bytes} bytes${entryText}`
 }
