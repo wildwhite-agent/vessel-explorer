@@ -40,29 +40,22 @@ export default defineEventHandler(async (event) => {
 async function renderSequenceOgImage(event: Parameters<typeof loadSequenceMetadata>[0], id: string): Promise<SequenceOgImage> {
   const origin = internalRenderOrigin(event)
   const metadata = await loadSequenceMetadata(event, id)
-  const [image, animation] = await Promise.all([
-    metadata.imageUri
-      ? inspectSequenceMediaAsset(event, id, 'image', metadata.imageUri).catch(() => null)
-      : null,
-    metadata.animationUri
-      ? inspectSequenceMediaAsset(event, id, 'animation', metadata.animationUri).catch(() => null)
-      : null,
-  ])
-  const preferred = animation || image
+  const image = metadata.imageUri
+    ? await inspectSequenceMediaAsset(event, id, 'image', metadata.imageUri).catch(() => null)
+    : null
 
-  if (!preferred) {
-    throw createError({ statusCode: 404, message: 'sequence media unavailable' })
+  if (!image) {
+    throw createError({ statusCode: 404, message: 'sequence image unavailable' })
   }
 
-  const mediaUrl = absoluteMediaUrl(origin, preferred.url)
-  const posterUrl = image ? absoluteMediaUrl(origin, image.url) : ''
-  const bytes = preferred.kind === 'html'
+  const mediaUrl = absoluteMediaUrl(origin, image.url)
+  const bytes = image.kind === 'html'
     ? await screenshotUrl(mediaUrl, HTML_RENDER_SETTLE_MS)
     : await screenshotHtml(sequenceRenderHtml({
         title: metadata.name || `Sequence #${id}`,
-        media: preferred,
+        media: image,
         mediaUrl,
-        posterUrl,
+        posterUrl: mediaUrl,
       }))
 
   return {
