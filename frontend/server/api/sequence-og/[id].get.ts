@@ -116,7 +116,17 @@ function sequenceRenderHtml(options: {
     }
 
     img,
-    video,
+    video {
+      width: auto;
+      height: auto;
+      max-width: ${SOCIAL_IMAGE_WIDTH}px;
+      max-height: ${SOCIAL_IMAGE_HEIGHT}px;
+      border: 0;
+      display: block;
+      background: #000;
+      object-fit: contain;
+    }
+
     audio,
     iframe {
       width: 100%;
@@ -124,7 +134,6 @@ function sequenceRenderHtml(options: {
       border: 0;
       display: block;
       background: #000;
-      object-fit: contain;
     }
   </style>
 </head>
