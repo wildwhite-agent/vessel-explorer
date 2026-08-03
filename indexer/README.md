@@ -15,6 +15,9 @@ capsules and vault entries can still be inspected.
   vault entry counts, chosen entries, lock state, and payload size
 - Official `tokenURI` trait labels for roles, axioms, relics, relic kind, and
   indexed machine names
+- Axioms are additionally derived from capacity (capacity always equals the
+  token id, and an axiom is a perfect-square capacity), so unclaimed vessels —
+  which have no `tokenURI` metadata yet — still report and filter as axioms
 - Current payload bytes for capsules and vaults as `payload_hex`
 - Machine addresses are indexed, but live machine contract payloads/names are
   intentionally read by the frontend because they can change without
@@ -135,7 +138,9 @@ Query params:
 - `claim`: `all`, `claimed`, `unclaimed`
 - `filled`: `all`, `filled`, `empty`
 - `type`: `all`, `capsule`, `vault`, `machine`
-- `trait`: `all`, `axiom`, `relic`
+- `trait`: `all`, `axiom`, `relic`. `axiom` matches claimed and unclaimed
+  vessels because it is derived from capacity; `relic` only exists once a
+  vessel is claimed
 - `color`: `all`, `0`, `1`, `2`, `3`
 - `includePayload`: `true` to include `payloadHex`
 
@@ -313,8 +318,8 @@ Sequence ERC-1155 transfer history. Supports:
 ### `GET /stats`
 
 Indexer summary counts and activity type counts. Token stats include total,
-claimed, filled, machines, vaults, capsules, claimed capacity bytes, filled
-bytes, and unique holders. Work Unit stats include supply, decimals, contract
+claimed, filled, machines, vaults, capsules, axioms (all 100, claimed or not),
+relics, claimed capacity bytes, filled bytes, and unique holders. Work Unit stats include supply, decimals, contract
 addresses, and holder count. Sequence stats include token count, minted count,
 contract address, vessel address, and holder count.
 

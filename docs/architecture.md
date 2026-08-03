@@ -23,6 +23,12 @@ Read-only Nuxt SPA for exploring THE_VESSEL on-chain storage protocol. No wallet
 
 Type detection: `craftToType(tokenId)` returns `"Capsule"`, `"Vault"`, or `"Machine"`.
 
+## Traits
+
+**Relic** — read from the `tokenURI` metadata, so it is only known once a vessel is claimed.
+
+**Axiom** — deterministic. Capacity always equals the token id, and a vessel is an axiom when that capacity is a perfect square (`8100`, `10000`, …), i.e. its render grid is a full square. The indexer derives it in addition to reading the `tokenURI` attribute, so unclaimed vessels stay filterable via `trait=axiom` and machines whose machine contract reverts `tokenURI` do not silently lose the trait. There are 100 axioms in the collection.
+
 ## Key Contract Functions
 
 ```solidity

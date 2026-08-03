@@ -115,7 +115,7 @@
 
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
-import { renderToCanvas, type ColorMode } from '~/utils/vessel'
+import { isAxiomCapacity, renderToCanvas, type ColorMode } from '~/utils/vessel'
 import { bytesFromHex, fetchAllTokenRows, fetchSequenceBalancesForAddress, type SequenceBalance, type TokenRow } from '~/utils/indexer'
 import { resolveEnsName } from '~/utils/ens'
 import { parseVesselSearchQuery } from '~/utils/search'
@@ -213,7 +213,7 @@ function rowToVessel(row: TokenRow): OwnedVessel {
     loaded: true,
     type: row.type,
     colorMode: Number(row.colorMode || 0) as ColorMode,
-    axiom: Boolean(row.axiom),
+    axiom: Boolean(row.axiom) || isAxiomCapacity(Number(row.capacityBytes ?? row.id)),
     relic: Boolean(row.relic),
   }
 }

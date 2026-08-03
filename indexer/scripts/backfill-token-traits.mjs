@@ -101,6 +101,8 @@ async function processToken(row) {
     })
     const role = row.role == null ? null : Number(row.role)
     const traits = parseTokenTraits(tokenUri, role)
+    // capacity always equals the token id, so never clear a derived axiom
+    traits.axiom = traits.axiom || isAxiomCapacity(id)
 
     if (dryRun) {
       console.log(`#${id} role=${traits.roleLabel ?? '-'} axiom=${traits.axiom} relic=${traits.relic} relicKind=${traits.relicKind ?? '-'} machineName=${traits.machineName ?? '-'}`)
@@ -129,6 +131,13 @@ async function processToken(row) {
     failures++
     console.error(`failed #${id}`, error instanceof Error ? error.message : error)
   }
+}
+
+function isAxiomCapacity(capacityBytes) {
+  const capacity = Number(capacityBytes)
+  if (!Number.isSafeInteger(capacity) || capacity < 1) return false
+  const root = Math.round(Math.sqrt(capacity))
+  return root * root === capacity
 }
 
 function parseTokenTraits(tokenUri, role) {

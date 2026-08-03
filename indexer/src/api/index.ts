@@ -18,6 +18,8 @@ import schema, {
   workUnitTransfer,
 } from 'ponder:schema'
 
+import { isAxiomCapacity } from '../token-traits'
+
 const app = new Hono()
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -25,6 +27,12 @@ const MAX_PAGE_SIZE = 250
 const MAX_ACTIVITY_SIZE = 1000
 const MAX_WRITE_SIZE = 500
 const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
+
+// Axiom is deterministic from capacity (capacity always equals the token id):
+// a vessel is an axiom when its capacity is a perfect square. The stored column
+// only covers vessels whose tokenURI has been read, so derive the trait in SQL
+// to keep unclaimed vessels filterable and sortable.
+const AXIOM_CONDITION = `(axiom = true OR (capacity_bytes > 0 AND round(sqrt(capacity_bytes::double precision))::bigint * round(sqrt(capacity_bytes::double precision))::bigint = capacity_bytes))`
 
 const tokenSortColumns: Record<string, string> = {
   id: 'token_id',
@@ -37,7 +45,7 @@ const tokenSortColumns: Record<string, string> = {
   colorMode: 'color_mode',
   role: 'role',
   roleLabel: 'role_label',
-  axiom: 'axiom',
+  axiom: AXIOM_CONDITION,
   relic: 'relic',
   relicKind: 'relic_kind',
   machineName: 'machine_name',
@@ -810,7 +818,7 @@ app.get('/stats', async (c) => {
         COUNT(*) FILTER (WHERE vessel_type = 'machine')::integer AS machines,
         COUNT(*) FILTER (WHERE vessel_type = 'vault')::integer AS vaults,
         COUNT(*) FILTER (WHERE vessel_type = 'capsule')::integer AS capsules,
-        COUNT(*) FILTER (WHERE axiom = true)::integer AS axioms,
+        COUNT(*) FILTER (WHERE ${sql.raw(AXIOM_CONDITION)})::integer AS axioms,
         COUNT(*) FILTER (WHERE relic = true)::integer AS relics,
         COALESCE(SUM(capacity_bytes) FILTER (WHERE claimed = true), 0)::integer AS "claimedCapacityBytes",
         COALESCE(SUM(payload_bytes), 0)::integer AS "filledBytes",
@@ -921,7 +929,7 @@ function tokenFilters(c: { req: { query: (key: string) => string | undefined } }
   }
 
   const trait = c.req.query('trait') || 'all'
-  if (trait === 'axiom') conds.push(sql`axiom = true`)
+  if (trait === 'axiom') conds.push(sql.raw(AXIOM_CONDITION))
   if (trait === 'relic') conds.push(sql`relic = true`)
 
   const color = c.req.query('color') || 'all'
@@ -1063,6 +1071,8 @@ function orClause(conds: ReturnType<typeof sql>[]) {
 }
 
 function normalizeTokenRow(row: Row) {
+  const capacityBytes = Number(row.capacityBytes ?? row.id ?? 0)
+
   return {
     id: Number(row.id),
     claimed: Boolean(row.claimed),
@@ -1070,11 +1080,11 @@ function normalizeTokenRow(row: Row) {
     type: row.type ?? null,
     filled: Boolean(row.filled),
     payloadBytes: Number(row.payloadBytes ?? 0),
-    capacityBytes: Number(row.capacityBytes ?? row.id ?? 0),
+    capacityBytes,
     colorMode: row.colorMode == null ? null : Number(row.colorMode),
     role: row.role == null ? null : Number(row.role),
     roleLabel: row.roleLabel ?? null,
-    axiom: Boolean(row.axiom),
+    axiom: Boolean(row.axiom) || isAxiomCapacity(capacityBytes),
     relic: Boolean(row.relic),
     relicKind: row.relicKind ?? null,
     machineName: row.machineName ?? null,

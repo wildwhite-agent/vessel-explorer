@@ -20,6 +20,17 @@ export function roleLabelForRole(role: number | null | undefined) {
   return ROLE_LABELS[role] ?? null
 }
 
+// Axiom is deterministic: capacity always equals the token id, and the trait is
+// set when that capacity is a perfect square. Deriving it keeps unclaimed
+// vessels searchable, since tokenURI traits only exist once a vessel is claimed.
+export function isAxiomCapacity(capacityBytes: number | bigint | null | undefined) {
+  if (capacityBytes == null) return false
+  const capacity = Number(capacityBytes)
+  if (!Number.isSafeInteger(capacity) || capacity < 1) return false
+  const root = Math.round(Math.sqrt(capacity))
+  return root * root === capacity
+}
+
 export function parseTokenTraits(tokenUri: string | null | undefined, role: number | null | undefined): TokenTraits {
   const metadata = parseTokenMetadata(tokenUri)
   const attributes = Array.isArray(metadata?.attributes) ? metadata.attributes : []

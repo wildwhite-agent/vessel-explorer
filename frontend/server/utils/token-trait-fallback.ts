@@ -31,6 +31,16 @@ const ROLE_LABELS: Record<number, string> = {
 
 let tokenTraitsPromise: Promise<Map<number, TokenTrait>> | null = null
 
+// Axiom is deterministic: capacity always equals the token id, and a vessel is
+// an axiom when that capacity is a perfect square. Unclaimed vessels have no
+// tokenURI metadata, so the trait has to be derived rather than looked up.
+function isAxiomCapacity(capacityBytes: unknown) {
+  const capacity = Number(capacityBytes)
+  if (!Number.isSafeInteger(capacity) || capacity < 1) return false
+  const root = Math.round(Math.sqrt(capacity))
+  return root * root === capacity
+}
+
 export async function applyTokenTraitFallback(
   data: TokenPageResponse,
   query: Record<string, unknown>,
@@ -69,7 +79,9 @@ async function fallbackTraitPage(
   const pageSize = positiveInteger(query.pageSize, 50)
   const claim = stringValue(query.claim).toLowerCase()
 
-  if (claim === 'unclaimed') {
+  // Relics only exist once a vessel is claimed and its metadata is readable.
+  // Axioms are derived from capacity, so unclaimed vessels can still match.
+  if (trait !== 'axiom' && claim === 'unclaimed') {
     return {
       ...data,
       rows: [],
@@ -81,7 +93,7 @@ async function fallbackTraitPage(
 
   const candidateParams = new URLSearchParams(originalParams)
   candidateParams.delete('trait')
-  candidateParams.set('claim', 'claimed')
+  if (trait !== 'axiom') candidateParams.set('claim', 'claimed')
   candidateParams.set('pageSize', String(FALLBACK_PAGE_SIZE))
 
   const candidateRows: TokenRow[] = []
@@ -119,7 +131,9 @@ async function enrichTokenRows(rows: TokenRow[]) {
     return {
       ...row,
       roleLabel: row.roleLabel ?? trait?.roleLabel ?? roleLabelForRole(row.role),
-      axiom: row.axiom ?? trait?.axiom ?? false,
+      axiom: row.axiom === true
+        || trait?.axiom === true
+        || isAxiomCapacity(row.capacityBytes ?? row.id),
       relic: row.relic ?? trait?.relic ?? false,
       relicKind: row.relicKind ?? trait?.relicKind ?? null,
       machineName: row.machineName ?? trait?.machineName ?? null,

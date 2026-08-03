@@ -45,7 +45,7 @@ import {
   WORK_UNIT_START_BLOCK,
 } from '../ponder.config'
 import { findSeaportSaleForTransfer, type SeaportSaleMatch } from './seaport'
-import { parseTokenTraits } from './token-traits'
+import { isAxiomCapacity, parseTokenTraits } from './token-traits'
 
 type Address = `0x${string}`
 type PonderEvent = {
@@ -820,7 +820,7 @@ function seedTokenRow(id: number, blockEvent0: bigint, lockStart: bigint) {
     color_mode: colorMode,
     role: null,
     role_label: null,
-    axiom: false,
+    axiom: isAxiomCapacity(id),
     relic: false,
     relic_kind: null,
     machine_name: null,
@@ -975,7 +975,9 @@ async function readTokenState(
     colorMode: numberResult(results, 3, deterministicColorMode(tokenId, BigInt(VESSEL_START_BLOCK))),
     role,
     roleLabel: traits.roleLabel,
-    axiom: traits.axiom,
+    // tokenURI reverts for machines whose machine contract reverts, so fall
+    // back to the deterministic capacity rule instead of dropping the trait.
+    axiom: traits.axiom || isAxiomCapacity(tokenId),
     relic: traits.relic,
     relicKind: traits.relicKind,
     machineName: traits.machineName,

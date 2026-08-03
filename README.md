@@ -152,6 +152,13 @@ discord-bot/
 | Vault | Append-only, multiple entries |
 | Machine | Programmable, delegates rendering to an IMachine contract |
 
+## Vessel Traits
+
+| Trait | Description |
+|-------|-------------|
+| Axiom | Capacity is a perfect square (100 of them). Derived from the token id, so unclaimed axioms are filterable on `/all` before they are claimed |
+| Relic | Read from `tokenURI` metadata, known only after a claim |
+
 ## Renderer
 
 Grid dimensions: `cols = ceil(sqrt(tokenId))`, `rows = ceil(tokenId / cols)`. Mode 0 = grayscale: each byte maps to `rgb(v, v, v)`.

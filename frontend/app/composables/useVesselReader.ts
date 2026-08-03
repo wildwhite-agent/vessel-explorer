@@ -6,6 +6,7 @@ import {
 } from '~/utils/indexer'
 import { fetchLiveMachineState } from '~/utils/machine'
 import {
+  isAxiomCapacity,
   type VesselType,
   type ColorMode,
 } from '~/utils/vessel'
@@ -85,7 +86,7 @@ export function useVesselReader(tokenId: MaybeRefOrGetter<number | undefined>) {
         delegate: token.delegate,
         role: Number(token.role || 0),
         roleLabel: token.roleLabel,
-        axiom: Boolean(token.axiom),
+        axiom: Boolean(token.axiom) || isAxiomCapacity(Number(token.capacityBytes ?? token.id)),
         relic: Boolean(token.relic),
         relicKind: token.relicKind,
         colorMode: Number(token.colorMode || 0) as ColorMode,

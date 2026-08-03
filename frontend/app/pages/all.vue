@@ -153,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { colorModeName, type ColorMode } from '~/utils/vessel'
+import { colorModeName, isAxiomCapacity, type ColorMode } from '~/utils/vessel'
 import { fetchTokenPage, type TokenRow } from '~/utils/indexer'
 import { resolveEnsName } from '~/utils/ens'
 import { parseVesselSearchQuery } from '~/utils/search'
@@ -247,6 +247,8 @@ const emptyMessage = computed(() => {
 })
 
 function rowFromIndexer(row: TokenRow): VesselRow {
+  const capacityBytes = numberValue(row.capacityBytes) ?? Number(row.id)
+
   return {
     id: Number(row.id),
     claimed: typeof row.claimed === 'boolean' ? row.claimed : null,
@@ -255,11 +257,11 @@ function rowFromIndexer(row: TokenRow): VesselRow {
     type: row.type || null,
     filled: typeof row.filled === 'boolean' ? row.filled : null,
     payloadBytes: numberValue(row.payloadBytes),
-    capacityBytes: numberValue(row.capacityBytes) ?? Number(row.id),
+    capacityBytes,
     colorMode: numberValue(row.colorMode) as ColorMode | null,
     role: numberValue(row.role),
     roleLabel: row.roleLabel || null,
-    axiom: Boolean(row.axiom),
+    axiom: Boolean(row.axiom) || isAxiomCapacity(capacityBytes),
     relic: Boolean(row.relic),
     relicKind: row.relicKind || null,
     machineName: row.machineName || null,
