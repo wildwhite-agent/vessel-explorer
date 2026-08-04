@@ -98,6 +98,9 @@ async function processToken(row) {
       abi: VESSEL_ABI,
       functionName: 'tokenURI',
       args: [id],
+    }).catch((error) => {
+      console.warn(`tokenURI unavailable #${id}; applying deterministic traits only`, error instanceof Error ? error.message : error)
+      return null
     })
     const role = row.role == null ? null : Number(row.role)
     const traits = parseTokenTraits(tokenUri, role)
