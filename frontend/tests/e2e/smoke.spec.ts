@@ -342,6 +342,67 @@ test('vessel trait UI shows axiom and relic metadata without profile card noise'
   expect(overflow).toBe(false)
 })
 
+test('unclaimed axioms stay searchable before they are claimed', async ({ page }) => {
+  // capacity always equals the token id, so a perfect-square capacity is an
+  // axiom whether or not the vessel has been claimed yet
+  const unclaimedAxiomMachine = traitToken({
+    id: 4900,
+    claimed: false,
+    owner: null,
+    type: 'machine',
+    capacityBytes: 4900,
+    role: null,
+    roleLabel: null,
+    // an unclaimed vessel has no tokenURI metadata to read the trait from
+    axiom: false,
+    claimBlock: null,
+    firstClaimedAt: null,
+    lastTransferAt: null,
+    isMachine: true,
+  })
+  const claimedNonAxiom = traitToken({ id: 4901, capacityBytes: 4901 })
+  const tokenRequests: string[] = []
+
+  await page.route(/\/api\/tokens\/4900$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(unclaimedAxiomMachine),
+    })
+  })
+  await page.route(/\/api\/tokens\/4900\/(entries|writes)(\?.*)?$/, async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rows: [], total: 0, page: 1, limit: 25 }) })
+  })
+  await page.route(/\/api\/tokens(\?.*)?$/, async (route) => {
+    const url = new URL(route.request().url())
+    tokenRequests.push(`${url.pathname}${url.search}`)
+    const rows = url.searchParams.get('claim') === 'unclaimed'
+      ? [unclaimedAxiomMachine]
+      : [unclaimedAxiomMachine, claimedNonAxiom]
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ rows, total: rows.length, page: 1, pageSize: 50, source: 'ponder' }),
+    })
+  })
+
+  await page.goto('/all')
+  await page.locator('.filter-field').filter({ hasText: 'trait' }).locator('select').selectOption('axiom')
+  await page.locator('.filter-field').filter({ hasText: 'claimed' }).locator('select').selectOption('unclaimed')
+  await page.locator('.filter-field').filter({ hasText: 'type' }).locator('select').selectOption('machine')
+
+  await expect.poll(() => tokenRequests.some((path) => hasApiParams(path, '/api/tokens', {
+    trait: 'axiom',
+    claim: 'unclaimed',
+    type: 'machine',
+  }))).toBe(true)
+  await expect(page.getByRole('link', { name: '#4900' })).toBeVisible()
+  await expect(page.locator('.vessel-table')).toContainText('[axiom]')
+
+  await page.goto('/4900')
+  await expect(page.getByRole('heading', { name: /vessel #4900/ })).toContainText('[axiom]')
+})
+
 test('heatmap renders useful contrast without the old date range caption', async ({ page }) => {
   await page.goto('/')
   await page.getByText('heatmap', { exact: true }).click()

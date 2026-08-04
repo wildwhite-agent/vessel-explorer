@@ -79,6 +79,19 @@ export function getGridDimensions(tokenId: number): { cols: number; rows: number
   return { cols, rows }
 }
 
+/**
+ * Axioms are deterministic: capacity always equals the token id, and a vessel
+ * is an axiom when that capacity is a perfect square (a full square grid). The
+ * trait is therefore known before a claim mints the tokenURI metadata.
+ */
+export function isAxiomCapacity(capacityBytes: number | null | undefined): boolean {
+  if (capacityBytes == null) return false
+  const capacity = Number(capacityBytes)
+  if (!Number.isSafeInteger(capacity) || capacity < 1) return false
+  const root = Math.round(Math.sqrt(capacity))
+  return root * root === capacity
+}
+
 /** Render pixel data to a data URL */
 export function renderPixels(data: Uint8Array, tokenId: number, colorMode: ColorMode = 0): string {
   const { cols, rows } = getGridDimensions(tokenId)
