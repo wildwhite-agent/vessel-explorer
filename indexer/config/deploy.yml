@@ -17,6 +17,13 @@ servers:
     options:
       network: shared
 
+labels:
+  vvork.project: vessel-explorer
+  vvork.kind: worker
+  vvork.owner: personal
+  vvork.url: 'https://<%= ENV["INDEXER_HOST"] %>'
+  vvork.repo: https://github.com/wildwhite-agent/vessel-explorer
+
 proxy:
   ssl: true
   hosts:
@@ -70,6 +77,12 @@ accessories:
     port: '127.0.0.1:5470:5432'
     options:
       network: shared
+    labels:
+      vvork.project: vessel-explorer
+      vvork.kind: db
+      vvork.owner: personal
+      vvork.url: 'https://<%= ENV["INDEXER_HOST"] %>'
+      vvork.repo: https://github.com/wildwhite-agent/vessel-explorer
     env:
       clear:
         POSTGRES_DB: vessel

@@ -9,6 +9,13 @@ servers:
     options:
       network: shared
 
+labels:
+  vvork.project: vessel-explorer
+  vvork.kind: app
+  vvork.owner: personal
+  vvork.url: 'https://<%= ENV["APP_HOST"] %>'
+  vvork.repo: https://github.com/wildwhite-agent/vessel-explorer
+
 proxy:
   ssl: true
   hosts:

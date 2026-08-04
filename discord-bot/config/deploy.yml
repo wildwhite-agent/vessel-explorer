@@ -12,6 +12,13 @@ servers:
     options:
       network: shared
 
+labels:
+  vvork.project: vessel-explorer
+  vvork.kind: bot
+  vvork.owner: personal
+  vvork.url: '<%= ENV["VESSEL_BASE_URL"] || "https://vessel.worldcomputer.art" %>'
+  vvork.repo: https://github.com/wildwhite-agent/vessel-explorer
+
 registry:
   username: <%= ENV["DOCKER_REGISTRY_USERNAME"] %>
   password:

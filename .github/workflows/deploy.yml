@@ -1,0 +1,304 @@
+name: Deploy Vessel Explorer
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-vessel-explorer-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect deploy changes
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_frontend: ${{ steps.detect.outputs.deploy_frontend }}
+      deploy_indexer: ${{ steps.detect.outputs.deploy_indexer }}
+      deploy_discord_bot: ${{ steps.detect.outputs.deploy_discord_bot }}
+      reason: ${{ steps.detect.outputs.reason }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect deploy targets
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deploy_frontend=false
+          deploy_indexer=false
+          deploy_discord_bot=false
+          reasons=()
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            deploy_frontend=true
+            deploy_indexer=true
+            deploy_discord_bot=true
+            reasons+=("manual:all")
+          else
+            before="${{ github.event.before }}"
+            after="${{ github.sha }}"
+
+            if [[ -z "$before" || "$before" =~ ^0+$ ]] || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+              deploy_frontend=true
+              deploy_indexer=true
+              deploy_discord_bot=true
+              reasons+=("push:unknown-base")
+            else
+              mapfile -t changed_files < <(git diff --name-only "$before" "$after")
+
+              for file in "${changed_files[@]}"; do
+                case "$file" in
+                  frontend/*|Dockerfile.frontend)
+                    deploy_frontend=true
+                    reasons+=("frontend:$file")
+                    ;;
+                  indexer/*|Dockerfile.indexer)
+                    deploy_indexer=true
+                    reasons+=("indexer:$file")
+                    ;;
+                  discord-bot/*|Dockerfile.discord-bot)
+                    deploy_discord_bot=true
+                    reasons+=("discord-bot:$file")
+                    ;;
+                  .dockerignore)
+                    deploy_frontend=true
+                    deploy_indexer=true
+                    deploy_discord_bot=true
+                    reasons+=("shared:$file")
+                    ;;
+                esac
+              done
+            fi
+          fi
+
+          reason="$(IFS=,; echo "${reasons[*]:-no-deploy-changes}")"
+          {
+            echo "deploy_frontend=$deploy_frontend"
+            echo "deploy_indexer=$deploy_indexer"
+            echo "deploy_discord_bot=$deploy_discord_bot"
+            echo "reason=$reason"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Deploy frontend: $deploy_frontend"
+          echo "Deploy indexer: $deploy_indexer"
+          echo "Deploy Discord bot: $deploy_discord_bot"
+          echo "Reason: $reason"
+
+  deploy:
+    name: Deploy production services
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+    if: >-
+      needs.changes.outputs.deploy_frontend == 'true' ||
+      needs.changes.outputs.deploy_indexer == 'true' ||
+      needs.changes.outputs.deploy_discord_bot == 'true'
+    environment: production
+    timeout-minutes: 120
+    env:
+      DEPLOY_FRONTEND: ${{ needs.changes.outputs.deploy_frontend }}
+      DEPLOY_INDEXER: ${{ needs.changes.outputs.deploy_indexer }}
+      DEPLOY_DISCORD_BOT: ${{ needs.changes.outputs.deploy_discord_bot }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DOCKER_REGISTRY_USERNAME: ${{ vars.DOCKER_REGISTRY_USERNAME }}
+      APP_HOST: ${{ vars.APP_HOST }}
+      INDEXER_HOST: ${{ vars.INDEXER_HOST }}
+      INDEXER_ADDITIONAL_HOSTS: ${{ vars.INDEXER_ADDITIONAL_HOSTS }}
+      NUXT_INDEXER_URL: ${{ vars.NUXT_INDEXER_URL }}
+      NUXT_PUBLIC_MACHINE_RPC_URL: ${{ vars.NUXT_PUBLIC_MACHINE_RPC_URL || 'https://ethereum-rpc.publicnode.com' }}
+      NUXT_PUBLIC_EVM_CHAINS_MAINNET_RPCS: ${{ vars.NUXT_PUBLIC_EVM_CHAINS_MAINNET_RPCS || 'https://ethereum-rpc.publicnode.com' }}
+      PONDER_RPC_REQUESTS_PER_SECOND_1: ${{ vars.PONDER_RPC_REQUESTS_PER_SECOND_1 || '10' }}
+      PONDER_ETH_GET_LOGS_BLOCK_RANGE_1: ${{ vars.PONDER_ETH_GET_LOGS_BLOCK_RANGE_1 || '5000' }}
+      VESSEL_INDEXER_START_BLOCK: ${{ vars.VESSEL_INDEXER_START_BLOCK }}
+      VESSEL_INDEXER_END_BLOCK: ${{ vars.VESSEL_INDEXER_END_BLOCK }}
+      WORK_UNIT_INDEXER_START_BLOCK: ${{ vars.WORK_UNIT_INDEXER_START_BLOCK }}
+      WORK_UNIT_INDEXER_END_BLOCK: ${{ vars.WORK_UNIT_INDEXER_END_BLOCK }}
+      SEQUENCE_INDEXER_START_BLOCK: ${{ vars.SEQUENCE_INDEXER_START_BLOCK }}
+      SEQUENCE_INDEXER_END_BLOCK: ${{ vars.SEQUENCE_INDEXER_END_BLOCK }}
+      SEQUENCE_METADATA_REFRESH_INTERVAL_BLOCKS: ${{ vars.SEQUENCE_METADATA_REFRESH_INTERVAL_BLOCKS || '300' }}
+      SEQUENCE_TOKEN_SCAN_MAX_ID: ${{ vars.SEQUENCE_TOKEN_SCAN_MAX_ID || '512' }}
+      SEQUENCE_TOKEN_SCAN_EMPTY_GAP: ${{ vars.SEQUENCE_TOKEN_SCAN_EMPTY_GAP || '16' }}
+      DATABASE_SCHEMA: ''
+      PONDER_VIEWS_SCHEMA: ${{ vars.PONDER_VIEWS_SCHEMA }}
+      INDEXER_URL: ${{ vars.INDEXER_URL || 'https://indexer.vessel.worldcomputer.art' }}
+      VESSEL_BASE_URL: ${{ vars.VESSEL_BASE_URL || 'https://vessel.worldcomputer.art' }}
+      POLL_INTERVAL_MS: ${{ vars.POLL_INTERVAL_MS || '15000' }}
+      START_MODE: ${{ vars.START_MODE || 'latest' }}
+      STATE_FILE: ${{ vars.STATE_FILE || '/data/state.json' }}
+      EXCLUDED_EVENT_TYPES: ${{ vars.EXCLUDED_EVENT_TYPES || 'transfer,metadata' }}
+      SEND_LATEST_ON_START: ${{ vars.SEND_LATEST_ON_START || 'false' }}
+      DAILY_SUMMARY_ENABLED: ${{ vars.DAILY_SUMMARY_ENABLED || 'true' }}
+      DAILY_SUMMARY_TIMEZONE: ${{ vars.DAILY_SUMMARY_TIMEZONE || 'America/New_York' }}
+      DAILY_SUMMARY_HOUR: ${{ vars.DAILY_SUMMARY_HOUR || '15' }}
+      DAILY_SUMMARY_MINUTE: ${{ vars.DAILY_SUMMARY_MINUTE || '0' }}
+      DAILY_SUMMARY_WINDOW_HOURS: ${{ vars.DAILY_SUMMARY_WINDOW_HOURS || '24' }}
+      DAILY_SUMMARY_SEND_LATEST_ON_START: ${{ vars.DAILY_SUMMARY_SEND_LATEST_ON_START || 'false' }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+      PONDER_RPC_URLS_1: ${{ secrets.PONDER_RPC_URLS_1 }}
+      PONDER_RPC_FALLBACK_URLS_1: ${{ secrets.PONDER_RPC_FALLBACK_URLS_1 }}
+      PONDER_WS_URL_1: ${{ secrets.PONDER_WS_URL_1 }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Mask deploy secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in \
+            SSH_PRIVATE_KEY \
+            KAMAL_REGISTRY_PASSWORD \
+            PONDER_RPC_URLS_1 \
+            PONDER_RPC_FALLBACK_URLS_1 \
+            PONDER_WS_URL_1 \
+            DATABASE_URL \
+            POSTGRES_PASSWORD \
+            DISCORD_WEBHOOK_URL
+          do
+            value="${!name:-}"
+            if [[ -n "$value" ]]; then
+              while IFS= read -r line; do
+                if [[ -n "$line" ]]; then
+                  echo "::add-mask::$line"
+                fi
+              done <<< "$value"
+
+              for part in $value; do
+                echo "::add-mask::$part"
+              done
+            fi
+          done
+
+      - name: Validate deploy environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            DEPLOY_HOST
+            DOCKER_REGISTRY_USERNAME
+            SSH_PRIVATE_KEY
+            KAMAL_REGISTRY_PASSWORD
+          )
+
+          if [[ "$DEPLOY_FRONTEND" == "true" ]]; then
+            required+=(APP_HOST NUXT_INDEXER_URL)
+          fi
+
+          if [[ "$DEPLOY_INDEXER" == "true" ]]; then
+            required+=(
+              INDEXER_HOST
+              PONDER_VIEWS_SCHEMA
+              PONDER_RPC_URLS_1
+              DATABASE_URL
+              POSTGRES_PASSWORD
+            )
+          fi
+
+          if [[ "$DEPLOY_DISCORD_BOT" == "true" ]]; then
+            required+=(DISCORD_WEBHOOK_URL)
+          fi
+
+          missing=()
+          for name in "${required[@]}"; do
+            if [[ -z "${!name:-}" ]]; then
+              missing+=("$name")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required production env values: %s\n' "${missing[*]}" >&2
+            exit 78
+          fi
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          scan="$(ssh-keyscan -t ed25519 "$DEPLOY_HOST" 2>/dev/null)"
+          fingerprint="$(printf '%s\n' "$scan" | ssh-keygen -lf - -E sha256 | awk '{print $2}')"
+          expected="SHA256:9cDQ7QtAMCDGaj24JDxIaAyMUf5YMLh36jz8hjfwmNk"
+
+          if [[ "$fingerprint" != "$expected" ]]; then
+            echo "Unexpected ED25519 host fingerprint for $DEPLOY_HOST: $fingerprint" >&2
+            exit 68
+          fi
+
+          printf '%s\n' "$scan" > ~/.ssh/known_hosts
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: false
+
+      - name: Install Kamal
+        run: gem install kamal -v 2.12.0 --no-document
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Render indexer Kamal config
+        if: env.DEPLOY_INDEXER == 'true'
+        working-directory: indexer
+        run: kamal config > "$RUNNER_TEMP/indexer-kamal.yml"
+
+      - name: Deploy indexer
+        if: env.DEPLOY_INDEXER == 'true'
+        working-directory: indexer
+        run: kamal deploy
+
+      - name: Verify indexer
+        if: env.DEPLOY_INDEXER == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30 "https://${INDEXER_HOST}/ready" --output /dev/null
+          curl --fail --silent --show-error --max-time 30 "https://${INDEXER_HOST}/stats" --output /dev/null
+
+      - name: Render frontend Kamal config
+        if: env.DEPLOY_FRONTEND == 'true'
+        working-directory: frontend
+        run: kamal config > "$RUNNER_TEMP/frontend-kamal.yml"
+
+      - name: Deploy frontend
+        if: env.DEPLOY_FRONTEND == 'true'
+        working-directory: frontend
+        run: kamal deploy
+
+      - name: Verify frontend
+        if: env.DEPLOY_FRONTEND == 'true'
+        run: curl --fail --silent --show-error --max-time 30 "https://${APP_HOST}/" --output /dev/null
+
+      - name: Render Discord bot Kamal config
+        if: env.DEPLOY_DISCORD_BOT == 'true'
+        working-directory: discord-bot
+        run: kamal config > "$RUNNER_TEMP/discord-bot-kamal.yml"
+
+      - name: Deploy Discord bot
+        if: env.DEPLOY_DISCORD_BOT == 'true'
+        working-directory: discord-bot
+        run: kamal deploy
+
+      - name: Verify Discord bot
+        if: env.DEPLOY_DISCORD_BOT == 'true'
+        working-directory: discord-bot
+        run: kamal app details
