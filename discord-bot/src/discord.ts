@@ -1,4 +1,4 @@
-import type { VesselActivity } from './types.js'
+import type { UpcomingAnnouncement, VesselActivity } from './types.js'
 
 export interface ActivityDisplayNames {
   actor?: string
@@ -10,7 +10,7 @@ export interface DiscordEmbedPayload {
     title: string
     description?: string
     url?: string
-    fields?: Array<{ name: string, value: string }>
+    fields?: Array<{ name: string, value: string, inline?: boolean }>
     image?: { url: string }
   }>
 }
@@ -100,6 +100,31 @@ export async function sendWithRetry(
     }
   }
   throw lastError
+}
+
+export function buildUpcomingProjectPayload(
+  announcement: UpcomingAnnouncement,
+  visualizerBaseUrl: string,
+): DiscordEmbedPayload {
+  const url = visualizerAbsoluteUrl(visualizerBaseUrl, announcement.exploreUrl)
+  return {
+    embeds: [
+      {
+        title: announcement.title,
+        url,
+        fields: [
+          { name: 'Date', value: announcement.date, inline: true },
+          { name: 'Artist', value: announcement.artist, inline: true },
+        ],
+      },
+    ],
+  }
+}
+
+export function visualizerAbsoluteUrl(baseUrl: string, exploreUrl: string) {
+  if (/^https?:\/\//i.test(exploreUrl)) return exploreUrl
+  const path = exploreUrl.startsWith('/') ? exploreUrl : `/${exploreUrl}`
+  return `${baseUrl.replace(/\/+$/, '')}${path}`
 }
 
 export function sentenceForActivity(

@@ -2,8 +2,12 @@ export type StartMode = 'latest' | 'backfill'
 
 export interface Config {
   discordWebhookUrl: string
+  discordProjectWebhookUrl: string
   indexerUrl: string
   vesselBaseUrl: string
+  visualizerBaseUrl: string
+  convexUrl: string
+  convexUpcomingQuery: string
   ethRpcUrl: string
   pollIntervalMs: number
   startMode: StartMode
@@ -21,6 +25,9 @@ export interface Config {
 
 const DEFAULT_INDEXER_URL = 'https://indexer.vessel.worldcomputer.art'
 const DEFAULT_VESSEL_BASE_URL = 'https://vessel.worldcomputer.art'
+const DEFAULT_VISUALIZER_BASE_URL = 'https://visualizer.thevessel.fun'
+const DEFAULT_CONVEX_URL = 'https://festive-hummingbird-510.convex.cloud'
+const DEFAULT_CONVEX_UPCOMING_QUERY = 'upcoming:listAnnouncements'
 const DEFAULT_ETH_RPC_URL = 'https://ethereum-rpc.publicnode.com'
 const DEFAULT_POLL_INTERVAL_MS = 15_000
 const DEFAULT_STATE_FILE = '/data/state.json'
@@ -44,8 +51,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
 
   return {
     discordWebhookUrl,
+    discordProjectWebhookUrl: stringEnv(env, 'DISCORD_PROJECT_WEBHOOK_URL'),
     indexerUrl: trimTrailingSlash(env.INDEXER_URL || DEFAULT_INDEXER_URL),
     vesselBaseUrl: trimTrailingSlash(env.VESSEL_BASE_URL || DEFAULT_VESSEL_BASE_URL),
+    visualizerBaseUrl: trimTrailingSlash(env.VISUALIZER_BASE_URL || DEFAULT_VISUALIZER_BASE_URL),
+    convexUrl: trimTrailingSlash(env.CONVEX_URL || DEFAULT_CONVEX_URL),
+    convexUpcomingQuery: env.CONVEX_UPCOMING_QUERY?.trim() || DEFAULT_CONVEX_UPCOMING_QUERY,
     ethRpcUrl: env.ETH_RPC_URL || DEFAULT_ETH_RPC_URL,
     pollIntervalMs: positiveIntegerEnv(env, 'POLL_INTERVAL_MS', DEFAULT_POLL_INTERVAL_MS),
     startMode,
@@ -118,4 +129,8 @@ function dateEnv(env: NodeJS.ProcessEnv, key: string, fallback: string) {
 
 function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, '')
+}
+
+export function isUpcomingPollerEnabled(config: Config) {
+  return Boolean(config.convexUrl && config.discordProjectWebhookUrl)
 }

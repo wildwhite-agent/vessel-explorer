@@ -7,11 +7,15 @@ export async function readState(path: string): Promise<BotState> {
     const raw = await readFile(path, 'utf8')
     const parsed = JSON.parse(raw) as Partial<BotState>
     const sentActivityKeys = normalizeSentActivityKeys(parsed.sentActivityKeys)
+    const upcomingSeenKeys = normalizeSentActivityKeys(parsed.upcomingSeenKeys)
     return {
       cursor: normalizeCursor(parsed.cursor),
       lastSummaryWindowEnd: normalizeSummaryWindowEnd(parsed.lastSummaryWindowEnd),
       lastForcedSummaryWindowEnd: normalizeSummaryWindowEnd(parsed.lastForcedSummaryWindowEnd),
       ...(sentActivityKeys ? { sentActivityKeys } : {}),
+      ...(Object.prototype.hasOwnProperty.call(parsed, 'upcomingSeenKeys')
+        ? { upcomingSeenKeys: upcomingSeenKeys ?? [] }
+        : {}),
     }
   } catch (error) {
     if (isNotFound(error)) {
