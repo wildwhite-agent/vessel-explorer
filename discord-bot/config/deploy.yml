@@ -33,6 +33,9 @@ env:
   clear:
     INDEXER_URL: '<%= ENV["INDEXER_URL"] || "https://indexer.vessel.worldcomputer.art" %>'
     VESSEL_BASE_URL: '<%= ENV["VESSEL_BASE_URL"] || "https://vessel.worldcomputer.art" %>'
+    VISUALIZER_BASE_URL: '<%= ENV["VISUALIZER_BASE_URL"] || "https://visualizer.thevessel.fun" %>'
+    CONVEX_URL: '<%= ENV["CONVEX_URL"] || "https://festive-hummingbird-510.convex.cloud" %>'
+    CONVEX_UPCOMING_QUERY: '<%= ENV["CONVEX_UPCOMING_QUERY"] || "upcoming:listAnnouncements" %>'
     ETH_RPC_URL: '<%= ENV["ETH_RPC_URL"] || "https://ethereum-rpc.publicnode.com" %>'
     POLL_INTERVAL_MS: '<%= ENV["POLL_INTERVAL_MS"] || "15000" %>'
     START_MODE: '<%= ENV["START_MODE"] || "latest" %>'
@@ -48,6 +51,7 @@ env:
     DAILY_SUMMARY_SEND_LATEST_ON_START: '<%= ENV["DAILY_SUMMARY_SEND_LATEST_ON_START"] || "false" %>'
   secret:
     - DISCORD_WEBHOOK_URL
+    - DISCORD_PROJECT_WEBHOOK_URL
 
 volumes:
   - /home/deploy/vessel-discord-bot/data:/data

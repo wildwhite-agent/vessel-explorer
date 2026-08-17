@@ -81,6 +81,16 @@ export interface BotState {
   lastSummaryWindowEnd: number | null
   lastForcedSummaryWindowEnd: number | null
   sentActivityKeys?: string[]
+  upcomingAfterCreatedAt?: number
+}
+
+export interface UpcomingAnnouncement {
+  id: string
+  title: string
+  date: string
+  artist: string
+  exploreUrl: string
+  creationTime: number | null
 }
 
 export interface ProtocolStats {

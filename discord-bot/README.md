@@ -2,7 +2,7 @@
 
 Polls the Vessel indexer activity feed and posts new vessel interactions to a
 Discord webhook. It also posts a once-daily protocol summary at 3:00 PM New
-York time.
+York time, and can poll Convex for new visualizer projects.
 
 The activity bot skips `transfer` and `metadata` events by default, skips rows
 without a vessel id, and posts one embed per included activity row. Sales are
@@ -103,10 +103,17 @@ them back off before normal redeploys.
 
 - `DISCORD_WEBHOOK_URL`
 
+## Optional Env
+
+- `DISCORD_PROJECT_WEBHOOK_URL` — visualizer project announcements
+
 ## Defaults
 
 - `INDEXER_URL=https://indexer.vessel.worldcomputer.art`
 - `VESSEL_BASE_URL=https://vessel.worldcomputer.art`
+- `VISUALIZER_BASE_URL=https://visualizer.thevessel.fun`
+- `CONVEX_URL=https://festive-hummingbird-510.convex.cloud`
+- `CONVEX_UPCOMING_QUERY=upcoming:listAnnouncements`
 - `ETH_RPC_URL=https://ethereum-rpc.publicnode.com`
 - `POLL_INTERVAL_MS=15000`
 - `START_MODE=latest`
@@ -127,3 +134,27 @@ Cursor state is stored in `STATE_FILE`, defaulting to `/data/state.json`.
 Kamal mounts persistent state at `/home/deploy/vessel-discord-bot/data:/data`.
 
 The bot only advances its cursor after the Discord webhook send succeeds.
+
+## Visualizer announcements
+
+When `DISCORD_PROJECT_WEBHOOK_URL` is set, the same poll loop also queries Convex
+`upcoming:listAnnouncements` with a persisted `afterCreatedAt` watermark and posts
+new visualizer projects to that webhook (channel `1538952605789855844`). Activity
+and daily summary keep using `DISCORD_WEBHOOK_URL`.
+
+Each visualizer embed is:
+
+- Title: project `title` (links to `VISUALIZER_BASE_URL` + `exploreUrl`)
+- Date: `date` (`YYYY-MM-DD` or `TBD`)
+- Artist: `artist`
+
+On first boot the bot persists `upcomingAfterCreatedAt` as `Date.now()` and polls
+`{ afterCreatedAt }` — never `0` and never without the argument. Existing dashboard
+projects stay quiet until a new one is added. After a successful post, the
+watermark becomes the max `createdAt` from that page. Only `status === "success"`
+with an array is handled.
+
+Leave `DISCORD_PROJECT_WEBHOOK_URL` empty to disable this poller.
+
+Create the incoming webhook in the visualizer Discord channel and treat the URL
+as a secret. Do not reuse the activity webhook.

@@ -1,13 +1,15 @@
 import { pathToFileURL } from 'node:url'
-import { loadConfig } from './config.js'
+import { isUpcomingPollerEnabled, loadConfig } from './config.js'
 import { processActivities, type ActivityNotification } from './bot.js'
-import { buildDiscordPayload, sendWithRetry } from './discord.js'
+import { fetchUpcomingAnnouncements } from './convex.js'
+import { buildDiscordPayload, buildUpcomingProjectPayload, sendWithRetry } from './discord.js'
 import { createEnsResolver, type EnsResolver } from './ens.js'
 import { fetchActivity, fetchAllActivity, fetchStats } from './indexer.js'
 import { readState, writeState } from './state.js'
 import { processDailySummary } from './summary.js'
+import { ensureUpcomingWatermark, processUpcomingAnnouncements, upcomingWatermark } from './upcoming.js'
 import type { Config } from './config.js'
-import type { BotState, VesselActivity } from './types.js'
+import type { BotState, UpcomingAnnouncement } from './types.js'
 
 let config: Config | null = null
 let ensResolver: EnsResolver | null = null
@@ -38,6 +40,11 @@ async function run() {
       console.error('poll failed', error)
     }
     try {
+      state = await pollUpcomingOnce(state)
+    } catch (error) {
+      console.error('upcoming project poll failed', error)
+    }
+    try {
       state = await summarizeOnce(state)
     } catch (error) {
       console.error('daily summary failed', error)
@@ -63,6 +70,26 @@ export async function pollOnce(state: BotState): Promise<BotState> {
     sendLatestOnStartPending = false
   }
   return nextState
+}
+
+export async function pollUpcomingOnce(state: BotState): Promise<BotState> {
+  const activeConfig = getConfig()
+  if (!isUpcomingPollerEnabled(activeConfig)) return state
+
+  const save = (nextState: BotState) => writeState(activeConfig.stateFile, nextState)
+  const watermarked = await ensureUpcomingWatermark(state, save)
+  const afterCreatedAt = upcomingWatermark(watermarked)
+  if (afterCreatedAt == null) return watermarked
+
+  const announcements = await fetchUpcomingAnnouncements(
+    activeConfig.convexUrl,
+    activeConfig.convexUpcomingQuery,
+    afterCreatedAt,
+  )
+  return await processUpcomingAnnouncements(watermarked, announcements, {
+    send: sendUpcomingProject,
+    save,
+  })
 }
 
 export async function summarizeOnce(state: BotState): Promise<BotState> {
@@ -118,6 +145,13 @@ async function sendActivity(activities: ActivityNotification) {
   const subject = activity.vesselId ?? activity.subjectId ?? ''
   const count = activities.length > 1 ? ` (${activities.length} rows)` : ''
   console.log(`sent ${activity.action} #${subject} ${activity.hash}${count}`)
+}
+
+async function sendUpcomingProject(announcement: UpcomingAnnouncement) {
+  const activeConfig = getConfig()
+  const payload = buildUpcomingProjectPayload(announcement, activeConfig.visualizerBaseUrl)
+  await sendWithRetry(activeConfig.discordProjectWebhookUrl, payload)
+  console.log(`sent upcoming project ${announcement.title}`)
 }
 
 function getConfig() {
