@@ -138,9 +138,9 @@ The bot only advances its cursor after the Discord webhook send succeeds.
 ## Visualizer announcements
 
 When `DISCORD_PROJECT_WEBHOOK_URL` is set, the same poll loop also queries Convex
-`upcoming:listAnnouncements` and posts new visualizer projects to that webhook
-(channel `1538952605789855844`). Activity and daily summary keep using
-`DISCORD_WEBHOOK_URL`.
+`upcoming:listAnnouncements` with a persisted `afterCreatedAt` watermark and posts
+new visualizer projects to that webhook (channel `1538952605789855844`). Activity
+and daily summary keep using `DISCORD_WEBHOOK_URL`.
 
 Each visualizer embed is:
 
@@ -148,8 +148,13 @@ Each visualizer embed is:
 - Date: `date` (`YYYY-MM-DD` or `TBD`)
 - Artist: `artist`
 
-On first boot with `START_MODE=latest`, existing projects are recorded and not
-posted. Leave `DISCORD_PROJECT_WEBHOOK_URL` empty to disable this poller.
+On first boot the bot persists `upcomingAfterCreatedAt` as `Date.now()` and polls
+`{ afterCreatedAt }` — never `0` and never without the argument. Existing dashboard
+projects stay quiet until a new one is added. After a successful post, the
+watermark becomes the max `createdAt` from that page. Only `status === "success"`
+with an array is handled.
+
+Leave `DISCORD_PROJECT_WEBHOOK_URL` empty to disable this poller.
 
 Create the incoming webhook in the visualizer Discord channel and treat the URL
 as a secret. Do not reuse the activity webhook.

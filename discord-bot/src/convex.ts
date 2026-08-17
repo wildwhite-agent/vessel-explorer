@@ -9,13 +9,18 @@ interface ConvexQueryResponse {
 export async function fetchUpcomingAnnouncements(
   convexUrl: string,
   queryPath: string,
+  afterCreatedAt: number,
 ): Promise<UpcomingAnnouncement[]> {
+  if (!Number.isFinite(afterCreatedAt) || afterCreatedAt <= 0) {
+    throw new Error('afterCreatedAt must be a positive timestamp; refusing to poll from 0')
+  }
+
   const response = await fetch(`${trimTrailingSlash(convexUrl)}/api/query`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       path: queryPath,
-      args: {},
+      args: { afterCreatedAt },
       format: 'json',
     }),
   })
@@ -32,11 +37,14 @@ export async function fetchUpcomingAnnouncements(
     throw new Error(`Convex query returned invalid JSON: ${body.slice(0, 200)}`)
   }
 
-  if (parsed.status === 'error' || parsed.errorMessage) {
-    throw new Error(`Convex query failed: ${parsed.errorMessage || 'unknown error'}`)
+  if (parsed.status !== 'success' || !Array.isArray(parsed.value)) {
+    throw new Error(
+      parsed.status === 'error' || parsed.errorMessage
+        ? `Convex query failed: ${parsed.errorMessage || 'unknown error'}`
+        : 'Convex query did not return status "success" with an array',
+    )
   }
 
-  if (!Array.isArray(parsed.value)) return []
   return parsed.value.map(normalizeAnnouncement).filter(Boolean) as UpcomingAnnouncement[]
 }
 
@@ -54,7 +62,9 @@ export function normalizeAnnouncement(value: unknown): UpcomingAnnouncement | nu
   if (!title || !artist) return null
 
   const id = stringField(row._id) || stringField(row.id) || [title, date, artist, exploreUrl].join('|')
-  const creationTime = numberField(row._creationTime) ?? numberField(row.creationTime)
+  const creationTime = numberField(row.createdAt)
+    ?? numberField(row._creationTime)
+    ?? numberField(row.creationTime)
 
   return {
     id,

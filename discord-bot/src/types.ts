@@ -81,7 +81,7 @@ export interface BotState {
   lastSummaryWindowEnd: number | null
   lastForcedSummaryWindowEnd: number | null
   sentActivityKeys?: string[]
-  upcomingSeenKeys?: string[]
+  upcomingAfterCreatedAt?: number
 }
 
 export interface UpcomingAnnouncement {

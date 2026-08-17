@@ -1,13 +1,24 @@
-import type { StartMode } from './config.js'
-import { announcementKey } from './convex.js'
 import type { BotState, UpcomingAnnouncement } from './types.js'
 
-const MAX_SEEN_KEYS = 5_000
-
 export interface ProcessUpcomingOptions {
-  startMode: StartMode
+  now?: number
   send: (announcement: UpcomingAnnouncement) => Promise<void>
   save: (state: BotState) => Promise<void>
+}
+
+export function upcomingWatermark(state: BotState): number | null {
+  return normalizeWatermark(state.upcomingAfterCreatedAt)
+}
+
+export async function ensureUpcomingWatermark(
+  state: BotState,
+  save: (state: BotState) => Promise<void>,
+  now = Date.now(),
+): Promise<BotState> {
+  if (upcomingWatermark(state) != null) return state
+  const nextState = { ...state, upcomingAfterCreatedAt: now }
+  await save(nextState)
+  return nextState
 }
 
 export async function processUpcomingAnnouncements(
@@ -15,31 +26,33 @@ export async function processUpcomingAnnouncements(
   announcements: UpcomingAnnouncement[],
   options: ProcessUpcomingOptions,
 ) {
-  const ordered = [...announcements].sort(compareAnnouncements)
+  const watermarked = await ensureUpcomingWatermark(state, options.save, options.now)
+  const watermark = upcomingWatermark(watermarked)
+  if (watermark == null) return watermarked
 
-  if (state.upcomingSeenKeys === undefined && options.startMode === 'latest') {
-    const nextState = {
-      ...state,
-      upcomingSeenKeys: ordered.map(announcementKey),
-    }
-    await options.save(nextState)
-    return nextState
-  }
+  const ordered = [...announcements]
+    .filter((announcement) => (announcement.creationTime ?? 0) > watermark)
+    .sort(compareAnnouncements)
 
-  const seen = new Set(state.upcomingSeenKeys ?? [])
-  let nextState = state
+  if (!ordered.length) return watermarked
+
   for (const announcement of ordered) {
-    const key = announcementKey(announcement)
-    if (seen.has(key)) continue
     await options.send(announcement)
-    seen.add(key)
-    nextState = {
-      ...nextState,
-      upcomingSeenKeys: capSeenKeys([...seen], key),
-    }
-    await options.save(nextState)
   }
+
+  const maxCreatedAt = ordered.reduce((max, announcement) => {
+    const createdAt = announcement.creationTime
+    return createdAt != null && createdAt > max ? createdAt : max
+  }, watermark)
+
+  const nextState = { ...watermarked, upcomingAfterCreatedAt: maxCreatedAt }
+  await options.save(nextState)
   return nextState
+}
+
+export function normalizeWatermark(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
+  return Math.floor(value)
 }
 
 function compareAnnouncements(left: UpcomingAnnouncement, right: UpcomingAnnouncement) {
@@ -47,10 +60,4 @@ function compareAnnouncements(left: UpcomingAnnouncement, right: UpcomingAnnounc
   const rightTime = right.creationTime ?? Number.MAX_SAFE_INTEGER
   if (leftTime !== rightTime) return leftTime - rightTime
   return left.id.localeCompare(right.id)
-}
-
-function capSeenKeys(keys: string[], newestKey: string) {
-  if (keys.length <= MAX_SEEN_KEYS) return keys
-  const withoutNewest = keys.filter((key) => key !== newestKey)
-  return [...withoutNewest.slice(withoutNewest.length - (MAX_SEEN_KEYS - 1)), newestKey]
 }

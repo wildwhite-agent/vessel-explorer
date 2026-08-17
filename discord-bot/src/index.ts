@@ -7,7 +7,7 @@ import { createEnsResolver, type EnsResolver } from './ens.js'
 import { fetchActivity, fetchAllActivity, fetchStats } from './indexer.js'
 import { readState, writeState } from './state.js'
 import { processDailySummary } from './summary.js'
-import { processUpcomingAnnouncements } from './upcoming.js'
+import { ensureUpcomingWatermark, processUpcomingAnnouncements, upcomingWatermark } from './upcoming.js'
 import type { Config } from './config.js'
 import type { BotState, UpcomingAnnouncement } from './types.js'
 
@@ -76,14 +76,19 @@ export async function pollUpcomingOnce(state: BotState): Promise<BotState> {
   const activeConfig = getConfig()
   if (!isUpcomingPollerEnabled(activeConfig)) return state
 
+  const save = (nextState: BotState) => writeState(activeConfig.stateFile, nextState)
+  const watermarked = await ensureUpcomingWatermark(state, save)
+  const afterCreatedAt = upcomingWatermark(watermarked)
+  if (afterCreatedAt == null) return watermarked
+
   const announcements = await fetchUpcomingAnnouncements(
     activeConfig.convexUrl,
     activeConfig.convexUpcomingQuery,
+    afterCreatedAt,
   )
-  return await processUpcomingAnnouncements(state, announcements, {
-    startMode: activeConfig.startMode,
+  return await processUpcomingAnnouncements(watermarked, announcements, {
     send: sendUpcomingProject,
-    save: (nextState) => writeState(activeConfig.stateFile, nextState),
+    save,
   })
 }
 
