@@ -151,6 +151,7 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      DISCORD_PROJECT_WEBHOOK_URL: ${{ secrets.DISCORD_PROJECT_WEBHOOK_URL }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -167,7 +168,8 @@ jobs:
             PONDER_WS_URL_1 \
             DATABASE_URL \
             POSTGRES_PASSWORD \
-            DISCORD_WEBHOOK_URL
+            DISCORD_WEBHOOK_URL \
+            DISCORD_PROJECT_WEBHOOK_URL
           do
             value="${!name:-}"
             if [[ -n "$value" ]]; then

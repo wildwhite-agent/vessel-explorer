@@ -36,17 +36,14 @@ export async function processUpcomingAnnouncements(
 
   if (!ordered.length) return watermarked
 
+  let nextState = watermarked
   for (const announcement of ordered) {
     await options.send(announcement)
-  }
-
-  const maxCreatedAt = ordered.reduce((max, announcement) => {
     const createdAt = announcement.creationTime
-    return createdAt != null && createdAt > max ? createdAt : max
-  }, watermark)
-
-  const nextState = { ...watermarked, upcomingAfterCreatedAt: maxCreatedAt }
-  await options.save(nextState)
+    if (createdAt == null) continue
+    nextState = { ...nextState, upcomingAfterCreatedAt: createdAt }
+    await options.save(nextState)
+  }
   return nextState
 }
 

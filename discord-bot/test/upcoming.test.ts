@@ -46,6 +46,7 @@ test('starts watermark at now without sending existing projects', async () => {
 
 test('sends projects after the persisted watermark and advances to max createdAt', async () => {
   const sent: string[] = []
+  const saved: number[] = []
   const next = await processUpcomingAnnouncements(
     {
       cursor: null,
@@ -62,11 +63,14 @@ test('sends projects after the persisted watermark and advances to max createdAt
       send: async (row) => {
         sent.push(row.id)
       },
-      save: async () => {},
+      save: async (state) => {
+        saved.push(state.upcomingAfterCreatedAt ?? 0)
+      },
     },
   )
 
   assert.deepEqual(sent, ['proj_2', 'proj_3'])
+  assert.deepEqual(saved, [20, 30])
   assert.equal(next.upcomingAfterCreatedAt, 30)
 })
 
@@ -111,6 +115,34 @@ test('does not advance watermark when send fails', async () => {
     },
   ))
   assert.deepEqual(saved, [])
+})
+
+test('checkpoints each successful post before sending the next project', async () => {
+  const sent: string[] = []
+  const saved: number[] = []
+  await assert.rejects(() => processUpcomingAnnouncements(
+    {
+      cursor: null,
+      lastSummaryWindowEnd: null,
+      lastForcedSummaryWindowEnd: null,
+      upcomingAfterCreatedAt: 10,
+    },
+    [
+      announcement({ id: 'proj_2', creationTime: 20 }),
+      announcement({ id: 'proj_3', creationTime: 30 }),
+    ],
+    {
+      send: async (row) => {
+        sent.push(row.id)
+        if (row.id === 'proj_3') throw new Error('webhook failed')
+      },
+      save: async (state) => {
+        saved.push(state.upcomingAfterCreatedAt ?? 0)
+      },
+    },
+  ))
+  assert.deepEqual(sent, ['proj_2', 'proj_3'])
+  assert.deepEqual(saved, [20])
 })
 
 test('builds visualizer embed with title date artist and explore url', () => {
