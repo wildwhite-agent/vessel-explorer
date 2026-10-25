@@ -1,5 +1,7 @@
+import { requireVesselId, boundedPngDimensions } from '../../utils/media-limits.ts'
+import { BoundedWorkCache, admitMediaRequest } from '../../utils/bounded-work.ts'
 import { deflateSync } from 'node:zlib'
-import type { H3Event } from 'h3'
+import { assertMethod, defineEventHandler, getRouterParam, createError, setResponseHeaders, type H3Event } from 'h3'
 import { createPublicClient, http, type Hex } from 'viem'
 import { mainnet } from 'viem/chains'
 
@@ -63,6 +65,9 @@ function byteToRGB(v: number, mode: number): [number, number, number] {
 function hexToBytes(hex: string): Uint8Array {
   const clean = hex.startsWith('0x') ? hex.slice(2) : hex
   if (!clean || clean.length % 2 !== 0) return new Uint8Array(0)
+  if (clean.length > 20_000 || !/^[a-fA-F0-9]*$/.test(clean)) {
+    throw createError({ statusCode: 502, message: 'invalid vessel payload' })
+  }
   const bytes = new Uint8Array(clean.length / 2)
   for (let i = 0; i < bytes.length; i++) {
     bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16)
@@ -71,8 +76,7 @@ function hexToBytes(hex: string): Uint8Array {
 }
 
 function buildPng(pixels: Uint8Array, width: number, height: number, scale: number, colorMode: number = 0): Buffer {
-  const w = width * scale
-  const h = height * scale
+  const { w, h } = boundedPngDimensions(width, height, scale)
 
   // Raw scanlines: filter byte (0 = None) + RGB per pixel
   const stride = 1 + w * 3
@@ -173,55 +177,38 @@ async function claimedEmptyCraftImage() {
   return emptyCraftImage
 }
 
+const previews = new BoundedWorkCache<{ bytes: Uint8Array; mime: string; maxAge: number }>(4, 64, 16 * 1024 * 1024)
+
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id')
-  if (!id || isNaN(Number(id))) {
-    throw createError({ statusCode: 400, message: 'invalid vessel id' })
-  }
-
-  const tokenId = Number(id)
-  const { cols, rows } = getGridDimensions(tokenId)
-
-  // Scale up for OG image (aim for ~400px wide)
-  const scale = Math.max(1, Math.floor(400 / cols))
-
-  try {
+  assertMethod(event, ['GET', 'HEAD'])
+  const tokenId = requireVesselId(getRouterParam(event, 'id'))
+  admitMediaRequest(event)
+  const image = await previews.get(String(tokenId), async () => {
+    // Resolve the token before dimensions, payload decoding, or image allocation.
     const token = await fetchIndexerJson(`/tokens/${tokenId}`)
-    const livePayload = token.isMachine
-      ? await liveMachinePayload(event, tokenId)
-      : null
-    const pixels = hexToBytes(String(livePayload || token.payloadHex || '0x'))
-    const colorMode = Number(token.colorMode || 0)
-
-    if (pixels.length === 0) {
-      const fallbackImage = await claimedEmptyCraftImage()
-      if (fallbackImage) {
-        setResponseHeaders(event, {
-          'Content-Type': 'image/jpeg',
-          'Cache-Control': 'public, max-age=86400',
-        })
-
-        return fallbackImage
-      }
+    if (!token || Number(token.id) !== tokenId) {
+      throw createError({ statusCode: 404, message: 'vessel not found' })
     }
-
-    const png = buildPng(pixels, cols, rows, scale, colorMode)
-
-    setResponseHeaders(event, {
-      'Content-Type': 'image/png',
-      'Cache-Control': `public, max-age=${token.isMachine ? 60 : 3600}`,
-    })
-
-    return png
-  } catch {
-    const pixels = new Uint8Array(cols * rows)
-    const png = buildPng(pixels, cols, rows, scale)
-
-    setResponseHeaders(event, {
-      'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=300',
-    })
-
-    return png
-  }
+    const { cols, rows } = getGridDimensions(tokenId)
+    const scale = Math.max(1, Math.floor(400 / cols))
+    const livePayload = token.isMachine ? await liveMachinePayload(event, tokenId) : null
+    const pixels = hexToBytes(String(livePayload || token.payloadHex || '0x'))
+    const maxAge = token.isMachine ? 60 : 3600
+    if (pixels.length === 0) {
+      const bytes = await claimedEmptyCraftImage()
+      if (bytes) return { bytes, mime: 'image/jpeg', maxAge }
+    }
+    return {
+      bytes: buildPng(pixels, cols, rows, scale, Number(token.colorMode || 0)),
+      mime: 'image/png',
+      maxAge,
+    }
+  }, 60_000, image => image.bytes.byteLength)
+  setResponseHeaders(event, {
+    'Content-Type': image.mime,
+    'Content-Length': image.bytes.byteLength,
+    'Cache-Control': `public, max-age=${image.maxAge}`,
+    'X-Content-Type-Options': 'nosniff',
+  })
+  return image.bytes
 })

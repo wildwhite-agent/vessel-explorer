@@ -17,7 +17,7 @@ export function requireIndexerUrl(message = 'indexer is unavailable; set NUXT_IN
 export async function fetchIndexerJson(path: string, params?: URLSearchParams) {
   const indexerUrl = requireIndexerUrl()
   const query = params?.toString()
-  const response = await fetch(`${indexerUrl}${path}${query ? `?${query}` : ''}`).catch(() => null)
+  const response = await fetch(`${indexerUrl}${path}${query ? `?${query}` : ''}`, { signal: AbortSignal.timeout(10_000) }).catch(() => null)
 
   if (!response) {
     throw createError({
