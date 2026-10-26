@@ -96,3 +96,16 @@ test('poster decoder ignores active HTML and SVG; raster previews are 1200 by 63
     assert.equal(metadata.height, 630)
   }
 })
+
+test('poster conversion preserves the displayed orientation of JPEG artwork', async () => {
+  const bytes = await sharp({ create: { width: 80, height: 40, channels: 3, background: 'red' } })
+    .withMetadata({ orientation: 6 }).jpeg().toBuffer()
+  const png = await sequencePoster({ bytes, mime: 'image/jpeg' })
+  const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true })
+  const pixel = (x: number, y: number) => [...data.subarray((y * info.width + x) * info.channels, (y * info.width + x) * info.channels + 3)]
+  // The displayed image is portrait: side bars are black and the center reaches
+  // the top. Ignoring EXIF would instead paint a wide landscape strip.
+  assert.deepEqual(pixel(200, 315), [0, 0, 0])
+  assert.ok(pixel(600, 20)[0]! > 240)
+  assert.ok(pixel(600, 20)[1]! < 10)
+})

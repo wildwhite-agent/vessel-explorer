@@ -13,6 +13,7 @@ export async function sequencePoster(media: { bytes: Uint8Array; mime: string },
   try {
     return await sharp(bytes, { limitInputPixels: 16_000_000, pages: 1, failOn: 'warning' })
       .timeout({ seconds: 3 })
+      .autoOrient()
       .resize(1200, 630, { fit: 'contain', background: '#000000' })
       .png().toBuffer()
   } catch {
