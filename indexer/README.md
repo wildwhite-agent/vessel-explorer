@@ -361,10 +361,13 @@ project's `vessel-data` network.
 
 `../Dockerfile.indexer` runs `pnpm codegen` during the build. Its entrypoint
 chooses `ponder serve --schema=vessel` for `VESSEL_PROCESS=api`, or
-`ponder start --schema=vessel_<deploy-hash> --views-schema=vessel
+`ponder start --schema=vessel_<container-hash> --views-schema=vessel
 --hostname=127.0.0.1` for `VESSEL_PROCESS=indexer`. Each process receives a
 separate limited role as `DATABASE_URL`; only the indexing worker has RPC
-credentials. New builds retain separate deployment schemas and stable views.
+credentials. The default schema hashes the version and unique container hostname,
+so same-commit replacements have separate schemas while container restarts reuse
+their schema. Keep `DATABASE_SCHEMA` empty for rolling deployments. A fixed schema
+requires stopping the previous writer first; see the security rollout procedure.
 
 ### Current Deployed Indexer
 

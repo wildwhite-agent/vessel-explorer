@@ -85,7 +85,13 @@ Kamal's required proxy network. Frontend/bot no longer join `shared`.
    `vessel_api` and `INDEXER_DATABASE_URL` using `vessel_indexer`; both target
    `vessel-indexer-db:5432/vessel` on `vessel-data`. Keep passwords private. Set
    `PONDER_VIEWS_SCHEMA=vessel`. Leave `DATABASE_SCHEMA` empty for a new writer
-   schema; do not reuse an old build schema. The role preparation SQL assumes
+   schema. The default includes the unique container hostname, so same-commit
+   replacements cannot share an active writer's schema. If an operator must use
+   a fixed `DATABASE_SCHEMA`, stop the existing worker with
+   `vvork-kamal vessel-indexer app stop -c config/deploy.worker.yml` and verify
+   that no writer remains before deploying its replacement; accept the resulting
+   indexing pause. Never perform a rolling deploy with a fixed schema override.
+   The role preparation SQL assumes
    these exact database/stable-schema names and must be adapted if they differ.
 7. Arrange a maintenance window. Pause the old combined indexer and hold bot
    polling while views and credentials change. Bot state must be preserved;

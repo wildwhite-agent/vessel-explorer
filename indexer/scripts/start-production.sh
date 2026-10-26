@@ -6,7 +6,10 @@ case "${VESSEL_PROCESS:-api}" in
     exec node node_modules/ponder/dist/esm/bin/ponder.js serve --schema="${PONDER_VIEWS_SCHEMA:-vessel}" --hostname=0.0.0.0
     ;;
   indexer)
-    schema="${DATABASE_SCHEMA:-vessel_$(printf %s "${KAMAL_VERSION:-local}" | sha1sum | cut -c1-16)}"
+    # A same-commit replacement overlaps the old writer during readiness checks.
+    # Kamal's unique container hostname separates their locks and remains stable
+    # across restarts of the same container.
+    schema="${DATABASE_SCHEMA:-vessel_$(printf '%s:%s' "${KAMAL_VERSION:-local}" "$(hostname)" | sha1sum | cut -c1-16)}"
     # Ponder start includes an HTTP server; bind it inside this container only.
     exec node node_modules/ponder/dist/esm/bin/ponder.js start --schema="$schema" --views-schema="${PONDER_VIEWS_SCHEMA:-vessel}" --hostname=127.0.0.1
     ;;
