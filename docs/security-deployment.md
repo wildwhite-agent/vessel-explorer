@@ -9,7 +9,12 @@ operator. Do not use `kamal setup` against the existing installation.
 - **VESSEL-01:** previews accept only canonical Vessel IDs 1–10000, look up the
   token before allocation, and propagate missing/upstream errors. PNG output is
   capped at 400×400. GET and HEAD share a byte-bounded cache, deduplicated work and
-  concurrency limits. Media requests have a per-process budget; behind Kamal the
+  concurrency limits. Daily grids call the preview helper directly, so they do
+  not exhaust the public preview budget. They reject oversized workloads (more
+  than 256 cells, 16 MiB source images, 10 activity pages or a 7-day window),
+  stop starting new previews after 30 seconds, and cache one in-flight grid.
+  Missing tokens may be omitted; overloads fail the grid instead of hiding cells.
+  Media requests have a per-process budget; behind Kamal the
   socket-IP budget is conservatively shared. Add finer client limits at the edge.
 - **VESSEL-02:** Hono is pinned and overridden to 4.13.14 throughout Ponder's
   dependency tree. The [maintainer advisory](https://github.com/honojs/hono/security/advisories/GHSA-8j4g-w8fx-2239)
@@ -23,7 +28,10 @@ operator. Do not use `kamal setup` against the existing installation.
   limited to 1 MiB each, 4 MiB total and 16 scripts. Final HTML is at most 8 MiB.
 - **VESSEL-04:** production requires a separate artwork hostname. Its virtual
   host serves only the media route. Media responses have an opaque-origin CSP
-  sandbox even on direct navigation and on mislabeled content. The iframe also
+  sandbox even on direct navigation and on mislabeled content. Separate-origin
+  redirects preserve bounded `v` and `view` cache versions. Media browser caching
+  is 60 seconds, matching the short server caches; live updates may take several
+  cache intervals to propagate. The iframe also
   remains sandboxed. Chromium is removed from the server image; no artwork JS
   executes on the server. Raster posters use bounded Sharp decoding; HTML/SVG
   posters use a static “open to view interactive artwork” PNG. Interactive art
@@ -34,7 +42,8 @@ operator. Do not use `kamal setup` against the existing installation.
 - **VESSEL-05:** public `ponder serve` uses `vessel_api`; a separate private
   `ponder start` process uses `vessel_indexer`. The latter listens only on its
   container loopback. Both roles lack all five elevated PostgreSQL role flags.
-  The writer can create schemas in the dedicated `vessel` database, which Ponder
+  The writer can create schemas and temporary staging tables in the dedicated
+  `vessel` database, which Ponder
   requires for each deployment. The reader gets SELECT on stable `vessel` views,
   not direct access to `ponder_sync` or deployment schemas. Default privileges
   preserve reads after view replacement. No cluster-wide ownership reassignment

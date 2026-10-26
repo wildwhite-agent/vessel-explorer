@@ -2,6 +2,8 @@
 -- Disposable local database only; never point this fixture at production.
 BEGIN;
 SET LOCAL ROLE vessel_indexer;
+CREATE TEMP TABLE writer_staging (id integer) ON COMMIT DROP;
+INSERT INTO writer_staging VALUES (1);
 CREATE SCHEMA vessel_security_fixture;
 CREATE TABLE vessel_security_fixture.tokens (id integer PRIMARY KEY);
 INSERT INTO vessel_security_fixture.tokens VALUES (1);
@@ -11,6 +13,11 @@ SET LOCAL ROLE vessel_api;
 SELECT * FROM vessel.security_fixture;
 DO $$
 BEGIN
+  BEGIN
+    EXECUTE 'CREATE TEMP TABLE api_staging (id int)';
+    RAISE EXCEPTION 'API temporary table unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
   BEGIN
     INSERT INTO vessel.security_fixture VALUES (2);
     RAISE EXCEPTION 'API write unexpectedly succeeded';

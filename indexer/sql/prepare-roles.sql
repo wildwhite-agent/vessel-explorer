@@ -22,7 +22,8 @@ BEGIN
 END $$;
 
 REVOKE ALL ON DATABASE vessel FROM PUBLIC, vessel_api, vessel_indexer;
-GRANT CONNECT, CREATE ON DATABASE vessel TO vessel_indexer;
+-- Ponder uses temporary staging tables during indexing and sync migrations.
+GRANT CONNECT, CREATE, TEMPORARY ON DATABASE vessel TO vessel_indexer;
 GRANT CONNECT ON DATABASE vessel TO vessel_api;
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 
