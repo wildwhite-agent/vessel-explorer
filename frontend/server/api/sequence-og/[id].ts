@@ -1,3 +1,4 @@
+import { mediaRevisionKey } from '../../utils/media-revision'
 import { sequencePoster } from '../../utils/sequence-poster'
 import { BoundedWorkCache, admitMediaRequest } from '../../utils/bounded-work'
 
@@ -7,7 +8,7 @@ export default defineEventHandler(async event => {
   assertMethod(event, ['GET', 'HEAD'])
   const id = requireSequenceId(getRouterParam(event, 'id'))
   admitMediaRequest(event)
-  const bytes = await posters.get(id, async () => {
+  const bytes = await posters.get(`${id}:${mediaRevisionKey(event)}`, async () => {
     const token = await fetchIndexerJson(`/sequences/tokens/${id}`)
     if (!token) throw createError({ statusCode: 404, message: 'sequence not found' })
     const fallback = await useStorage('assets:server').getItemRaw('sequence-poster.png')

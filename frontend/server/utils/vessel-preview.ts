@@ -1,3 +1,4 @@
+import { mediaRevisionKey } from './media-revision.ts'
 import { requireVesselId, boundedPngDimensions } from './media-limits.ts'
 import { BoundedWorkCache } from './bounded-work.ts'
 import { deflateSync } from 'node:zlib'
@@ -181,7 +182,7 @@ const previews = new BoundedWorkCache<{ bytes: Uint8Array; mime: string; maxAge:
 
 export async function getVesselPreview(event: H3Event, tokenId: number) {
   requireVesselId(String(tokenId))
-  return previews.get(String(tokenId), async () => {
+  return previews.get(`${tokenId}:${mediaRevisionKey(event)}`, async () => {
     // Resolve the token before dimensions, payload decoding, or image allocation.
     const token = await fetchIndexerJson(`/tokens/${tokenId}`)
     if (!token || Number(token.id) !== tokenId) {

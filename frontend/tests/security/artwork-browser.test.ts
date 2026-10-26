@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createServer } from 'node:http'
-import { createApp, createRouter, toNodeListener, defineEventHandler } from 'h3'
+import { createApp, createRouter, toNodeListener, toWebHandler, defineEventHandler } from 'h3'
 import { chromium } from '@playwright/test'
 import handler from '../../server/api/sequence-media/[id]/[asset].get.ts'
 
@@ -16,6 +16,20 @@ Object.assign(globalThis, {
     window.result.origin = window.origin;
     fetch('/private').then(() => window.result.fetchBlocked = false).catch(() => window.result.fetchBlocked = true);
   </script><p>Sandbox fixture</p>`) }),
+})
+
+test('sequence media refreshes for a new notification revision and reuses an identical revision', async () => {
+  artworkOrigin = ''
+  let loads = 0
+  assetLoader = async () => ({ mime: 'image/png', bytes: Buffer.from(`fixture-${++loads}`) })
+  const request = toWebHandler(createApp().use(createRouter().get('/api/sequence-media/:id/:asset', handler)))
+  const url = 'http://localhost/api/sequence-media/200/image?v='
+  try {
+    assert.equal(await (await request(new Request(url + '123-0xabc-7%3A4%2C8%3A1-456'))).text(), 'fixture-1')
+    assert.equal(await (await request(new Request(url + '124-0xabc-7%3A4%2C8%3A1-457'))).text(), 'fixture-2')
+    assert.equal(await (await request(new Request(url + '124-0xabc-7%3A4%2C8%3A1-457'))).text(), 'fixture-2')
+    assert.equal(loads, 2)
+  } finally { assetLoader = undefined }
 })
 
 test('direct artwork navigation has an opaque origin and cannot access app storage or fetch app endpoints', async () => {
@@ -44,9 +58,9 @@ test('direct artwork navigation has an opaque origin and cannot access app stora
     assert.equal(privateRequests, 0)
     // Configured production artwork URLs redirect to the separate origin.
     artworkOrigin = 'https://artwork.example.org'
-    const redirect = await fetch(`${origin}/api/sequence-media/1/image?v=123-456-7&view=2&ignored=1`, { redirect: 'manual' })
+    const redirect = await fetch(`${origin}/api/sequence-media/1/image?v=123-0xabc-7%3A4%2C8%3A1-456&view=2&ignored=1`, { redirect: 'manual' })
     assert.equal(redirect.status, 307)
-    assert.equal(redirect.headers.get('location'), 'https://artwork.example.org/api/sequence-media/1/image?v=123-456-7&view=2')
+    assert.equal(redirect.headers.get('location'), 'https://artwork.example.org/api/sequence-media/1/image?v=123-0xabc-7%3A4%2C8%3A1-456&view=2')
     assert.equal((await fetch(`${origin}/api/sequence-media/1/image?v=a&v=b`, { redirect: 'manual' })).status, 400)
   } finally {
     await browser?.close()

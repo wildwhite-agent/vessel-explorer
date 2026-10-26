@@ -147,9 +147,9 @@ export async function fetchMediaHttps(initial: URL, limit: number, io = networkI
   }
 }
 
-export async function loadSafeMediaBytes(uri: string, limit = MAX_ASSET_BYTES): Promise<LoadedBytes> {
+export async function loadSafeMediaBytes(uri: string, limit = MAX_ASSET_BYTES, revisionKey = 'current'): Promise<LoadedBytes> {
   if (uri.startsWith('data:')) return decodeMediaDataUri(uri, limit)
   const url = validateMediaUrl(uri)
-  const key = `${limit}:${createHash('sha256').update(url.href).digest('hex')}`
+  const key = `${revisionKey}:${limit}:${createHash('sha256').update(url.href).digest('hex')}`
   return downloads.get(key, () => fetchMediaHttps(url, limit), 60_000, value => value.bytes.byteLength)
 }

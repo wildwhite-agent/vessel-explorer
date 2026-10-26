@@ -1,3 +1,4 @@
+import { mediaRevision, mediaRevisionKey } from '../../../utils/media-revision.ts'
 import { defineEventHandler, getRouterParam, createError, getRequestURL, getQuery, sendRedirect, setResponseHeaders } from 'h3'
 import { requireSequenceId } from '../../../utils/media-limits.ts'
 import { requireArtworkOrigin } from '../../../utils/artwork-origin.ts'
@@ -15,7 +16,9 @@ export default defineEventHandler(async (event) => {
 
   const versionQuery = new URLSearchParams()
   const query = getQuery(event)
-  for (const key of ['v', 'view']) {
+  const revision = mediaRevision(event)
+  if (revision) versionQuery.set('v', revision)
+  for (const key of ['view']) {
     const value = query[key]
     if (value === undefined) continue
     if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(value)) {
@@ -32,7 +35,7 @@ export default defineEventHandler(async (event) => {
     }
   }
   admitMediaRequest(event)
-  const media = await mediaCache.get(`${id}:${asset}`, async () => {
+  const media = await mediaCache.get(`${id}:${asset}:${mediaRevisionKey(event)}`, async () => {
     let media = normalizeCompressedHtmlScripts(await loadSequenceMediaAsset(event, id, asset))
     if (id === '7' && asset === 'animation' && media.mime === 'text/html') {
       media = patchSequence7AudioButton(media)

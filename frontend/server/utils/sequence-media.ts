@@ -1,3 +1,4 @@
+import { mediaRevisionKey } from './media-revision'
 import { BoundedWorkCache } from './bounded-work'
 import { loadSafeMediaBytes } from './safe-media-fetch'
 import { MAX_ASSET_BYTES, MAX_METADATA_BYTES, requireSequenceId } from './media-limits'
@@ -111,7 +112,7 @@ const metadataCache = new BoundedWorkCache<SequenceMediaMetadata>(4, 64, 8 * 102
 
 export async function loadSequenceMetadata(event: H3Event, id: string) {
   requireSequenceId(id)
-  return metadataCache.get(id, () => fetchSequenceMetadata(event, id), 60_000, value => Buffer.byteLength(JSON.stringify(value)))
+  return metadataCache.get(`${id}:${mediaRevisionKey(event)}`, () => fetchSequenceMetadata(event, id), 60_000, value => Buffer.byteLength(JSON.stringify(value)))
 }
 
 async function fetchSequenceMetadata(event: H3Event, id: string) {
@@ -129,7 +130,7 @@ async function fetchSequenceMetadata(event: H3Event, id: string) {
     throw createError({ statusCode: 404, message: 'sequence metadata unavailable' })
   }
 
-  const data = await loadSafeMediaBytes(metadataUri, MAX_METADATA_BYTES)
+  const data = await loadSafeMediaBytes(metadataUri, MAX_METADATA_BYTES, mediaRevisionKey(event))
   const text = new TextDecoder().decode(data.bytes)
   let metadata: Record<string, unknown>
   try {
@@ -166,7 +167,7 @@ export async function loadSequenceMediaAsset(
     throw createError({ statusCode: 404, message: `sequence ${slot} unavailable` })
   }
 
-  const asset = await loadBytes(uri)
+  const asset = await loadSafeMediaBytes(uri, MAX_ASSET_BYTES, mediaRevisionKey(event))
   return {
     bytes: asset.bytes,
     mime: detectMime(asset),
@@ -191,7 +192,7 @@ export async function inspectSequenceMediaAsset(
     } satisfies SequenceMediaAssetInfo
   }
 
-  const asset = await inspectBytes(uri)
+  const asset = await loadSafeMediaBytes(uri, MAX_ASSET_BYTES, mediaRevisionKey(event))
   const mime = detectMime(asset)
   return {
     url: `/api/sequence-media/${id}/${slot}`,
@@ -255,12 +256,6 @@ export function mediaKindForMime(mime: string): SequenceMediaAssetInfo['kind'] {
   if (normalized.startsWith('image/')) return 'image'
   return 'unknown'
 }
-
-export const loadBytes = loadSafeMediaBytes
-
-// Inspect the same bounded bytes used by the media route, rather than trusting
-// remote HEAD types or allowing an unbounded GET fallback.
-const inspectBytes = loadSafeMediaBytes
 
 function stringValue(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : ''
