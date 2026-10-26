@@ -1,3 +1,6 @@
+import { BoundedWorkCache } from './bounded-work'
+import { loadSafeMediaBytes } from './safe-media-fetch'
+import { MAX_ASSET_BYTES, MAX_METADATA_BYTES, requireSequenceId } from './media-limits'
 import type { H3Event } from 'h3'
 import { createPublicClient, http, hexToBytes, type Hex } from 'viem'
 import { mainnet } from 'viem/chains'
@@ -104,7 +107,17 @@ function getClient(event: H3Event) {
   return client
 }
 
+const metadataCache = new BoundedWorkCache<SequenceMediaMetadata>(4, 64, 8 * 1024 * 1024)
+
 export async function loadSequenceMetadata(event: H3Event, id: string) {
+  requireSequenceId(id)
+  return metadataCache.get(id, () => fetchSequenceMetadata(event, id), 60_000, value => Buffer.byteLength(JSON.stringify(value)))
+}
+
+async function fetchSequenceMetadata(event: H3Event, id: string) {
+  const token = await fetchIndexerJson(`/sequences/tokens/${id}`)
+  if (!token) throw createError({ statusCode: 404, message: 'sequence not found' })
+  requireSequenceId(id)
   const metadataUri = await getClient(event).readContract({
     address: SEQUENCE_ADDRESS,
     abi: SEQUENCE_URI_ABI,
@@ -116,11 +129,12 @@ export async function loadSequenceMetadata(event: H3Event, id: string) {
     throw createError({ statusCode: 404, message: 'sequence metadata unavailable' })
   }
 
-  const data = await loadBytes(metadataUri)
+  const data = await loadSafeMediaBytes(metadataUri, MAX_METADATA_BYTES)
   const text = new TextDecoder().decode(data.bytes)
   let metadata: Record<string, unknown>
   try {
     metadata = JSON.parse(text) as Record<string, unknown>
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) throw new Error('invalid metadata')
   } catch {
     throw createError({ statusCode: 502, message: 'invalid sequence metadata' })
   }
@@ -140,6 +154,7 @@ export async function loadSequenceMediaAsset(
   id: string,
   slot: SequenceMediaSlot,
 ) {
+  requireSequenceId(id)
   const override = slot === 'animation' ? getSequenceAnimationOverride(id) : null
   if (override) {
     return { bytes: await loadSequenceAnimationOverride(event, override), mime: 'text/html' }
@@ -164,6 +179,7 @@ export async function inspectSequenceMediaAsset(
   slot: SequenceMediaSlot,
   uri: string,
 ) {
+  requireSequenceId(id)
   const override = slot === 'animation' ? getSequenceAnimationOverride(id) : null
   if (override) {
     const bytes = await loadSequenceAnimationOverride(event, override)
@@ -222,6 +238,7 @@ async function loadVesselVaultEntry(
     args: [BigInt(vaultTokenId), BigInt(entryIndex)],
   }) as Hex
 
+  if (payload.length > MAX_ASSET_BYTES * 2 + 2) throw createError({ statusCode: 502, message: 'sequence asset too large' })
   const bytes = payload && payload !== '0x' ? hexToBytes(payload) : new Uint8Array()
   if (!bytes.length) {
     throw createError({ statusCode: 404, message: 'sequence animation unavailable' })
@@ -239,60 +256,11 @@ export function mediaKindForMime(mime: string): SequenceMediaAssetInfo['kind'] {
   return 'unknown'
 }
 
-export async function loadBytes(uri: string): Promise<LoadedBytes> {
-  const normalized = normalizeUri(uri)
-  if (normalized.startsWith('data:')) return decodeDataUri(normalized)
+export const loadBytes = loadSafeMediaBytes
 
-  const response = await fetch(normalized).catch(() => null)
-  if (!response?.ok) {
-    throw createError({ statusCode: 502, message: 'sequence asset request failed' })
-  }
-
-  return {
-    bytes: new Uint8Array(await response.arrayBuffer()),
-    mime: response.headers.get('content-type')?.split(';')[0]?.trim() || 'application/octet-stream',
-  }
-}
-
-async function inspectBytes(uri: string): Promise<LoadedBytes> {
-  const normalized = normalizeUri(uri)
-  if (normalized.startsWith('data:')) return decodeDataUri(normalized)
-
-  const head = await fetch(normalized, { method: 'HEAD' }).catch(() => null)
-  if (head?.ok) {
-    return {
-      bytes: new Uint8Array(),
-      mime: head.headers.get('content-type')?.split(';')[0]?.trim() || 'application/octet-stream',
-    }
-  }
-
-  return await loadBytes(uri)
-}
-
-function decodeDataUri(uri: string): LoadedBytes {
-  const match = uri.match(/^data:([^;,]+)?(;base64)?,(.*)$/s)
-  if (!match) {
-    throw createError({ statusCode: 502, message: 'invalid sequence data uri' })
-  }
-
-  const mime = match[1] || 'application/octet-stream'
-  const encoded = match[3] || ''
-  const bytes = match[2]
-    ? Buffer.from(encoded, 'base64')
-    : Buffer.from(decodeURIComponent(encoded))
-
-  return { bytes: new Uint8Array(bytes), mime }
-}
-
-function normalizeUri(uri: string) {
-  if (uri.startsWith('ipfs://')) {
-    return `https://ipfs.io/ipfs/${uri.slice('ipfs://'.length)}`
-  }
-  if (uri.startsWith('ar://')) {
-    return `https://arweave.net/${uri.slice('ar://'.length)}`
-  }
-  return uri
-}
+// Inspect the same bounded bytes used by the media route, rather than trusting
+// remote HEAD types or allowing an unbounded GET fallback.
+const inspectBytes = loadSafeMediaBytes
 
 function stringValue(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : ''
@@ -304,7 +272,7 @@ function stringValue(value: unknown) {
 function normalizeAttributes(value: unknown): SequenceTrait[] {
   if (!Array.isArray(value)) return []
   const traits: SequenceTrait[] = []
-  for (const entry of value) {
+  for (const entry of value.slice(0, 100)) {
     if (!entry || typeof entry !== 'object') continue
     const row = entry as Record<string, unknown>
     const traitType = stringValue(row.trait_type) || stringValue(row.traitType)

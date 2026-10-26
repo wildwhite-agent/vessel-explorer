@@ -1,9 +1,7 @@
 export default defineEventHandler(async (event) => {
   setNoStoreHeaders(event)
-  const id = getRouterParam(event, 'id')
-  if (!id || !/^\d+$/.test(id)) {
-    throw createError({ statusCode: 400, message: 'invalid sequence id' })
-  }
+  admitMediaRequest(event)
+  const id = requireSequenceId(getRouterParam(event, 'id'))
 
   const metadata = await loadSequenceMetadata(event, id)
   const [image, animation] = await Promise.all([

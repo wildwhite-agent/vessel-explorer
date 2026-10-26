@@ -63,7 +63,7 @@ export function admitMediaRequest(event: H3Event) {
   const ip = getRequestIP(event) || 'unknown'
   const bucket = clients.get(ip) || { count: 0, expires: now + 60_000 }
   if (++requests > 600 || ++bucket.count > 240 || (!clients.has(ip) && clients.size >= 1024)) {
-    setResponseHeader(event, 'Retry-After', '60')
+    setResponseHeader(event, 'Retry-After', 60)
     throw createError({ statusCode: 429, message: 'media request limit exceeded' })
   }
   clients.set(ip, bucket)

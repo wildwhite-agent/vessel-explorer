@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "typecheck": "nuxi typecheck",
     "test:e2e": "NITRO_PRESET=node-server pnpm build && playwright test",
-    "test:e2e:live": "PLAYWRIGHT_BASE_URL=https://vessel.worldcomputer.art playwright test"
+    "test:e2e:live": "PLAYWRIGHT_BASE_URL=https://vessel.worldcomputer.art playwright test",
+    "test:security": "node --experimental-strip-types --test tests/security/*.test.ts"
   },
   "dependencies": {
     "@1001-digital/components.evm": "^3.6.0",
@@ -19,13 +20,24 @@
     "@visualizevalue/img-grid": "^0.1.4",
     "@wagmi/core": "3.4.6",
     "@wagmi/vue": "0.5.6",
+    "ipaddr.js": "2.5.0",
     "nuxt": "^4.3.1",
-    "playwright-core": "1.60.0",
     "postcss-nesting": "^14.0.0",
+    "sharp": "0.35.5",
     "viem": "^2.48.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "@types/luxon": "^3.7.1"
+    "@types/luxon": "^3.7.1",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.3.13"
+  },
+  "pnpm": {
+    "overrides": {
+      "sharp": "0.35.5"
+    }
+  },
+  "overrides": {
+    "sharp": "0.35.5"
   }
 }

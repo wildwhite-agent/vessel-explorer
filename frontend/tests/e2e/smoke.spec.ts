@@ -619,14 +619,19 @@ test('sequence detail fits mobile viewport', async ({ browser, baseURL }) => {
   await context.close()
 })
 
-test('sequence og endpoint returns rendered png media', async ({ request }) => {
-  for (const [id, minBytes] of [['2', 50_000], ['7', 5_000]] as const) {
+test('sequence og endpoint returns bounded png posters', async ({ request }) => {
+  for (const id of ['2', '7']) {
     const response = await request.get(`/api/sequence-og/${id}?v=e2e`)
     expect(response.status()).toBe(200)
     expect(response.headers()['content-type']).toContain('image/png')
 
     const body = await response.body()
     expect(body.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a')
-    expect(body.length).toBeGreaterThan(minBytes)
+    expect(body.readUInt32BE(16)).toBe(1200)
+    expect(body.readUInt32BE(20)).toBe(630)
+    expect(body.length).toBeLessThan(5 * 1024 * 1024)
+    const head = await request.head(`/api/sequence-og/${id}?v=e2e`)
+    expect(head.status()).toBe(200)
+    expect(head.headers()['content-length']).toBe(String(body.length))
   }
 })

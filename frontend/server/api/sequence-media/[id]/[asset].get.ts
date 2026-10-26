@@ -1,48 +1,47 @@
-import { gunzipSync } from 'node:zlib'
+import { defineEventHandler, getRouterParam, createError, getRequestURL, sendRedirect, setResponseHeaders } from 'h3'
+import { requireSequenceId } from '../../../utils/media-limits.ts'
+import { requireArtworkOrigin } from '../../../utils/artwork-origin.ts'
+import { ARTWORK_CSP, normalizeCompressedHtmlScripts } from '../../../utils/active-media.ts'
+import { admitMediaRequest, BoundedWorkCache } from '../../../utils/bounded-work.ts'
+
+const mediaCache = new BoundedWorkCache<{ bytes: Uint8Array; mime: string }>(4, 32, 32 * 1024 * 1024)
 
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id')
+  const id = requireSequenceId(getRouterParam(event, 'id'))
   const asset = getRouterParam(event, 'asset')
-  if (!id || !/^\d+$/.test(id)) {
-    throw createError({ statusCode: 400, message: 'invalid sequence id' })
-  }
   if (asset !== 'image' && asset !== 'animation') {
     throw createError({ statusCode: 400, message: 'invalid sequence asset' })
   }
 
-  let media = normalizeCompressedHtmlScripts(await loadSequenceMediaAsset(event, id, asset))
-  if (id === '7' && asset === 'animation' && media.mime === 'text/html') {
-    media = patchSequence7AudioButton(media)
+  const mediaOrigin = String(useRuntimeConfig(event).public.artworkOrigin || '')
+  if (mediaOrigin) {
+    const origin = requireArtworkOrigin(mediaOrigin)
+    if (getRequestURL(event).hostname !== new URL(origin).hostname) {
+      return sendRedirect(event, `${origin}/api/sequence-media/${id}/${asset}`, 307)
+    }
   }
+  admitMediaRequest(event)
+  const media = await mediaCache.get(`${id}:${asset}`, async () => {
+    let media = normalizeCompressedHtmlScripts(await loadSequenceMediaAsset(event, id, asset))
+    if (id === '7' && asset === 'animation' && media.mime === 'text/html') {
+      media = patchSequence7AudioButton(media)
+    }
+    return media
+  }, 60_000, media => media.bytes.byteLength)
   setResponseHeaders(event, {
     'Content-Type': media.mime,
     'Cache-Control': 'public, max-age=3600',
     'X-Content-Type-Options': 'nosniff',
+    // Apply to every MIME, so mislabeled/polyglot artwork never acquires the app origin.
+    'Content-Security-Policy': ARTWORK_CSP,
+    'Referrer-Policy': 'no-referrer',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Content-Length': media.bytes.byteLength,
   })
 
   return media.bytes
 })
-
-function normalizeCompressedHtmlScripts(media: { bytes: Uint8Array; mime: string }) {
-  if (media.mime !== 'text/html') return media
-
-  const html = new TextDecoder().decode(media.bytes)
-  const patched = html.replace(
-    /<script\b([^>]*)\btype=["']text\/javascript\+gzip["']([^>]*)\bsrc=["']data:text\/javascript;base64,([^"']+)["']([^>]*)><\/script>/gi,
-    (_match, beforeType: string, afterTypeBeforeSrc: string, encoded: string, afterSrc: string) => {
-      const script = gunzipSync(Buffer.from(encoded, 'base64'))
-      const src = Buffer.from(script).toString('base64')
-      return `<script${beforeType}${afterTypeBeforeSrc}${afterSrc} src="data:text/javascript;base64,${src}"></script>`
-    },
-  )
-
-  if (patched === html) return media
-
-  return {
-    bytes: new TextEncoder().encode(patched),
-    mime: media.mime,
-  }
-}
 
 function patchSequence7AudioButton(media: { bytes: Uint8Array; mime: string }) {
   const html = new TextDecoder().decode(media.bytes)

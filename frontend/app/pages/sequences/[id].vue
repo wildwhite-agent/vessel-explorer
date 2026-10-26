@@ -28,7 +28,7 @@
                   :src="mediaAssetUrl(activeMedia)"
                   :title="sequenceMediaTitle"
                   class="sequence-art sequence-frame"
-                  sandbox="allow-scripts allow-pointer-lock allow-popups"
+                  sandbox="allow-scripts allow-pointer-lock"
                   allow="autoplay; fullscreen"
                 />
                 <video
