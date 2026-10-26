@@ -1,14 +1,18 @@
 import { createError, getRequestIP, setResponseHeader, type H3Event } from 'h3'
 
-/** Per-process LRU with byte/entry limits, deduplication and no unbounded job queue. */
+/** Per-process LRU with byte/entry limits, deduplication and bounded admission. */
 export class BoundedWorkCache<T> {
   private cache = new Map<string, { value: T; expires: number; size: number }>()
   private pending = new Map<string, Promise<T>>()
   private bytes = 0
+  private active = 0
+  private waiting: (() => void)[] = []
+  private maxQueued: number
   private concurrency: number
   private entries: number
   private maxBytes: number
-  constructor(concurrency: number, entries: number, maxBytes: number) {
+  constructor(concurrency: number, entries: number, maxBytes: number, maxQueued = 0) {
+    this.maxQueued = maxQueued
     this.concurrency = concurrency
     this.entries = entries
     this.maxBytes = maxBytes
@@ -26,10 +30,10 @@ export class BoundedWorkCache<T> {
     }
     const running = this.pending.get(key)
     if (running) return running
-    if (this.pending.size >= this.concurrency) {
+    if (this.pending.size >= this.concurrency + this.maxQueued) {
       throw createError({ statusCode: 503, message: 'media service busy' })
     }
-    const job = Promise.resolve().then(work).then(value => {
+    const job = Promise.resolve().then(() => this.run(work)).then(value => {
       const size = sizeOf(value)
       if (size <= this.maxBytes) {
         while (this.cache.size >= this.entries || this.bytes + size > this.maxBytes) {
@@ -44,6 +48,17 @@ export class BoundedWorkCache<T> {
     }).finally(() => this.pending.delete(key))
     this.pending.set(key, job)
     return job
+  }
+  private async run(work: () => Promise<T>): Promise<T> {
+    if (this.active < this.concurrency) this.active++
+    else await new Promise<void>(resolve => this.waiting.push(resolve))
+    try {
+      return await work()
+    } finally {
+      const next = this.waiting.shift()
+      if (next) next() // Transfer this slot to the oldest admitted waiter.
+      else this.active--
+    }
   }
 }
 

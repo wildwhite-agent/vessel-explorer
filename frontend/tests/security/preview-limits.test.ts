@@ -42,3 +42,26 @@ test('work is deduplicated, concurrency capped, failed jobs released and cache b
   await assert.rejects(cache.get('err', async () => { throw Error('failure') }, 1000, () => 1))
   assert.equal(await cache.get('err', async () => 'ok', 1000, v => v.length), 'ok')
 })
+
+
+test('bounded media waiting queue keeps active work limited and rejects excess admission', async () => {
+  const cache = new BoundedWorkCache<string>(1, 2, 4, 1)
+  let active = 0
+  let peak = 0
+  let finish!: () => void
+  const first = cache.get('a', async () => {
+    peak = Math.max(peak, ++active)
+    await new Promise<void>(resolve => { finish = resolve })
+    active--
+    return 'a'
+  }, 1000, v => v.length)
+  const second = cache.get('b', async () => {
+    peak = Math.max(peak, ++active)
+    active--
+    return 'b'
+  }, 1000, v => v.length)
+  await assert.rejects(cache.get('c', async () => 'c', 1000, v => v.length), { statusCode: 503 })
+  finish()
+  assert.deepEqual(await Promise.all([first, second]), ['a', 'b'])
+  assert.equal(peak, 1)
+})

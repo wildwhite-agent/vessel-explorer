@@ -4,7 +4,7 @@ import { requireArtworkOrigin } from '../../../utils/artwork-origin.ts'
 import { ARTWORK_CSP, normalizeCompressedHtmlScripts } from '../../../utils/active-media.ts'
 import { admitMediaRequest, BoundedWorkCache } from '../../../utils/bounded-work.ts'
 
-const mediaCache = new BoundedWorkCache<{ bytes: Uint8Array; mime: string }>(4, 32, 32 * 1024 * 1024)
+const mediaCache = new BoundedWorkCache<{ bytes: Uint8Array; mime: string }>(4, 32, 32 * 1024 * 1024, 8)
 
 export default defineEventHandler(async (event) => {
   const id = requireSequenceId(getRouterParam(event, 'id'))

@@ -107,7 +107,7 @@ function getClient(event: H3Event) {
   return client
 }
 
-const metadataCache = new BoundedWorkCache<SequenceMediaMetadata>(4, 64, 8 * 1024 * 1024)
+const metadataCache = new BoundedWorkCache<SequenceMediaMetadata>(4, 64, 8 * 1024 * 1024, 8)
 
 export async function loadSequenceMetadata(event: H3Event, id: string) {
   requireSequenceId(id)

@@ -6,9 +6,10 @@ import { chromium } from '@playwright/test'
 import handler from '../../server/api/sequence-media/[id]/[asset].get.ts'
 
 let artworkOrigin = ''
+let assetLoader: (() => Promise<{ mime: string; bytes: Buffer }>) | undefined
 Object.assign(globalThis, {
   useRuntimeConfig: () => ({ public: { artworkOrigin } }),
-  loadSequenceMediaAsset: async () => ({ mime: 'text/html', bytes: Buffer.from(`<!doctype html><script>
+  loadSequenceMediaAsset: async () => assetLoader ? assetLoader() : ({ mime: 'text/html', bytes: Buffer.from(`<!doctype html><script>
     window.result = {};
     try { window.result.cookie = document.cookie; } catch { window.result.cookieBlocked = true; }
     try { localStorage.setItem('artwork', 'no'); } catch { window.result.storageBlocked = true; }
@@ -50,5 +51,40 @@ test('direct artwork navigation has an opaque origin and cannot access app stora
   } finally {
     await browser?.close()
     await new Promise<void>(resolve => server.close(() => resolve()))
+  }
+})
+
+
+test('a gallery burst waits within a bounded queue and loads all twelve images', async () => {
+  artworkOrigin = ''
+  let active = 0
+  let peak = 0
+  let loads = 0
+  assetLoader = async () => {
+    peak = Math.max(peak, ++active)
+    loads++
+    await new Promise(resolve => setTimeout(resolve, 120))
+    active--
+    return { mime: 'image/png', bytes: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l2kAAAAASUVORK5CYII=', 'base64') }
+  }
+  const app = createApp().use(createRouter().get('/api/sequence-media/:id/:asset', handler))
+  const server = createServer(toNodeListener(app))
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  const { port } = server.address() as { port: number }
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined
+  try {
+    browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH })
+    const page = await browser.newPage()
+    const failures: number[] = []
+    page.on('response', response => { if (response.status() !== 200) failures.push(response.status()) })
+    await page.setContent(Array.from({ length: 12 }, (_, i) => `<img src="http://127.0.0.1:${port}/api/sequence-media/${i + 100}/image">`).join(''))
+    await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth > 0))
+    assert.equal(loads, 12)
+    assert.equal(peak, 4)
+    assert.deepEqual(failures, [])
+  } finally {
+    await browser?.close()
+    await new Promise<void>(resolve => server.close(() => resolve()))
+    assetLoader = undefined
   }
 })

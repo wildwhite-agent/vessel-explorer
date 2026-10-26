@@ -23,6 +23,8 @@ operator. Do not use `kamal setup` against the existing installation.
   hosts, initially `ipfs.io` and `arweave.net`. IPFS/Arweave schemes normalize to
   those gateways. Every redirect is checked, every DNS answer must be public,
   and the connection pins the checked address while retaining TLS verification.
+  Media fetches admit four active jobs and at most eight waiting jobs, allowing
+  ordinary gallery bursts while rejecting excess work.
   Downloads have a 10-second total deadline, three redirects, 1 MiB metadata /
   8 MiB asset ceilings including HTTP decompression. Embedded gzip scripts are
   limited to 1 MiB each, 4 MiB total and 16 scripts. Final HTML is at most 8 MiB.
