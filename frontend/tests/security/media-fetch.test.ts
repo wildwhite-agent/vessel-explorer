@@ -29,6 +29,7 @@ test('data URIs, streams and HTTP compressed bodies have byte ceilings', async (
     assert.throws(() => decodeMediaDataUri(uri, 8))
   }
   await assert.rejects(collectBounded(Readable.from([Buffer.alloc(4), Buffer.alloc(5)]), 8))
+  await assert.rejects(collectBounded(Readable.from(Array.from({ length: 1025 }, () => Buffer.from('x'))), 2048))
   assert.throws(() => decodeMediaBody(gzipSync(Buffer.alloc(32)), 'gzip', 8))
   assert.equal(decodeMediaBody(gzipSync(Buffer.from('ok')), 'gzip', 8).toString(), 'ok')
   assert.throws(() => decodeMediaBody(Buffer.from('ok'), 'unknown', 8))

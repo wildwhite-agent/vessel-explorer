@@ -60,7 +60,7 @@ export function decodeMediaDataUri(uri: string, limit = MAX_ASSET_BYTES): Loaded
   const encoded = uri.slice(comma + 1)
   let bytes: Buffer
   try {
-    if (header.endsWith(';base64')) {
+    if (header.toLowerCase().endsWith(';base64')) {
       if (encoded.length > Math.ceil(limit / 3) * 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) throw fail()
       bytes = Buffer.from(encoded, 'base64')
     } else {
@@ -76,7 +76,8 @@ export async function collectBounded(stream: AsyncIterable<Uint8Array>, limit: n
   const chunks: Uint8Array[] = []
   for await (const chunk of stream) {
     total += chunk.byteLength
-    if (total > limit) throw fail()
+    // A byte cap alone does not bound the overhead of millions of tiny chunks.
+    if (total > limit || chunks.length >= 1024) throw fail()
     chunks.push(chunk)
   }
   return Buffer.concat(chunks, total)

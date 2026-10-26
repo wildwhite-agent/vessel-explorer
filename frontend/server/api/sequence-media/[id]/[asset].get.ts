@@ -1,4 +1,4 @@
-import { defineEventHandler, getRouterParam, createError, getRequestURL, sendRedirect, setResponseHeaders } from 'h3'
+import { defineEventHandler, getRouterParam, createError, getRequestURL, getQuery, sendRedirect, setResponseHeaders } from 'h3'
 import { requireSequenceId } from '../../../utils/media-limits.ts'
 import { requireArtworkOrigin } from '../../../utils/artwork-origin.ts'
 import { ARTWORK_CSP, normalizeCompressedHtmlScripts } from '../../../utils/active-media.ts'
@@ -13,11 +13,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'invalid sequence asset' })
   }
 
+  const versionQuery = new URLSearchParams()
+  const query = getQuery(event)
+  for (const key of ['v', 'view']) {
+    const value = query[key]
+    if (value === undefined) continue
+    if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(value)) {
+      throw createError({ statusCode: 400, message: 'invalid artwork version' })
+    }
+    versionQuery.set(key, value)
+  }
+  const suffix = versionQuery.size ? `?${versionQuery}` : ''
   const mediaOrigin = String(useRuntimeConfig(event).public.artworkOrigin || '')
   if (mediaOrigin) {
     const origin = requireArtworkOrigin(mediaOrigin)
     if (getRequestURL(event).hostname !== new URL(origin).hostname) {
-      return sendRedirect(event, `${origin}/api/sequence-media/${id}/${asset}`, 307)
+      return sendRedirect(event, `${origin}/api/sequence-media/${id}/${asset}${suffix}`, 307)
     }
   }
   admitMediaRequest(event)
@@ -30,7 +41,7 @@ export default defineEventHandler(async (event) => {
   }, 60_000, media => media.bytes.byteLength)
   setResponseHeaders(event, {
     'Content-Type': media.mime,
-    'Cache-Control': 'public, max-age=3600',
+    'Cache-Control': 'public, max-age=60',
     'X-Content-Type-Options': 'nosniff',
     // Apply to every MIME, so mislabeled/polyglot artwork never acquires the app origin.
     'Content-Security-Policy': ARTWORK_CSP,

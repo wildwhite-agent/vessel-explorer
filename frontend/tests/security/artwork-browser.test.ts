@@ -43,9 +43,10 @@ test('direct artwork navigation has an opaque origin and cannot access app stora
     assert.equal(privateRequests, 0)
     // Configured production artwork URLs redirect to the separate origin.
     artworkOrigin = 'https://artwork.example.org'
-    const redirect = await fetch(`${origin}/api/sequence-media/1/image`, { redirect: 'manual' })
+    const redirect = await fetch(`${origin}/api/sequence-media/1/image?v=123-456-7&view=2&ignored=1`, { redirect: 'manual' })
     assert.equal(redirect.status, 307)
-    assert.equal(redirect.headers.get('location'), 'https://artwork.example.org/api/sequence-media/1/image')
+    assert.equal(redirect.headers.get('location'), 'https://artwork.example.org/api/sequence-media/1/image?v=123-456-7&view=2')
+    assert.equal((await fetch(`${origin}/api/sequence-media/1/image?v=a&v=b`, { redirect: 'manual' })).status, 400)
   } finally {
     await browser?.close()
     await new Promise<void>(resolve => server.close(() => resolve()))
