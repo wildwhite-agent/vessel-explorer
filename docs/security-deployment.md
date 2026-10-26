@@ -32,7 +32,7 @@ operator. Do not use `kamal setup` against the existing installation.
   host serves only the media route. Media responses have an opaque-origin CSP
   sandbox even on direct navigation and on mislabeled content. Separate-origin
   redirects preserve bounded `v` and `view` cache versions. Hashed `v` revisions
-  also key preview, metadata, download and poster caches, so new notifications
+  also key preview, grid, metadata, download and poster caches, so new notifications
   refresh changed artwork. Unversioned media browser caching is 60 seconds;
   unversioned updates may take several cache intervals to propagate. The iframe
   remains sandboxed. Chromium is removed from the server image; no artwork JS

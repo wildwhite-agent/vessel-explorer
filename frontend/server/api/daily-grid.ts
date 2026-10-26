@@ -3,6 +3,7 @@ import { assertMethod, createError, defineEventHandler, getQuery, setResponseHea
 import { BoundedWorkCache, admitMediaRequest } from '../utils/bounded-work.ts'
 import { getVesselPreview } from '../utils/vessel-preview.ts'
 import { requireVesselId } from '../utils/media-limits.ts'
+import { mediaRevisionKey } from '../utils/media-revision.ts'
 
 const DAILY_GRID_CACHE_SECONDS = 3600
 const PAGE_LIMIT = 1000
@@ -21,7 +22,7 @@ export default defineEventHandler(async (event) => {
   assertMethod(event, ['GET', 'HEAD'])
   const { start, end } = parseWindow(event)
   admitMediaRequest(event)
-  const png = await grids.get(`${start}:${end}`, async () => {
+  const png = await grids.get(`${start}:${end}:${mediaRevisionKey(event)}`, async () => {
     const vesselIds = await touchedVesselIds(start, end)
     const images: { id: string; url: string }[] = []
     const deadline = Date.now() + 30_000
