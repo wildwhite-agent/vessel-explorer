@@ -115,7 +115,11 @@ registry/host credential wrapper. For commands below, start in the repository's
    service uses the same image source and only the writer credential. Monitor
    its local `/ready` (inside its container), Ponder sync progress and stable
    view ownership. Wait until indexing is ready and views have switched before
-   proceeding; the worker has no proxy readiness gate. Verify its HTTP server
+   proceeding. The worker's Docker healthcheck gates Kamal replacement on its
+   local `/ready`, preserving the old worker until its replacement is ready on
+   subsequent deployments. The healthcheck start period and deploy timeout are
+   one hour; extend both deliberately if a measured backfill needs longer.
+   Verify its HTTP server
    listens on `127.0.0.1:42069` only.
 4. Deploy the public service with `vvork-kamal vessel-indexer deploy`. It now
    runs `ponder serve` with only `API_DATABASE_URL`, no indexing/RPC credentials.

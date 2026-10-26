@@ -332,7 +332,9 @@ Ponder exposes:
 - GraphQL at `/graphql`
 - SQL at `/sql/*`
 
-Kamal proxy cutover uses `/health`.
+The public API's Kamal proxy cutover uses `/ready`. The private worker uses a
+container-local `/ready` Docker healthcheck so Kamal waits for indexing before
+replacing the previous worker.
 
 ## Production Deployment
 

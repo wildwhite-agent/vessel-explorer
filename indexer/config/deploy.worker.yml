@@ -17,6 +17,12 @@ servers:
       pids-limit: 128
       cap-drop: ALL
       security-opt: no-new-privileges:true
+      health-cmd: >-
+        node -e 'fetch("http://127.0.0.1:42069/ready").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))'
+      health-interval: 5s
+      health-timeout: 3s
+      health-start-period: 60m
+      health-retries: 3
 
 deploy_timeout: 3600
 
