@@ -166,3 +166,6 @@ Grid dimensions: `cols = ceil(sqrt(tokenId))`, `rows = ceil(tokenId / cols)`. Mo
 ## License
 
 MIT
+
+Production security changes and the database-role cutover are documented in
+[the deployment runbook](docs/security-deployment.md).

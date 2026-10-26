@@ -13,3 +13,6 @@ indexer/generated
 !indexer/.env.local.example
 !indexer/.env.production.example
 !frontend/.env.production.example
+
+indexer/.ponder
+discord-bot/dist

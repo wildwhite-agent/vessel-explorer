@@ -11,9 +11,8 @@ COPY indexer ./
 RUN pnpm codegen
 
 FROM base AS production
-COPY --from=build /app/indexer ./
-
+COPY --from=build --chown=node:node /app/indexer ./
+RUN chown node:node /app/indexer
+USER node
 EXPOSE 42069
-# Ponder binds schema metadata to each indexing build. Use a fresh deploy
-# schema by default and keep a stable views schema for zero-downtime swaps.
-CMD pnpm start --schema=${DATABASE_SCHEMA:-vessel_$(printf %s "${KAMAL_VERSION:-local}" | sha1sum | cut -c1-16)} --views-schema=${PONDER_VIEWS_SCHEMA:-vessel}
+CMD ["sh", "scripts/start-production.sh"]

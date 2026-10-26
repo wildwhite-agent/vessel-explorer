@@ -10,7 +10,12 @@ servers:
       - <%= ENV["DEPLOY_HOST"] %>
     proxy: false
     options:
-      network: shared
+      memory: 256m
+      memory-swap: 256m
+      cpus: 0.5
+      pids-limit: 64
+      cap-drop: ALL
+      security-opt: no-new-privileges:true
 
 labels:
   vvork.project: vessel-explorer
@@ -31,6 +36,7 @@ builder:
 
 env:
   clear:
+    NODE_OPTIONS: '--max-old-space-size=160'
     INDEXER_URL: '<%= ENV["INDEXER_URL"] || "https://indexer.vessel.worldcomputer.art" %>'
     VESSEL_BASE_URL: '<%= ENV["VESSEL_BASE_URL"] || "https://vessel.worldcomputer.art" %>'
     VISUALIZER_BASE_URL: '<%= ENV["VISUALIZER_BASE_URL"] || "https://visualizer.thevessel.fun" %>'

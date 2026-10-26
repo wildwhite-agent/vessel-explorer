@@ -116,6 +116,11 @@ const rpcTransport = fallbackRpcUrls.length
   : primaryTransport
 
 export default createConfig({
+  database: process.env.DATABASE_URL ? {
+    kind: 'postgres',
+    connectionString: process.env.DATABASE_URL,
+    poolConfig: { max: process.env.VESSEL_PROCESS === 'api' ? 8 : 18 },
+  } : undefined,
   chains: {
     mainnet: {
       id: 1,

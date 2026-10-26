@@ -348,23 +348,21 @@ pnpm kamal:setup   # first server bootstrapping only
 pnpm kamal:deploy  # normal releases
 ```
 
-Kamal serves the app on port `42069`, provisions a Postgres 17 accessory, and
-mounts persistent database storage at:
+Follow [the security rollout procedure](../docs/security-deployment.md) before
+upgrading an existing installation. The database role/network cutover requires a
+maintenance window and backup verification.
 
-```txt
-/home/deploy/vessel-indexer-db/data
-```
+Kamal serves the read-only API on port `42069` using `config/deploy.yml`.
+`config/deploy.worker.yml` runs the private indexing service. The PostgreSQL
+17.11 accessory retains `/home/deploy/vessel-indexer-db/data` and uses the
+project's `vessel-data` network.
 
-`../Dockerfile.indexer` runs `pnpm codegen` during the image build. The runtime
-starts Ponder with a fresh deploy schema derived from `KAMAL_VERSION` and a
-stable views schema:
-
-```bash
-pnpm start --schema=vessel_<deploy-hash> --views-schema=vessel
-```
-
-This keeps old failed deploy schemas isolated while exposing stable views for
-the running application.
+`../Dockerfile.indexer` runs `pnpm codegen` during the build. Its entrypoint
+chooses `ponder serve --schema=vessel` for `VESSEL_PROCESS=api`, or
+`ponder start --schema=vessel_<deploy-hash> --views-schema=vessel
+--hostname=127.0.0.1` for `VESSEL_PROCESS=indexer`. Each process receives a
+separate limited role as `DATABASE_URL`; only the indexing worker has RPC
+credentials. New builds retain separate deployment schemas and stable views.
 
 ### Current Deployed Indexer
 
@@ -382,8 +380,9 @@ deployment belong in `INDEXER_ADDITIONAL_HOSTS`.
 
 Required in production:
 
-- `DATABASE_URL`
-- `PONDER_RPC_URLS_1`
+- `API_DATABASE_URL` (read-only role, mapped to API `DATABASE_URL`)
+- `INDEXER_DATABASE_URL` (indexing role, mapped to worker `DATABASE_URL`)
+- `PONDER_RPC_URLS_1` (indexing worker only)
 - `INDEXER_HOST`
 - `DOCKER_REGISTRY_USERNAME`
 - `KAMAL_REGISTRY_PASSWORD`

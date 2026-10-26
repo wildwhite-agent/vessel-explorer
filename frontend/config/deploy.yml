@@ -37,12 +37,6 @@ proxy:
     interval: 5
     timeout: 60
 
-labels:
-  vvork.project: vessel-explorer
-  vvork.kind: app
-  vvork.owner: ygg
-  vvork.repo: https://github.com/wildwhite-agent/vessel-explorer
-
 registry:
   username: <%= ENV["DOCKER_REGISTRY_USERNAME"] %>
   password:

@@ -15,11 +15,17 @@ servers:
     hosts:
       - <%= ENV["DEPLOY_HOST"] %>
     options:
-      network: shared
+      network: vessel-data
+      memory: 1g
+      memory-swap: 1g
+      cpus: 1
+      pids-limit: 128
+      cap-drop: ALL
+      security-opt: no-new-privileges:true
 
 labels:
   vvork.project: vessel-explorer
-  vvork.kind: worker
+  vvork.kind: app
   vvork.owner: personal
   vvork.url: 'https://<%= ENV["INDEXER_HOST"] %>'
   vvork.repo: https://github.com/wildwhite-agent/vessel-explorer
@@ -50,7 +56,9 @@ builder:
 
 env:
   clear:
+    VESSEL_PROCESS: api
     PONDER_TELEMETRY_DISABLED: 'true'
+    NODE_OPTIONS: '--max-old-space-size=640 --max-http-header-size=8192'
     PONDER_RPC_REQUESTS_PER_SECOND_1: '<%= ENV["PONDER_RPC_REQUESTS_PER_SECOND_1"] || "10" %>'
     PONDER_ETH_GET_LOGS_BLOCK_RANGE_1: '<%= ENV["PONDER_ETH_GET_LOGS_BLOCK_RANGE_1"] || "5000" %>'
     VESSEL_INDEXER_START_BLOCK: '<%= ENV["VESSEL_INDEXER_START_BLOCK"] || "" %>'
@@ -63,20 +71,21 @@ env:
     SEQUENCE_TOKEN_SCAN_MAX_ID: '<%= ENV["SEQUENCE_TOKEN_SCAN_MAX_ID"] || "512" %>'
     SEQUENCE_TOKEN_SCAN_EMPTY_GAP: '<%= ENV["SEQUENCE_TOKEN_SCAN_EMPTY_GAP"] || "16" %>'
   secret:
-    - PONDER_RPC_URLS_1
-    - PONDER_RPC_FALLBACK_URLS_1
-    - PONDER_WS_URL_1
-    - DATABASE_URL
-    - DATABASE_SCHEMA
+    - DATABASE_URL:API_DATABASE_URL
     - PONDER_VIEWS_SCHEMA
 
 accessories:
   db:
-    image: postgres:17-alpine
+    image: postgres:17.11-alpine
     host: <%= ENV["DEPLOY_HOST"] %>
     port: '127.0.0.1:5470:5432'
+    network: vessel-data
     options:
-      network: shared
+      memory: 4g
+      memory-swap: 4g
+      cpus: 2
+      pids-limit: 256
+      security-opt: no-new-privileges:true
     labels:
       vvork.project: vessel-explorer
       vvork.kind: db
@@ -89,6 +98,7 @@ accessories:
         POSTGRES_USER: vessel
       secret:
         - POSTGRES_PASSWORD
+    cmd: postgres -c shared_buffers=512MB -c max_connections=80 -c work_mem=16MB -c temp_file_limit=512MB
     directories:
       - /home/deploy/vessel-indexer-db/data:/var/lib/postgresql/data
 

@@ -1,13 +1,19 @@
 services:
   postgres17_vessel_indexer:
-    image: postgres:17-alpine
+    image: postgres:17.11-alpine
     container_name: postgres17_vessel_indexer
+    mem_limit: 2g
+    memswap_limit: 2g
+    cpus: 2
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_USER: vessel
       POSTGRES_PASSWORD: vessel
       POSTGRES_DB: vessel
     ports:
-      - '5470:5432'
+      - '127.0.0.1:5470:5432'
     volumes:
       - postgres17_vessel_indexer:/var/lib/postgresql/data
 
