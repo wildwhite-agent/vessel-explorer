@@ -32,10 +32,12 @@ operator. Do not use `kamal setup` against the existing installation.
   Downloads have a 10-second total deadline, three redirects, 1 MiB metadata /
   8 MiB asset ceilings including HTTP decompression. Embedded gzip scripts are
   limited to 1 MiB each, 4 MiB total and 16 scripts. Final HTML is at most 8 MiB.
-- **VESSEL-04:** production requires a separate artwork hostname. Its virtual
-  host serves only the media route. Media responses have an opaque-origin CSP
-  sandbox even on direct navigation and on mislabeled content. Separate-origin
-  redirects preserve bounded `v` and `view` cache versions. Hashed `v` revisions
+- **VESSEL-04:** media responses have an opaque-origin HTTP CSP sandbox even
+  on direct navigation and on mislabeled content. The existing hostname can
+  serve artwork safely with this response policy and the iframe sandbox. An
+  optional separate artwork hostname adds isolation if a future route loses its
+  CSP; its virtual host serves only the media route. When configured, separate-
+  origin redirects preserve bounded `v` and `view` cache versions. Hashed `v` revisions
   also key preview, grid, metadata, download and poster caches, so new notifications
   refresh changed artwork. Unversioned media browser caching is 60 seconds;
   unversioned updates may take several cache intervals to propagate. The iframe
@@ -77,9 +79,12 @@ Kamal's required proxy network. Frontend/bot no longer join `shared`.
    host egress restrictions with the operator: deny private/link-local destinations
    for frontend asset traffic while retaining the explicitly configured indexer
    and RPC destinations. The application checks do not replace a host firewall.
-4. Provision DNS/TLS for a distinct, cookieless `ARTWORK_HOST`. It must differ
-   from `APP_HOST` and must not receive application cookies scoped to a parent
-   domain. The frontend config validates that the hostname is present. Set
+4. Leave `ARTWORK_HOST` unset or empty to keep artwork on the existing app
+   hostname with the tested HTTP CSP sandbox. A separate origin is optional
+   defense in depth, not required to prevent direct-navigation origin access.
+   If configured, provision DNS/TLS for a distinct, cookieless `ARTWORK_HOST`.
+   It must differ from `APP_HOST` and must not receive application cookies scoped
+   to a parent domain. The frontend config rejects invalid or same-host values. Set
    `NUXT_INDEXER_URL` to the public HTTPS indexer hostname; a hostname reachable
    only on the removed `shared` network will no longer work.
 5. Review any extra asset hosts and add only exact hostnames to
@@ -141,8 +146,9 @@ registry/host credential wrapper. For commands below, start in the repository's
 5. Deploy the frontend with `vvork-kamal vessel-frontend deploy`. Verify its UID
    is nonzero, no Chromium binary exists, and memory/CPU/PID limits are applied.
    Check valid OG GET/HEAD requests, missing-token status, normal sequence pages,
-   raster and static fallback posters. On the artwork hostname, app/API routes
-   other than media must return 404. Check direct HTML/SVG response CSP and the
+   raster and static fallback posters. If an artwork hostname is configured,
+   its app/API routes other than media must return 404. On either deployment
+   choice, check direct HTML/SVG response CSP and the
    sandbox's blocked storage access using harmless fixtures. Check supported
    existing artwork visually; do not run attack payloads against production.
 6. The host operator applies the bot container limits in its next approved
@@ -190,7 +196,7 @@ with the host operator. Preserve bot state throughout.
   ordinary CORS. Use a loopback dummy RPC URL; `serve` skips RPC diagnostics.
   Never point fixture scripts at a production database.
 
-Production migration/indexing, DNS/TLS, host egress, backup restore and live
+Production migration/indexing, optional artwork DNS/TLS, host egress, backup restore and live
 artwork compatibility remain rollout checks. Other dependency scanner matches
 were not established as reachable vulnerabilities and are outside these five
 fixes; this is not a claim that the entire dependency graph is advisory-free.

@@ -1,6 +1,8 @@
 <%
-artwork_host = ENV.fetch("ARTWORK_HOST")
-raise "ARTWORK_HOST must be a separate DNS hostname" unless artwork_host.match?(/\A[a-z0-9.-]+\z/) && artwork_host.include?(".") && artwork_host != ENV["APP_HOST"]
+artwork_host = ENV.fetch("ARTWORK_HOST", "").strip
+if !artwork_host.empty? && (!artwork_host.match?(/\A[a-z0-9.-]+\z/) || !artwork_host.include?(".") || artwork_host == ENV["APP_HOST"])
+  raise "ARTWORK_HOST must be a separate DNS hostname when configured"
+end
 %>
 
 service: vessel-explorer
@@ -30,7 +32,9 @@ proxy:
   ssl: true
   hosts:
     - <%= ENV["APP_HOST"] %>
+<% unless artwork_host.empty? %>
     - <%= artwork_host %>
+<% end %>
   app_port: 3000
   healthcheck:
     path: /
@@ -51,7 +55,7 @@ env:
   clear:
     NITRO_CLUSTER_WORKERS: '1'
     NODE_OPTIONS: '--max-old-space-size=640 --max-http-header-size=8192'
-    NUXT_PUBLIC_ARTWORK_ORIGIN: '<%= "https://#{artwork_host}" %>'
+    NUXT_PUBLIC_ARTWORK_ORIGIN: '<%= artwork_host.empty? ? "" : "https://#{artwork_host}" %>'
     SEQUENCE_ASSET_HOSTS: '<%= ENV["SEQUENCE_ASSET_HOSTS"] || "" %>'
     NUXT_INDEXER_URL: '<%= ENV["NUXT_INDEXER_URL"] || "" %>'
     NUXT_PUBLIC_MACHINE_RPC_URL: '<%= ENV["NUXT_PUBLIC_MACHINE_RPC_URL"] || "" %>'
