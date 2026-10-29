@@ -1,4 +1,5 @@
 import { mediaRevisionKey } from '../../utils/media-revision'
+import { knownSequencePoster } from '../../utils/known-sequence-poster'
 import { sequencePoster } from '../../utils/sequence-poster'
 import { BoundedWorkCache, admitMediaRequest } from '../../utils/bounded-work'
 
@@ -11,8 +12,9 @@ export default defineEventHandler(async event => {
   const bytes = await posters.get(`${id}:${mediaRevisionKey(event)}`, async () => {
     const token = await fetchIndexerJson(`/sequences/tokens/${id}`)
     if (!token) throw createError({ statusCode: 404, message: 'sequence not found' })
-    const fallback = await useStorage('assets:server').getItemRaw('sequence-poster.png')
-    return sequencePoster(await loadSequenceMediaAsset(event, id, 'image'), fallback)
+    const media = await loadSequenceMediaAsset(event, id, 'image')
+    const fallback = await useStorage('assets:server').getItemRaw(knownSequencePoster(media.bytes) || 'sequence-poster.png')
+    return sequencePoster(media, fallback)
   }, 300_000, bytes => bytes.byteLength)
   setResponseHeaders(event, {
     'Content-Type': 'image/png',

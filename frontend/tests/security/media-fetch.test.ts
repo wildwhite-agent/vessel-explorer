@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+import { knownSequencePoster } from '../../server/utils/known-sequence-poster.ts'
 import test from 'node:test'
 import { Readable } from 'node:stream'
 import { gzipSync } from 'node:zlib'
@@ -124,4 +126,21 @@ test('poster conversion preserves the displayed orientation of JPEG artwork', as
   assert.deepEqual(pixel(200, 315), [0, 0, 0])
   assert.ok(pixel(600, 20)[0]! > 240)
   assert.ok(pixel(600, 20)[1]! < 10)
+})
+
+
+test('existing static SVG posters match exact source hashes and retain visible artwork', async () => {
+  for (const id of [5, 7, 8]) {
+    const svg = await readFile(new URL(`../fixtures/sequence-posters/${id}.svg`, import.meta.url))
+    const name = knownSequencePoster(svg)
+    assert.equal(name, `sequence-${id}-poster.png`)
+    assert.equal(knownSequencePoster(Buffer.concat([svg, Buffer.from(' ')])), undefined)
+    const png = await readFile(new URL(`../../server/assets/${name}`, import.meta.url))
+    const metadata = await sharp(png).metadata()
+    assert.equal(metadata.width, 1200)
+    assert.equal(metadata.height, 630)
+    const stats = await sharp(png).stats()
+    assert.ok(stats.channels.some(channel => channel.stdev > 1), `Sequence ${id} must retain visible artwork`)
+    assert.deepEqual(await sequencePoster({ bytes: svg, mime: 'image/svg+xml' }, png), png)
+  }
 })
