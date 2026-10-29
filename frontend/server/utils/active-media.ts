@@ -2,15 +2,17 @@ import { gunzipSync } from 'node:zlib'
 import { createError } from 'h3'
 import { MAX_ASSET_BYTES } from './media-limits.ts'
 
+// Existing pieces embed data styles/audio and use this exact p5 release.
+// The opaque-origin sandbox and app-origin connection denial still apply.
 export const ARTWORK_CSP = [
   'sandbox allow-scripts allow-pointer-lock',
   "default-src 'none'",
-  "script-src 'unsafe-inline' 'unsafe-eval' data: blob:",
-  "style-src 'unsafe-inline'",
+  "script-src 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js",
+  "style-src 'unsafe-inline' data:",
   'img-src data: blob: https://ipfs.io https://arweave.net',
   'media-src data: blob: https://ipfs.io https://arweave.net',
   'font-src data:',
-  'connect-src https://ethereum-rpc.publicnode.com https://eth.llamarpc.com https://cloudflare-eth.com',
+  'connect-src data: https://ethereum-rpc.publicnode.com https://eth.llamarpc.com https://cloudflare-eth.com',
   'worker-src blob:',
   "frame-src 'none'",
   "object-src 'none'",

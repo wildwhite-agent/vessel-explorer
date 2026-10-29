@@ -44,8 +44,9 @@ operator. Do not use `kamal setup` against the existing installation.
   remains sandboxed. Chromium is removed from the server image; no artwork JS
   executes on the server. Raster posters use bounded Sharp decoding; HTML/SVG
   posters use a static “open to view interactive artwork” PNG. Interactive art
-  remains in the visitor's sandbox. External scripts, frames, popups and network
-  destinations outside the CSP are intentionally blocked; check supported pieces
+  remains in the visitor's sandbox. Embedded data styles/audio and the exact
+  p5.js 1.9.0 CDN URL used by existing pieces are permitted. Other external
+  scripts, frames, popups and network destinations outside the CSP are blocked; check supported pieces
   in staging before rollout. Native raster decoding remains in the nonroot
   frontend container with resource limits, not in a separate worker.
 - **VESSEL-05:** public `ponder serve` uses `vessel_api`; a separate private

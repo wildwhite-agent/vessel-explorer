@@ -102,3 +102,38 @@ test('a gallery burst waits within a bounded queue and loads all twelve images',
     assetLoader = undefined
   }
 })
+
+test('embedded styles and audio data work while artwork libraries stay restricted to the pinned URL', async () => {
+  artworkOrigin = ''
+  const library = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js'
+  assetLoader = async () => ({ mime: 'text/html', bytes: Buffer.from(`<!doctype html>
+    <link rel="stylesheet" href="data:text/css,body%7Bbackground-color%3Argb(1%2C2%2C3)%7D">
+    <script src="${library}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.1/p5.min.js"></script>
+    <script>fetch('data:text/plain;base64,b2s=').then(r => r.text()).then(value => window.dataResult = value);</script>
+    <p>Embedded media fixture</p>`) })
+  const app = createApp().use(createRouter().get('/api/sequence-media/:id/:asset', handler))
+  const server = createServer(toNodeListener(app))
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  const { port } = server.address() as { port: number }
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined
+  const requests: string[] = []
+  try {
+    browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH })
+    const page = await browser.newPage()
+    await page.route('https://cdnjs.cloudflare.com/**', async route => {
+      requests.push(route.request().url())
+      await route.fulfill({ contentType: 'application/javascript', body: 'window.libraryLoaded = true' })
+    })
+    await page.goto(`http://127.0.0.1:${port}/api/sequence-media/202/animation`)
+    await page.waitForFunction(() => (window as any).dataResult === 'ok' && (window as any).libraryLoaded, {}, { timeout: 5000 })
+    assert.deepEqual(requests, [library])
+    assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgb(1, 2, 3)')
+    assert.equal(await page.evaluate(() => window.origin), 'null')
+    assert.equal(await page.evaluate(() => { try { localStorage.getItem('x'); return false } catch { return true } }), true)
+  } finally {
+    await browser?.close()
+    await new Promise<void>(resolve => server.close(() => resolve()))
+    assetLoader = undefined
+  }
+})
