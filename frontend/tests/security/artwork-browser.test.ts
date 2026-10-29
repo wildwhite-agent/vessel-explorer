@@ -5,10 +5,8 @@ import { createApp, createRouter, toNodeListener, toWebHandler, defineEventHandl
 import { chromium } from '@playwright/test'
 import handler from '../../server/api/sequence-media/[id]/[asset].get.ts'
 
-let artworkOrigin = ''
 let assetLoader: (() => Promise<{ mime: string; bytes: Buffer }>) | undefined
 Object.assign(globalThis, {
-  useRuntimeConfig: () => ({ public: { artworkOrigin } }),
   loadSequenceMediaAsset: async () => assetLoader ? assetLoader() : ({ mime: 'text/html', bytes: Buffer.from(`<!doctype html><script>
     window.result = {};
     try { window.result.cookie = document.cookie; } catch { window.result.cookieBlocked = true; }
@@ -19,7 +17,6 @@ Object.assign(globalThis, {
 })
 
 test('sequence media refreshes for a new notification revision and reuses an identical revision', async () => {
-  artworkOrigin = ''
   let loads = 0
   assetLoader = async () => ({ mime: 'image/png', bytes: Buffer.from(`fixture-${++loads}`) })
   const request = toWebHandler(createApp().use(createRouter().get('/api/sequence-media/:id/:asset', handler)))
@@ -56,11 +53,6 @@ test('direct artwork navigation has an opaque origin and cannot access app stora
     assert.equal(result.cookieBlocked, true)
     assert.equal(result.storageBlocked, true)
     assert.equal(privateRequests, 0)
-    // Configured production artwork URLs redirect to the separate origin.
-    artworkOrigin = 'https://artwork.example.org'
-    const redirect = await fetch(`${origin}/api/sequence-media/1/image?v=123-0xabc-7%3A4%2C8%3A1-456&view=2&ignored=1`, { redirect: 'manual' })
-    assert.equal(redirect.status, 307)
-    assert.equal(redirect.headers.get('location'), 'https://artwork.example.org/api/sequence-media/1/image?v=123-0xabc-7%3A4%2C8%3A1-456&view=2')
     assert.equal((await fetch(`${origin}/api/sequence-media/1/image?v=a&v=b`, { redirect: 'manual' })).status, 400)
   } finally {
     await browser?.close()
@@ -70,7 +62,6 @@ test('direct artwork navigation has an opaque origin and cannot access app stora
 
 
 test('a gallery burst waits within a bounded queue and loads all twelve images', async () => {
-  artworkOrigin = ''
   let active = 0
   let peak = 0
   let loads = 0
@@ -104,7 +95,6 @@ test('a gallery burst waits within a bounded queue and loads all twelve images',
 })
 
 test('embedded styles and audio data work while artwork libraries stay restricted to the pinned URL', async () => {
-  artworkOrigin = ''
   const library = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js'
   assetLoader = async () => ({ mime: 'text/html', bytes: Buffer.from(`<!doctype html>
     <link rel="stylesheet" href="data:text/css,body%7Bbackground-color%3Argb(1%2C2%2C3)%7D">

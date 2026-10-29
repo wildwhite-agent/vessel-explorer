@@ -34,10 +34,8 @@ operator. Do not use `kamal setup` against the existing installation.
   limited to 1 MiB each, 4 MiB total and 16 scripts. Final HTML is at most 8 MiB.
 - **VESSEL-04:** media responses have an opaque-origin HTTP CSP sandbox even
   on direct navigation and on mislabeled content. The existing hostname can
-  serve artwork safely with this response policy and the iframe sandbox. An
-  optional separate artwork hostname adds isolation if a future route loses its
-  CSP; its virtual host serves only the media route. When configured, separate-
-  origin redirects preserve bounded `v` and `view` cache versions. Hashed `v` revisions
+  serve artwork safely with this response policy and the iframe sandbox. No
+  additional hostname or DNS record is needed. Hashed `v` revisions
   also key preview, grid, metadata, download and poster caches, so new notifications
   refresh changed artwork. Unversioned media browser caching is 60 seconds;
   unversioned updates may take several cache intervals to propagate. The iframe
@@ -68,9 +66,9 @@ Kamal's required proxy network. Frontend/bot no longer join `shared`.
 ## Preconditions
 
 1. Record the currently deployed app image revisions and schemas. The audit
-   examined `b1ae196`; this branch began at `9adec8a`, which also contains two
-   later poster changes and the patched Node pin. Review the complete diff before
-   choosing the release revision. Keep old images and schema names for rollback.
+   examined `b1ae196`; the release is reconciled onto that main revision, preserving
+   its trait handling, announcements and deployment workflow. Review the complete
+   diff and keep old images and schema names for rollback.
 2. Verify a recent off-host backup and restore it into an isolated PostgreSQL
    17.11 instance. Back up roles and the database with patched client tools. The
    existing bind mount is `/home/deploy/vessel-indexer-db/data`; never initialize
@@ -80,12 +78,7 @@ Kamal's required proxy network. Frontend/bot no longer join `shared`.
    host egress restrictions with the operator: deny private/link-local destinations
    for frontend asset traffic while retaining the explicitly configured indexer
    and RPC destinations. The application checks do not replace a host firewall.
-4. Leave `ARTWORK_HOST` unset or empty to keep artwork on the existing app
-   hostname with the tested HTTP CSP sandbox. A separate origin is optional
-   defense in depth, not required to prevent direct-navigation origin access.
-   If configured, provision DNS/TLS for a distinct, cookieless `ARTWORK_HOST`.
-   It must differ from `APP_HOST` and must not receive application cookies scoped
-   to a parent domain. The frontend config rejects invalid or same-host values. Set
+4. Keep the existing app hostname and its tested HTTP CSP sandbox. Set
    `NUXT_INDEXER_URL` to the public HTTPS indexer hostname; a hostname reachable
    only on the removed `shared` network will no longer work.
 5. Review any extra asset hosts and add only exact hostnames to
@@ -197,7 +190,7 @@ with the host operator. Preserve bot state throughout.
   ordinary CORS. Use a loopback dummy RPC URL; `serve` skips RPC diagnostics.
   Never point fixture scripts at a production database.
 
-Production migration/indexing, optional artwork DNS/TLS, host egress, backup restore and live
+Production migration/indexing, host egress, backup restore and live
 artwork compatibility remain rollout checks. Other dependency scanner matches
 were not established as reachable vulnerabilities and are outside these five
 fixes; this is not a claim that the entire dependency graph is advisory-free.

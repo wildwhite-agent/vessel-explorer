@@ -38,7 +38,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     indexerUrl: '',
     public: {
-      artworkOrigin: '',
       machineRpcUrl: '',
       evm: {
         walletConnectProjectId: '',
