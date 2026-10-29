@@ -115,6 +115,7 @@ jobs:
       INDEXER_HOST: ${{ vars.INDEXER_HOST }}
       INDEXER_ADDITIONAL_HOSTS: ${{ vars.INDEXER_ADDITIONAL_HOSTS }}
       NUXT_INDEXER_URL: ${{ vars.NUXT_INDEXER_URL }}
+      SEQUENCE_ASSET_HOSTS: ${{ vars.SEQUENCE_ASSET_HOSTS }}
       NUXT_PUBLIC_MACHINE_RPC_URL: ${{ vars.NUXT_PUBLIC_MACHINE_RPC_URL || 'https://ethereum-rpc.publicnode.com' }}
       NUXT_PUBLIC_EVM_CHAINS_MAINNET_RPCS: ${{ vars.NUXT_PUBLIC_EVM_CHAINS_MAINNET_RPCS || 'https://ethereum-rpc.publicnode.com' }}
       PONDER_RPC_REQUESTS_PER_SECOND_1: ${{ vars.PONDER_RPC_REQUESTS_PER_SECOND_1 || '10' }}
@@ -269,24 +270,10 @@ jobs:
           kamal config -c config/deploy.worker.yml > "$RUNNER_TEMP/indexer-worker-kamal.yml"
           kamal config > "$RUNNER_TEMP/indexer-kamal.yml"
 
-      - name: Deploy private indexer worker
+      - name: Deploy worker and public query service
         if: env.DEPLOY_INDEXER == 'true'
         working-directory: indexer
-        # Kamal waits for the worker's Docker /ready healthcheck before replacing it.
-        run: kamal deploy -c config/deploy.worker.yml --version "$GITHUB_SHA" --lock-wait --lock-wait-timeout 600
-
-      - name: Verify private indexer worker
-        if: env.DEPLOY_INDEXER == 'true'
-        working-directory: indexer
-        run: >-
-          kamal app exec -c config/deploy.worker.yml --version "$GITHUB_SHA" --reuse
-          "node -e 'fetch(\"http://127.0.0.1:42069/ready\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))'"
-
-      - name: Deploy public indexer API
-        if: env.DEPLOY_INDEXER == 'true'
-        working-directory: indexer
-        # Kamal requires a separately labeled API image at the same source revision.
-        run: kamal deploy --version "$GITHUB_SHA" --lock-wait --lock-wait-timeout 600
+        run: sh scripts/deploy-production.sh
 
       - name: Verify indexer
         if: env.DEPLOY_INDEXER == 'true'

@@ -14,7 +14,7 @@
     "codegen": "ponder codegen",
     "typecheck": "tsc",
     "kamal:setup": "set -a && . ./.env.production && set +a && kamal setup",
-    "kamal:deploy": "set -a && . ./.env.production && set +a && kamal deploy",
+    "kamal:deploy": "set -a && . ./.env.production && set +a && sh scripts/deploy-production.sh",
     "kamal:sh": "set -a && . ./.env.production && set +a && kamal app exec -i --reuse sh",
     "test:security": "node --expose-gc --test test/*.test.mjs"
   },
