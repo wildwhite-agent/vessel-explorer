@@ -127,3 +127,42 @@ test('embedded styles and audio data work while artwork libraries stay restricte
     assetLoader = undefined
   }
 })
+
+
+test('direct audio playback loads only its media path and still denies app requests and storage', async () => {
+  const samples = 8000
+  const wav = Buffer.alloc(44 + samples * 2)
+  wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8)
+  wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22)
+  wav.writeUInt32LE(samples, 24); wav.writeUInt32LE(samples * 2, 28)
+  wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36)
+  wav.writeUInt32LE(samples * 2, 40)
+  assetLoader = async () => ({ mime: 'audio/wav', bytes: wav })
+  let privateRequests = 0
+  const app = createApp().use(createRouter()
+    .get('/api/sequence-media/:id/:asset', handler)
+    .get('/private', defineEventHandler(() => { privateRequests++; return 'private' })))
+  const server = createServer(toNodeListener(app))
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  const { port } = server.address() as { port: number }
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined
+  try {
+    browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH })
+    const page = await browser.newPage()
+    await page.goto(`http://127.0.0.1:${port}/api/sequence-media/203/animation`)
+    await page.waitForFunction(() => document.querySelector('video, audio') instanceof HTMLMediaElement
+      && (document.querySelector('video, audio') as HTMLMediaElement).readyState >= 2, {}, { timeout: 5000 })
+    await page.evaluate(async () => { const media = document.querySelector('video, audio') as HTMLMediaElement; media.muted = true; await media.play() })
+    await page.waitForFunction(() => (document.querySelector('video, audio') as HTMLMediaElement).currentTime > 0)
+    assert.equal(await page.evaluate(() => window.origin), 'null')
+    assert.equal(await page.evaluate(() => { try { localStorage.getItem('x'); return false } catch { return true } }), true)
+    assert.equal(await page.evaluate(async () => { try { await fetch('/private'); return false } catch { return true } }), true)
+    await page.evaluate(() => { const media = document.createElement('audio'); media.src = '/private'; document.body.append(media); media.load() })
+    await page.waitForTimeout(100)
+    assert.equal(privateRequests, 0)
+  } finally {
+    await browser?.close()
+    await new Promise<void>(resolve => server.close(() => resolve()))
+    assetLoader = undefined
+  }
+})

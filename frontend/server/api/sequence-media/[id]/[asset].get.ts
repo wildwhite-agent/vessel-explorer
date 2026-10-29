@@ -21,12 +21,19 @@ export default defineEventHandler(async (event) => {
     }
     return media
   }, 60_000, media => media.bytes.byteLength)
+  // A browser's direct audio/video viewer reloads this same URL as media.
+  // Permit only this asset path, while connect-src still denies the app origin.
+  const directMedia = /^(audio|video)\//.test(media.mime)
+  const csp = directMedia
+    ? ARTWORK_CSP.replace('media-src ', `media-src ${getRequestURL(event).origin}/api/sequence-media/${id}/${asset} `)
+    : ARTWORK_CSP
   setResponseHeaders(event, {
     'Content-Type': media.mime,
+    ...(directMedia ? { 'Access-Control-Allow-Origin': '*' } : {}),
     'Cache-Control': 'public, max-age=60',
     'X-Content-Type-Options': 'nosniff',
     // Apply to every MIME, so mislabeled/polyglot artwork never acquires the app origin.
-    'Content-Security-Policy': ARTWORK_CSP,
+    'Content-Security-Policy': csp,
     'Referrer-Policy': 'no-referrer',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
     'Cross-Origin-Opener-Policy': 'same-origin',

@@ -9,7 +9,8 @@ import { BoundedWorkCache } from './bounded-work.ts'
 
 export interface LoadedBytes { bytes: Uint8Array; mime: string }
 const downloads = new BoundedWorkCache<LoadedBytes>(4, 32, 32 * 1024 * 1024, 8)
-const DEFAULT_HOSTS = ['ipfs.io', 'arweave.net']
+// The exact additional host serves existing Sequence #11's public video.
+const DEFAULT_HOSTS = ['ipfs.io', 'arweave.net', 'www.thevessel.fun']
 const REDIRECTS = new Set([301, 302, 303, 307, 308])
 const fail = () => createError({ statusCode: 502, message: 'sequence asset request rejected' })
 
