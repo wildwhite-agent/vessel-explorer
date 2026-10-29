@@ -29,7 +29,7 @@ operator. Do not use `kamal setup` against the existing installation.
   and the connection pins the checked address while retaining TLS verification.
   Media fetches admit four active jobs and at most eight waiting jobs, allowing
   ordinary gallery bursts while rejecting excess work.
-  Downloads have a 10-second total deadline, three redirects, 1 MiB metadata /
+  Downloads have a 10-second total deadline, three redirects, 2 MiB metadata /
   8 MiB asset ceilings including HTTP decompression. Embedded gzip scripts are
   limited to 1 MiB each, 4 MiB total and 16 scripts. Final HTML is at most 8 MiB.
 - **VESSEL-04:** media responses have an opaque-origin HTTP CSP sandbox even

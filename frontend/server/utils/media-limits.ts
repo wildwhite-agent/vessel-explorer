@@ -1,7 +1,8 @@
 import { createError } from 'h3'
 
 export const MAX_ASSET_BYTES = 8 * 1024 * 1024
-export const MAX_METADATA_BYTES = 1024 * 1024
+// Existing on-chain JSON embeds artwork larger than 1 MiB; keep a finite ceiling.
+export const MAX_METADATA_BYTES = 2 * 1024 * 1024
 
 export function requireVesselId(id: unknown): number {
   if (typeof id !== 'string' || !/^[1-9]\d{0,4}$/.test(id) || Number(id) > 10_000) {

@@ -6,6 +6,7 @@ import { validateMediaUrl, isPublicAddress, resolvePublicAddress, decodeMediaDat
 import { normalizeCompressedHtmlScripts, ARTWORK_CSP } from '../../server/utils/active-media.ts'
 import { sequencePoster } from '../../server/utils/sequence-poster.ts'
 import sharp from 'sharp'
+import { MAX_METADATA_BYTES } from '../../server/utils/media-limits.ts'
 
 const hosts = ['ipfs.io', 'arweave.net']
 test('only configured HTTPS hosts and public DNS results are accepted', async () => {
@@ -33,6 +34,21 @@ test('data URIs, streams and HTTP compressed bodies have byte ceilings', async (
   assert.throws(() => decodeMediaBody(gzipSync(Buffer.alloc(32)), 'gzip', 8))
   assert.equal(decodeMediaBody(gzipSync(Buffer.from('ok')), 'gzip', 8).toString(), 'ok')
   assert.throws(() => decodeMediaBody(Buffer.from('ok'), 'unknown', 8))
+})
+
+test('embedded artwork metadata admits existing piece sizes while retaining a 2 MiB ceiling', () => {
+  // Sequence #1 embeds 1,344,989 bytes of JSON; #2 embeds 1,111,881 bytes.
+  // Match their decoded size without storing or executing the artwork fixture.
+  for (const size of [1_344_989, 1_111_881]) {
+    const prefix = 'data:image/png;base64,'
+    const empty = JSON.stringify({ image: prefix })
+    const metadata = JSON.stringify({ image: prefix + 'A'.repeat(size - Buffer.byteLength(empty)) })
+    const uri = 'data:application/json;base64,' + Buffer.from(metadata).toString('base64')
+    assert.equal(decodeMediaDataUri(uri, MAX_METADATA_BYTES).bytes.byteLength, size)
+  }
+  const tooLarge = Buffer.alloc(2 * 1024 * 1024 + 1, 'x')
+  assert.throws(() => decodeMediaDataUri('data:application/json;base64,' + tooLarge.toString('base64'), MAX_METADATA_BYTES))
+  assert.throws(() => decodeMediaBody(gzipSync(tooLarge), 'gzip', MAX_METADATA_BYTES))
 })
 
 function response(status: number, headers: Record<string, string>, chunks: Buffer[] = []) {
