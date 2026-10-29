@@ -24,7 +24,8 @@ operator. Do not use `kamal setup` against the existing installation.
   malformed requests from exhausting all 1000 subscriptions. Read-only query
   work memory is limited to 16 MiB instead of 512 MiB per operation.
 - **VESSEL-03:** server asset fetches accept data URIs and HTTPS on exact approved
-  hosts, initially `ipfs.io` and `arweave.net`. IPFS/Arweave schemes normalize to
+  hosts: `ipfs.io`, `arweave.net`, and `www.thevessel.fun` (the existing Sequence
+  #11 video). IPFS/Arweave schemes normalize to
   those gateways. Every redirect is checked, every DNS answer must be public,
   and the connection pins the checked address while retaining TLS verification.
   Media fetches admit four active jobs and at most eight waiting jobs, allowing
@@ -40,8 +41,10 @@ operator. Do not use `kamal setup` against the existing installation.
   refresh changed artwork. Unversioned media browser caching is 60 seconds;
   unversioned updates may take several cache intervals to propagate. The iframe
   remains sandboxed. Chromium is removed from the server image; no artwork JS
-  executes on the server. Raster posters use bounded Sharp decoding; HTML/SVG
-  posters use a static “open to view interactive artwork” PNG. Interactive art
+  executes on the server. Raster posters use bounded Sharp decoding. The three
+  existing SVG images (#5, #7, #8) use audited PNGs rendered offline, selected
+  only by their exact input SHA-256; new HTML/SVG images use a static “open to
+  view interactive artwork” PNG. Interactive art
   remains in the visitor's sandbox. Embedded data styles/audio and the exact
   p5.js 1.9.0 CDN URL used by existing pieces are permitted. Other external
   scripts, frames, popups and network destinations outside the CSP are blocked; check supported pieces
@@ -84,7 +87,8 @@ Kamal's required proxy network. Frontend/bot no longer join `shared`.
 5. Review any extra asset hosts and add only exact hostnames to
    `SEQUENCE_ASSET_HOSTS`. Redirect destinations also need explicit approval in
    this list. Do not add private endpoints, wildcard hosts or credentialed URLs.
-6. In the ignored indexer `.env.production`, prepare `API_DATABASE_URL` using
+6. In the ignored indexer `.env.production` and GitHub production environment
+   secrets, prepare `API_DATABASE_URL` using
    `vessel_api` and `INDEXER_DATABASE_URL` using `vessel_indexer`; both target
    `vessel-indexer-db:5432/vessel` on `vessel-data`. Keep passwords private. Set
    `PONDER_VIEWS_SCHEMA=vessel`. Leave `DATABASE_SCHEMA` empty for a new writer
@@ -94,6 +98,11 @@ Kamal's required proxy network. Frontend/bot no longer join `shared`.
    `vvork-kamal vessel-indexer app stop -c config/deploy.worker.yml` and verify
    that no writer remains before deploying its replacement; accept the resulting
    indexing pause. Never perform a rolling deploy with a fixed schema override.
+   The GitHub workflow deploys the worker and verifies its readiness before
+   replacing the public API from the same source revision. Worker images use
+   the separate `vessel-indexer-worker` repository so Kamal service labels and
+   rollback tags cannot collide. Both role URLs must be
+   configured before enabling that workflow.
    The role preparation SQL assumes
    these exact database/stable-schema names and must be adapted if they differ.
 7. Arrange a maintenance window. Pause the old combined indexer and hold bot

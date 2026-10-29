@@ -1,6 +1,6 @@
 service: vessel-indexer-worker
 
-image: <%= ENV["DOCKER_REGISTRY_USERNAME"] %>/vessel-indexer
+image: <%= ENV["DOCKER_REGISTRY_USERNAME"] %>/vessel-indexer-worker
 
 primary_role: worker
 
@@ -29,7 +29,7 @@ deploy_timeout: 3600
 labels:
   vvork.project: vessel-explorer
   vvork.kind: worker
-  vvork.owner: ygg
+  vvork.owner: personal
   vvork.repo: https://github.com/wildwhite-agent/vessel-explorer
 
 registry:

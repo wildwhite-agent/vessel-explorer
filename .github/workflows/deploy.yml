@@ -148,7 +148,8 @@ jobs:
       PONDER_RPC_URLS_1: ${{ secrets.PONDER_RPC_URLS_1 }}
       PONDER_RPC_FALLBACK_URLS_1: ${{ secrets.PONDER_RPC_FALLBACK_URLS_1 }}
       PONDER_WS_URL_1: ${{ secrets.PONDER_WS_URL_1 }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      API_DATABASE_URL: ${{ secrets.API_DATABASE_URL }}
+      INDEXER_DATABASE_URL: ${{ secrets.INDEXER_DATABASE_URL }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
       DISCORD_PROJECT_WEBHOOK_URL: ${{ secrets.DISCORD_PROJECT_WEBHOOK_URL }}
@@ -166,7 +167,8 @@ jobs:
             PONDER_RPC_URLS_1 \
             PONDER_RPC_FALLBACK_URLS_1 \
             PONDER_WS_URL_1 \
-            DATABASE_URL \
+            API_DATABASE_URL \
+            INDEXER_DATABASE_URL \
             POSTGRES_PASSWORD \
             DISCORD_WEBHOOK_URL \
             DISCORD_PROJECT_WEBHOOK_URL
@@ -205,7 +207,8 @@ jobs:
               INDEXER_HOST
               PONDER_VIEWS_SCHEMA
               PONDER_RPC_URLS_1
-              DATABASE_URL
+              API_DATABASE_URL
+              INDEXER_DATABASE_URL
               POSTGRES_PASSWORD
             )
           fi
@@ -261,12 +264,29 @@ jobs:
       - name: Render indexer Kamal config
         if: env.DEPLOY_INDEXER == 'true'
         working-directory: indexer
-        run: kamal config > "$RUNNER_TEMP/indexer-kamal.yml"
+        run: |
+          umask 077
+          kamal config -c config/deploy.worker.yml > "$RUNNER_TEMP/indexer-worker-kamal.yml"
+          kamal config > "$RUNNER_TEMP/indexer-kamal.yml"
 
-      - name: Deploy indexer
+      - name: Deploy private indexer worker
         if: env.DEPLOY_INDEXER == 'true'
         working-directory: indexer
-        run: kamal deploy
+        # Kamal waits for the worker's Docker /ready healthcheck before replacing it.
+        run: kamal deploy -c config/deploy.worker.yml --version "$GITHUB_SHA" --lock-wait --lock-wait-timeout 600
+
+      - name: Verify private indexer worker
+        if: env.DEPLOY_INDEXER == 'true'
+        working-directory: indexer
+        run: >-
+          kamal app exec -c config/deploy.worker.yml --version "$GITHUB_SHA" --reuse
+          "node -e 'fetch(\"http://127.0.0.1:42069/ready\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))'"
+
+      - name: Deploy public indexer API
+        if: env.DEPLOY_INDEXER == 'true'
+        working-directory: indexer
+        # Kamal requires a separately labeled API image at the same source revision.
+        run: kamal deploy --version "$GITHUB_SHA" --lock-wait --lock-wait-timeout 600
 
       - name: Verify indexer
         if: env.DEPLOY_INDEXER == 'true'
