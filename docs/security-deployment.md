@@ -19,6 +19,10 @@ operator. Do not use `kamal setup` against the existing installation.
 - **VESSEL-02:** Hono is pinned and overridden to 4.13.14 throughout Ponder's
   dependency tree. The [maintainer advisory](https://github.com/honojs/hono/security/advisories/GHSA-8j4g-w8fx-2239)
   identifies 4.12.34 as the first fixed version.
+  A locked Ponder 0.16.6 patch additionally releases live-query slots on every
+  validation failure, setup error, completion and request abort. This prevents
+  malformed requests from exhausting all 1000 subscriptions. Read-only query
+  work memory is limited to 16 MiB instead of 512 MiB per operation.
 - **VESSEL-03:** server asset fetches accept data URIs and HTTPS on exact approved
   hosts, initially `ipfs.io` and `arweave.net`. IPFS/Arweave schemes normalize to
   those gateways. Every redirect is checked, every DNS answer must be public,

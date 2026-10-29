@@ -1,0 +1,538 @@
+--- a/src/client/index.ts
++++ b/src/client/index.ts
+@@ -433,117 +433,150 @@
+       }
+ 
+       liveQueryCount++;
+-
+-      c.header("Content-Type", "text/event-stream");
+-      c.header("Cache-Control", "no-cache");
+-      c.header("Connection", "keep-alive");
+-
+-      const queryString = c.req.query("sql");
+-      if (queryString === undefined) {
+-        return c.text('Missing "sql" query parameter', 400);
+-      }
+-      const query = superjson.parse(queryString) as QueryWithTypings;
++      let hasLiveQuerySlot = true;
++      let isStreaming = false;
++      const releaseLiveQuerySlot = () => {
++        if (hasLiveQuerySlot === false) return;
++        hasLiveQuerySlot = false;
++        liveQueryCount--;
++      };
+ 
+       try {
+-        await validateAllowableSQLQuery(query.sql);
+-      } catch (error) {
+-        (error as Error).stack = undefined;
+-        return c.text((error as Error).message, 500);
+-      }
+-
+-      const relations = await getSQLQueryRelations(query.sql);
+-      const referencedTables = new Set<string>();
+-      for (const relation of relations) {
+-        if (tableNames.has(relation)) {
+-          referencedTables.add(relation);
+-        } else if (viewNames.has(relation)) {
+-          for (const tableName of perViewTables.get(relation)!) {
+-            referencedTables.add(tableName);
+-          }
+-        }
+-      }
+-
+-      let result: QueryResult;
+-      if (cache.has(queryString)) {
+-        const resultRef = cache.get(queryString)!.deref();
+-
+-        if (resultRef === undefined) {
+-          cache.delete(queryString);
++        c.header("Content-Type", "text/event-stream");
++        c.header("Cache-Control", "no-cache");
++        c.header("Connection", "keep-alive");
++
++        const queryString = c.req.query("sql");
++        if (queryString === undefined) {
++          return c.text('Missing "sql" query parameter', 400);
++        }
++        const query = superjson.parse(queryString) as QueryWithTypings;
++
++        try {
++          await validateAllowableSQLQuery(query.sql);
++        } catch (error) {
++          (error as Error).stack = undefined;
++          return c.text((error as Error).message, 500);
++        }
++
++        const relations = await getSQLQueryRelations(query.sql);
++        const referencedTables = new Set<string>();
++        for (const relation of relations) {
++          if (tableNames.has(relation)) {
++            referencedTables.add(relation);
++          } else if (viewNames.has(relation)) {
++            for (const tableName of perViewTables.get(relation)!) {
++              referencedTables.add(tableName);
++            }
++          }
++        }
++
++        let result: QueryResult;
++        if (cache.has(queryString)) {
++          const resultRef = cache.get(queryString)!.deref();
++
++          if (resultRef === undefined) {
++            cache.delete(queryString);
++            const resultPromise = getQueryResult(query);
++            cache.set(queryString, new WeakRef(resultPromise));
++            perQueryReferences.set(queryString, referencedTables);
++            registry.register(resultPromise, queryString);
++            result = await resultPromise;
++          } else {
++            result = await resultRef;
++          }
++        } else {
+           const resultPromise = getQueryResult(query);
+           cache.set(queryString, new WeakRef(resultPromise));
+           perQueryReferences.set(queryString, referencedTables);
+           registry.register(resultPromise, queryString);
+           result = await resultPromise;
+-        } else {
+-          result = await resultRef;
+-        }
+-      } else {
+-        const resultPromise = getQueryResult(query);
+-        cache.set(queryString, new WeakRef(resultPromise));
+-        perQueryReferences.set(queryString, referencedTables);
+-        registry.register(resultPromise, queryString);
+-        result = await resultPromise;
+-      }
+-
+-      let resultHash = crypto
+-        .createHash("MD5")
+-        // @ts-ignore
+-        .update(JSON.stringify(result.rows))
+-        .digest("hex")
+-        .slice(0, 10);
+-
+-      return streamSSE(c, async (stream) => {
+-        stream.onAbort(() => {
+-          liveQueryCount--;
++        }
++
++        let resultHash = crypto
++          .createHash("MD5")
++          // @ts-ignore
++          .update(JSON.stringify(result.rows))
++          .digest("hex")
++          .slice(0, 10);
++
++        const response = streamSSE(c, async (stream) => {
++          let wakeOnAbort: (() => void) | undefined;
++          const abort = () => stream.abort();
++          stream.onAbort(() => {
++            releaseLiveQuerySlot();
++            wakeOnAbort?.();
++          });
++          c.req.raw.signal.addEventListener("abort", abort, { once: true });
++          if (c.req.raw.signal.aborted) abort();
++
++          try {
++            while (stream.closed === false && stream.aborted === false) {
++              // A fresh waiter prevents completed races retaining the whole stream.
++              const aborted = promiseWithResolvers<void>();
++              wakeOnAbort = aborted.resolve;
++              try {
++                await Promise.race([
++                  aborted.promise,
++                  ...Array.from(referencedTables).map(
++                    (relation) => perTableResolver.get(relation)!.promise,
++                  ),
++                ]);
++              } finally {
++                wakeOnAbort = undefined;
++              }
++              if (stream.closed || stream.aborted) break;
++
++              try {
++                let resultPromise: Promise<unknown>;
++                if (cache.has(queryString)) {
++                  const resultRef = cache.get(queryString)!.deref();
++
++                  if (resultRef === undefined) {
++                    cache.delete(queryString);
++                    resultPromise = getQueryResult(query);
++                    cache.set(queryString, new WeakRef(resultPromise));
++                    perQueryReferences.set(queryString, referencedTables);
++                    registry.register(resultPromise, queryString);
++                  } else {
++                    resultPromise = resultRef;
++                  }
++                } else {
++                  resultPromise = getQueryResult(query);
++                  cache.set(queryString, new WeakRef(resultPromise));
++                  perQueryReferences.set(queryString, referencedTables);
++                  registry.register(resultPromise, queryString);
++                }
++
++                const result = await resultPromise;
++
++                const _resultHash = crypto
++                  .createHash("MD5")
++                  // @ts-ignore
++                  .update(JSON.stringify(result.rows))
++                  .digest("hex")
++                  .slice(0, 10);
++
++                if (_resultHash === resultHash) continue;
++                resultHash = _resultHash;
++
++                // @ts-ignore
++                await stream.writeSSE({ data: JSON.stringify(result) });
++              } catch {
++                stream.abort();
++              }
++            }
++          } finally {
++            wakeOnAbort = undefined;
++            c.req.raw.signal.removeEventListener("abort", abort);
++            releaseLiveQuerySlot();
++          }
+         });
+-
+-        while (stream.closed === false && stream.aborted === false) {
+-          await Promise.race(
+-            Array.from(referencedTables).map(
+-              (relation) => perTableResolver.get(relation)!.promise,
+-            ),
+-          );
+-
+-          try {
+-            let resultPromise: Promise<unknown>;
+-            if (cache.has(queryString)) {
+-              const resultRef = cache.get(queryString)!.deref();
+-
+-              if (resultRef === undefined) {
+-                cache.delete(queryString);
+-                resultPromise = getQueryResult(query);
+-                cache.set(queryString, new WeakRef(resultPromise));
+-                perQueryReferences.set(queryString, referencedTables);
+-                registry.register(resultPromise, queryString);
+-              } else {
+-                resultPromise = resultRef;
+-              }
+-            } else {
+-              resultPromise = getQueryResult(query);
+-              cache.set(queryString, new WeakRef(resultPromise));
+-              perQueryReferences.set(queryString, referencedTables);
+-              registry.register(resultPromise, queryString);
+-            }
+-
+-            const result = await resultPromise;
+-
+-            const _resultHash = crypto
+-              .createHash("MD5")
+-              // @ts-ignore
+-              .update(JSON.stringify(result.rows))
+-              .digest("hex")
+-              .slice(0, 10);
+-
+-            if (_resultHash === resultHash) continue;
+-            resultHash = _resultHash;
+-
+-            // @ts-ignore
+-            await stream.writeSSE({ data: JSON.stringify(result) });
+-          } catch {
+-            stream.abort();
+-          }
+-        }
+-      });
++        isStreaming = true;
++        return response;
++      } finally {
++        if (isStreaming === false) releaseLiveQuerySlot();
++      }
+     }
+ 
+     return next();
+--- a/dist/esm/client/index.js
++++ b/dist/esm/client/index.js
+@@ -334,106 +334,147 @@
+                 return c.text("Maximum number of live queries reached", 503);
+             }
+             liveQueryCount++;
+-            c.header("Content-Type", "text/event-stream");
+-            c.header("Cache-Control", "no-cache");
+-            c.header("Connection", "keep-alive");
+-            const queryString = c.req.query("sql");
+-            if (queryString === undefined) {
+-                return c.text('Missing "sql" query parameter', 400);
+-            }
+-            const query = superjson.parse(queryString);
++            let hasLiveQuerySlot = true;
++            let isStreaming = false;
++            const releaseLiveQuerySlot = () => {
++                if (hasLiveQuerySlot === false)
++                    return;
++                hasLiveQuerySlot = false;
++                liveQueryCount--;
++            };
+             try {
+-                await validateAllowableSQLQuery(query.sql);
+-            }
+-            catch (error) {
+-                error.stack = undefined;
+-                return c.text(error.message, 500);
+-            }
+-            const relations = await getSQLQueryRelations(query.sql);
+-            const referencedTables = new Set();
+-            for (const relation of relations) {
+-                if (tableNames.has(relation)) {
+-                    referencedTables.add(relation);
+-                }
+-                else if (viewNames.has(relation)) {
+-                    for (const tableName of perViewTables.get(relation)) {
+-                        referencedTables.add(tableName);
+-                    }
+-                }
+-            }
+-            let result;
+-            if (cache.has(queryString)) {
+-                const resultRef = cache.get(queryString).deref();
+-                if (resultRef === undefined) {
+-                    cache.delete(queryString);
++                c.header("Content-Type", "text/event-stream");
++                c.header("Cache-Control", "no-cache");
++                c.header("Connection", "keep-alive");
++                const queryString = c.req.query("sql");
++                if (queryString === undefined) {
++                    return c.text('Missing "sql" query parameter', 400);
++                }
++                const query = superjson.parse(queryString);
++                try {
++                    await validateAllowableSQLQuery(query.sql);
++                }
++                catch (error) {
++                    error.stack = undefined;
++                    return c.text(error.message, 500);
++                }
++                const relations = await getSQLQueryRelations(query.sql);
++                const referencedTables = new Set();
++                for (const relation of relations) {
++                    if (tableNames.has(relation)) {
++                        referencedTables.add(relation);
++                    }
++                    else if (viewNames.has(relation)) {
++                        for (const tableName of perViewTables.get(relation)) {
++                            referencedTables.add(tableName);
++                        }
++                    }
++                }
++                let result;
++                if (cache.has(queryString)) {
++                    const resultRef = cache.get(queryString).deref();
++                    if (resultRef === undefined) {
++                        cache.delete(queryString);
++                        const resultPromise = getQueryResult(query);
++                        cache.set(queryString, new WeakRef(resultPromise));
++                        perQueryReferences.set(queryString, referencedTables);
++                        registry.register(resultPromise, queryString);
++                        result = await resultPromise;
++                    }
++                    else {
++                        result = await resultRef;
++                    }
++                }
++                else {
+                     const resultPromise = getQueryResult(query);
+                     cache.set(queryString, new WeakRef(resultPromise));
+                     perQueryReferences.set(queryString, referencedTables);
+                     registry.register(resultPromise, queryString);
+                     result = await resultPromise;
+                 }
+-                else {
+-                    result = await resultRef;
+-                }
+-            }
+-            else {
+-                const resultPromise = getQueryResult(query);
+-                cache.set(queryString, new WeakRef(resultPromise));
+-                perQueryReferences.set(queryString, referencedTables);
+-                registry.register(resultPromise, queryString);
+-                result = await resultPromise;
+-            }
+-            let resultHash = crypto
+-                .createHash("MD5")
+-                // @ts-ignore
+-                .update(JSON.stringify(result.rows))
+-                .digest("hex")
+-                .slice(0, 10);
+-            return streamSSE(c, async (stream) => {
+-                stream.onAbort(() => {
+-                    liveQueryCount--;
++                let resultHash = crypto
++                    .createHash("MD5")
++                    // @ts-ignore
++                    .update(JSON.stringify(result.rows))
++                    .digest("hex")
++                    .slice(0, 10);
++                const response = streamSSE(c, async (stream) => {
++                    let wakeOnAbort;
++                    const abort = () => stream.abort();
++                    stream.onAbort(() => {
++                        releaseLiveQuerySlot();
++                        wakeOnAbort?.();
++                    });
++                    c.req.raw.signal.addEventListener("abort", abort, { once: true });
++                    if (c.req.raw.signal.aborted)
++                        abort();
++                    try {
++                        while (stream.closed === false && stream.aborted === false) {
++                            // A fresh waiter prevents completed races retaining the whole stream.
++                            const aborted = promiseWithResolvers();
++                            wakeOnAbort = aborted.resolve;
++                            try {
++                              await Promise.race([
++                                  aborted.promise,
++                                  ...Array.from(referencedTables).map((relation) => perTableResolver.get(relation).promise),
++                              ]);
++                            } finally {
++                              wakeOnAbort = undefined;
++                            }
++                            if (stream.closed || stream.aborted)
++                                break;
++                            try {
++                                let resultPromise;
++                                if (cache.has(queryString)) {
++                                    const resultRef = cache.get(queryString).deref();
++                                    if (resultRef === undefined) {
++                                        cache.delete(queryString);
++                                        resultPromise = getQueryResult(query);
++                                        cache.set(queryString, new WeakRef(resultPromise));
++                                        perQueryReferences.set(queryString, referencedTables);
++                                        registry.register(resultPromise, queryString);
++                                    }
++                                    else {
++                                        resultPromise = resultRef;
++                                    }
++                                }
++                                else {
++                                    resultPromise = getQueryResult(query);
++                                    cache.set(queryString, new WeakRef(resultPromise));
++                                    perQueryReferences.set(queryString, referencedTables);
++                                    registry.register(resultPromise, queryString);
++                                }
++                                const result = await resultPromise;
++                                const _resultHash = crypto
++                                    .createHash("MD5")
++                                    // @ts-ignore
++                                    .update(JSON.stringify(result.rows))
++                                    .digest("hex")
++                                    .slice(0, 10);
++                                if (_resultHash === resultHash)
++                                    continue;
++                                resultHash = _resultHash;
++                                // @ts-ignore
++                                await stream.writeSSE({ data: JSON.stringify(result) });
++                            }
++                            catch {
++                                stream.abort();
++                            }
++                        }
++                    }
++                    finally {
++                        wakeOnAbort = undefined;
++                      c.req.raw.signal.removeEventListener("abort", abort);
++                        releaseLiveQuerySlot();
++                    }
+                 });
+-                while (stream.closed === false && stream.aborted === false) {
+-                    await Promise.race(Array.from(referencedTables).map((relation) => perTableResolver.get(relation).promise));
+-                    try {
+-                        let resultPromise;
+-                        if (cache.has(queryString)) {
+-                            const resultRef = cache.get(queryString).deref();
+-                            if (resultRef === undefined) {
+-                                cache.delete(queryString);
+-                                resultPromise = getQueryResult(query);
+-                                cache.set(queryString, new WeakRef(resultPromise));
+-                                perQueryReferences.set(queryString, referencedTables);
+-                                registry.register(resultPromise, queryString);
+-                            }
+-                            else {
+-                                resultPromise = resultRef;
+-                            }
+-                        }
+-                        else {
+-                            resultPromise = getQueryResult(query);
+-                            cache.set(queryString, new WeakRef(resultPromise));
+-                            perQueryReferences.set(queryString, referencedTables);
+-                            registry.register(resultPromise, queryString);
+-                        }
+-                        const result = await resultPromise;
+-                        const _resultHash = crypto
+-                            .createHash("MD5")
+-                            // @ts-ignore
+-                            .update(JSON.stringify(result.rows))
+-                            .digest("hex")
+-                            .slice(0, 10);
+-                        if (_resultHash === resultHash)
+-                            continue;
+-                        resultHash = _resultHash;
+-                        // @ts-ignore
+-                        await stream.writeSSE({ data: JSON.stringify(result) });
+-                    }
+-                    catch {
+-                        stream.abort();
+-                    }
+-                }
+-            });
++                isStreaming = true;
++                return response;
++            }
++            finally {
++                if (isStreaming === false)
++                    releaseLiveQuerySlot();
++            }
+         }
+         return next();
+     });
+--- a/src/utils/pg.ts
++++ b/src/utils/pg.ts
+@@ -155,7 +155,7 @@
+             `
+           SET search_path = "${namespace}";
+           SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
+-          SET work_mem = '512MB';
++          SET work_mem = '16MB';
+           SET lock_timeout = '500ms';`,
+             callback,
+           );
+@@ -166,7 +166,7 @@
+             `
+           SET search_path = "${namespace}";
+           SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
+-          SET work_mem = '512MB';
++          SET work_mem = '16MB';
+           SET lock_timeout = '500ms';`,
+           ).then(() => {}),
+         );
+--- a/dist/esm/utils/pg.js
++++ b/dist/esm/utils/pg.js
+@@ -115,7 +115,7 @@
+                     this.query(`
+           SET search_path = "${namespace}";
+           SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
+-          SET work_mem = '512MB';
++          SET work_mem = '16MB';
+           SET lock_timeout = '500ms';`, callback);
+                 });
+             }
+@@ -123,7 +123,7 @@
+                 return super.connect().then(() => this.query(`
+           SET search_path = "${namespace}";
+           SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
+-          SET work_mem = '512MB';
++          SET work_mem = '16MB';
+           SET lock_timeout = '500ms';`).then(() => { }));
+             }
+         }

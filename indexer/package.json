@@ -16,7 +16,7 @@
     "kamal:setup": "set -a && . ./.env.production && set +a && kamal setup",
     "kamal:deploy": "set -a && . ./.env.production && set +a && kamal deploy",
     "kamal:sh": "set -a && . ./.env.production && set +a && kamal app exec -i --reuse sh",
-    "test:security": "node --test test/*.test.mjs"
+    "test:security": "node --expose-gc --test test/*.test.mjs"
   },
   "dependencies": {
     "@ponder/utils": "^0.2.18",
@@ -36,6 +36,9 @@
   "pnpm": {
     "overrides": {
       "hono": "4.13.14"
+    },
+    "patchedDependencies": {
+      "ponder@0.16.6": "patches/ponder@0.16.6.patch"
     }
   }
 }

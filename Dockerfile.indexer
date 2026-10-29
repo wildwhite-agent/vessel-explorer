@@ -4,6 +4,7 @@ WORKDIR /app/indexer
 
 FROM base AS deps
 COPY indexer/package.json indexer/pnpm-lock.yaml ./
+COPY indexer/patches ./patches
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
